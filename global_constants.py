@@ -8,11 +8,3 @@ SUBSPACE_CAPACITIES = {"Dining Hall": 100, "Faculty Dining Leaf": 20, "Library":
                        "Social Space": 10}
 SUBSPACE_RISK_MULTIPLIERS = {"Dining Hall": 2, "Faculty Dining Leaf": 2, "Library": 2, "Gym": 3,
                              "Office": 2, "Social Space": 3, "Classroom": 2, "Dorm": 3}
-
-"""
-VARIABLE CV/RVs:
-    Space CV: 
-    Space RV:
-    Subspace CV:
-    Subspace RV:
-"""
