@@ -1,10 +1,9 @@
-from global_constants import TOTAL_AGENTS
+# from global_constants import TOTAL_AGENTS
 import random
 
 # n = 10  # number of agents
 # n = 2380, on-campus: 1500, off-campus: 500, faculty: 380
-n = TOTAL_AGENTS
-TOTAL_AGENTS = 10
+# n = TOTAL_AGENTS
 
 vaccine_percentage = 0.5
 face_mask_comp = 0.5
