@@ -1,7 +1,7 @@
 # from global_constants import TOTAL_AGENTS
 import random
 
-# n = 10  # number of agents
+n = 10  # number of agents
 # n = 2380, on-campus: 1500, off-campus: 500, faculty: 380
 # n = TOTAL_AGENTS
 
