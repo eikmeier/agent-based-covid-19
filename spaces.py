@@ -3,7 +3,7 @@ from global_constants import PASSING_TIME, TOTAL_AGENTS, SPACE_CAPACITIES, \
 import math
 
 class Space:
-    def __init__(self, type, size = None, division = None):
+    def __init__(self):
         """ 
         Initialize a space with a type and, if applicable, a size or a division.\n
         Possible types are: "Transit Space", "Dining Hall", "Library",
@@ -12,60 +12,6 @@ class Space:
         Possible divisions are: "STEM", "Humanities", and "Arts". Only Office spaces must have a division.\n
         If the space is a dining hall, gym, library, or office, then the space will be given 6 empty subspaces given in the field leaves.\n
         """
-        self.type = type
-        if size is not None:
-            self.size = size
-
-        # Initialize CV (Capacity) of the space
-        if self.type in SPACE_CAPACITIES.keys():
-            self.cv = SPACE_CAPACITIES.get(self.type)
-        elif self.type == "Office":
-            if self.division == "STEM":
-                self.cv = PASSING_TIME * 6 * 50
-            elif self.division in {"Humanities", "Arts"}:
-                self.cv = PASSING_TIME * 6 * 25
-        elif self.type == "Academic":
-            if self.size == "Small":
-                self.cv = PASSING_TIME * 45
-            elif self.size == "Medium":
-                self.cv = PASSING_TIME * 90
-            elif self.size == "Large":
-                self.cv = PASSING_TIME * 225
-        elif self.type == "Dorm":
-            if self.size == "Small":
-                self.cv = PASSING_TIME * 15
-            elif self.size == "Medium":
-                self.cv = PASSING_TIME * 45
-            elif self.size == "Large":
-                self.cv = PASSING_TIME * 75
-        else: # Large Gatherings will initially have a capacity of 0 until students are assigned
-            self.cv = 0
-
-        # Initialize RV (risk multiplier) of the space
-        if self.type in SPACE_RISK_MULTIPLIERS.keys():
-            self.rv = SPACE_RISK_MULTIPLIERS.get(self.type)
-        else: # If there is an error, set RV to 0
-            self.cv = 0
-
-        if type in {"Dining Hall", "Gym", "Library", "Office"}:
-            self.leaves = [SubSpace(self), SubSpace(self), SubSpace(self), SubSpace(self), SubSpace(self), SubSpace(self)]
-
-    def getCV(self):
-        """
-        Get the capacity of a space.\n
-        Note that Large Gatherings must have a defined numberAssigned field that counts how many people have been
-        assigned to that space.
-        """
-        if self.type == "Large Gatherings":
-            return 40 * math.ceil(self.numberAssigned / 40.0) 
-        else:
-            return self.cv
-
-    def getRV(self):
-        """
-        Get the risk multiplier for infection spread in a space
-        """
-        return self.rv
 
     def closeSpace(self):
         """
@@ -75,32 +21,106 @@ class Space:
         self.rv = 0
         self.numberAssigned = 0
 
+class Dorm(Space):
+    def __init__(self, size):
+        self.rv = SPACE_RISK_MULTIPLIERS.get("Dorm")
+        if self.size == "Small":
+            self.cv = PASSING_TIME * 15
+            self.singles = [None] * 5
+            self.doubles = [None] * 5
+        elif self.size == "Medium":
+            self.cv = PASSING_TIME * 45
+            self.singles = [None] * 15
+            self.doubles = [None] * 15
+        elif self.size == "Large":
+            self.cv = PASSING_TIME * 75
+            self.singles = [None] * 25
+            self.doubles = [None] * 25
+
+        for i in range(len(singles)):
+            singles[i] = SubSpace(self, 1, SUBSPACE_RISK_MULTIPLIERS.get("Dorm"))
+        for j in range(len(doubles)):
+            doubles[j] = SubSpace(self, 2, SUBSPACE_RISK_MULTIPLIERS.get("Dorm"))
+
+class TransitSpace(Space):
+    def __init__(self):
+        self.cv = SPACE_CAPACITIES.get("Transit Space")
+        self.rv = SPACE_RISK_MULTIPLIERS.get("Transit Space")
+
+class DiningHall(Space):
+    def __init__(self):
+        self.cv = SPACE_CAPACITIES.get("Dining Hall")
+        self.rv = SPACE_RISK_MULTIPLIERS.get("Dining Hall")
+        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Dining Hall"), SUBSPACE_RISK_MULTIPLIERS.get("Dining Hall"))] * 5
+        self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Faculty Dining Leaf"), SUBSPACE_RISK_MULTIPLIERS.get("Faculty Dining Leaf")))
+
+class Library(Space):
+    def __init__(self):
+        self.cv = SPACE_CAPACITIES.get("Library")
+        self.rv = SPACE_RISK_MULTIPLIERS.get("Library")
+        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Library"), SUBSPACE_RISK_MULTIPLIERS.get("Library"))] * 6
+
+class Gym(Space):
+    def __init__(self):
+        self.cv = SPACE_CAPACITIES.get("Gym")
+        self.rv = SPACE_RISK_MULTIPLIERS.get("Gym")
+        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Gym"), SUBSPACE_RISK_MULTIPLIERS.get("Gym"))] * 6
+
+class Office(Space):
+    def __init__(self, division):
+        if self.division == "STEM":
+            self.cv = PASSING_TIME * 6 * 50
+            self.subcv = 50
+        elif self.division in {"Humanities", "Arts"}:
+            self.cv = PASSING_TIME * 6 * 25
+            self.subcv = 20
+        self.rv = SPACE_RISK_MULTIPLIERS.get("Office")
+        self.leaves = [SubSpace(self, self.subcv, SUBSPACE_RISK_MULTIPLIERS.get("Office"))] * 6
+
+class LargeGatherings(Space):
+    def __init__(self):
+        self.cv = 0
+        self.numberAssigned = 0
+        self.rv = SPACE_RISK_MULTIPLIERS.get("Large Gatherings")
+
+    def assign_agent(self, agent):
+        self.numberAssigned += 1
+        self.cv = 40 * math.ceil(self.numberAssigned / 40.0) 
+        self.agents.append(agent)
+
+class Academic(Space):
+    small_classroom_cv = 15
+    medium_classroom_cv = 20
+    large_classroom_cv = 30
+    def __init__(self, size):
+        if self.size == "Small":
+            self.cv = PASSING_TIME * 45
+            self.classrooms = [SubSpace(self, small_classroom_cv, SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 3
+        elif self.size == "Medium":
+            self.cv = PASSING_TIME * 90
+            self.classrooms = [SubSpace(self, small_classroom_cv, SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 2 + \
+                                [SubSpace(self, medium_classroom_cv, SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 3
+        elif self.size == "Large":
+            self.cv = PASSING_TIME * 225
+            self.classrooms = [SubSpace(self, small_classroom_cv, SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 5 + \
+                                [SubSpace(self, medium_classroom_cv, SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 3 + \
+                                [SubSpace(self, large_classroom_cv, SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 3
+        self.rv = SPACE_RISK_MULTIPLIERS.get("Academic")
+    pass
+
+class SocialSpace(Space):
+    def __init__(self):
+        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Social Space"), SUBSPACE_RISK_MULTIPLIERS.get("Social Space"))] * 100
+
 class SubSpace():
-    def __init__(self, space):
+    def __init__(self, space, cv, rv):
         self.space = space
+        self.cv = cv
+        self.rv = rv
 
         # Initialize CV (Capacity) of the subspace
         if self.space.type in SUBSPACE_CAPACITIES.keys():
             self.cv = SUBSPACE_CAPACITIES.get(self.space.type)
-        elif self.space.type == "Office":
-            if self.space.division == "STEM":
-                self.cv = 50
-            elif self.space.division in {"Humanities", "Arts"}:
-                self.cv = 20
-        elif self.space.type == "Classroom":
-            if self.space.size == "Small":
-                self.cv = 15
-            elif self.space.size == "Medium":
-                self.cv = 20
-            elif self.space.size == "Large":
-                self.cv = 30
-        elif self.space.type == "Dorm":
-            if self.space.size == "Single":
-                self.cv = 1
-            elif self.space.size == "Double":
-                self.cv = 2
-            else: # If dorm is small, medium, or large
-                self.cv = 0
         else: # If there is an error, return 0
             self.cv = 0
 
@@ -109,22 +129,6 @@ class SubSpace():
             self.rv = SUBSPACE_RISK_MULTIPLIERS.get(self.space.type)
         else: # If there is an error, return 0
             return 0
-
-
-    def getCV(self):
-        """
-        Get the capacity of a subspace.
-        """
-        if self.space.type == "Dorm" and self.space.size in {"Small", "Medium", "Large"}:
-            return self.numberAssigned
-        else:
-            return self.cv
-       
-    def getRV(self):
-        """
-        Get the risk multiplier for infection spread in a subspace.
-        """
-        return self.rv
     
     def closeSubspace(self):
         """
