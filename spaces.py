@@ -40,8 +40,37 @@ class Dorm(Space):
 
         for i in range(len(self.singles)):
             self.singles[i] = SubSpace(self, 1, SUBSPACE_RISK_MULTIPLIERS.get("Dorm"))
+            self.singles[i].agent = None
         for j in range(len(self.doubles)):
             self.doubles[j] = SubSpace(self, 2, SUBSPACE_RISK_MULTIPLIERS.get("Dorm"))
+            self.doubles[j].agents = [None, None]
+
+        self.occupiedSingles = 0
+        self.occupiedDoubles = 0
+    
+    def assignAgent(self, agent):
+        if self.occupiedSingles < len(self.singles):
+            self.singles[self.occupiedSingles].agent = agent
+            self.occupiedSingles += 1
+            return self.singles[self.occupiedSingles - 1]
+        elif self.occupiedDoubles < len(self.doubles):
+            if self.doubles[self.occupiedDoubles].agents[0] is None:
+                self.doubles[self.occupiedDoubles].agents[0] = agent
+            else:
+                self.doubles[self.occupiedDoubles].agents[1] = agent
+                self.occupiedDoubles += 1
+            return self.doubles[self.occupiedDoubles - 1]
+        else: # Return nothing if there are no open dorms to be assigned
+            return
+
+    def returnAgents(self):
+        print("Singles Agents:")
+        for i in range(len(self.singles)):
+            print(self.singles[i].agent)
+        
+        print("Doubles Agents:")
+        for j in range(len(self.doubles)):
+            print(self.doubles[j].agents)
 
 class TransitSpace(Space):
     def __init__(self):
@@ -85,7 +114,7 @@ class LargeGatherings(Space):
         self.numberAssigned = 0
         self.rv = SPACE_RISK_MULTIPLIERS.get("Large Gatherings")
 
-    def assign_agent(self, agent):
+    def assignAgent(self, agent):
         self.numberAssigned += 1
         self.cv = 40 * math.ceil(self.numberAssigned / 40.0) 
         self.agents.append(agent)
