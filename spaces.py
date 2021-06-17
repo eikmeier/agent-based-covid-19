@@ -142,19 +142,15 @@ class SubSpace():
 
 """
 ** Problems (or so-called problems, more like a running list of stuff for Erik to reference) with the code to fix:
- 1. Add in Faculty Dining Leaf - what is the space for this though? Not sure, so it is not included yet
- 2. Figure out whether leaves of spaces should be implemented here or elsewhere in the code.
-    -If here, need to add in the 100 social space leaves
- 3. Initializer is confusing, need to clean up. Current approach is not really complete
+ 1. Add in functionality to add agents to spaces (move from spaces to subspaces and vice versa as well...)
+ 2. Consider adding in closing spaces (gym/library/dining hall/large gatherings) based on h? Or to have this elsewhere
 
- 4. Unique fields of spaces and subspaces need to be clear to whoever is referring to this code
+ 3. Unique fields of spaces and subspaces need to be clear to whoever is referring to this code
 
- 5. Consider allowing abbreviated names along with long names (ex. DH and Dining Hall both work)
+ 4. Consider allowing abbreviated names along with long names (ex. DH and Dining Hall both work)
 """
 
 # Our network has one gym, one library, one dining hall, and three faculty offices.
-
-# Social spaces - core has no meaning but is included for sake of consistency
 
 # We close the gym, library, and dining hall with h = 0.50 and h = 1
     # h = 0.50, close gym and library
