@@ -23,6 +23,7 @@ class Space:
 
 class Dorm(Space):
     def __init__(self, size):
+        self.size = size
         self.rv = SPACE_RISK_MULTIPLIERS.get("Dorm")
         if self.size == "Small":
             self.cv = PASSING_TIME * 15
@@ -37,10 +38,10 @@ class Dorm(Space):
             self.singles = [None] * 25
             self.doubles = [None] * 25
 
-        for i in range(len(singles)):
-            singles[i] = SubSpace(self, 1, SUBSPACE_RISK_MULTIPLIERS.get("Dorm"))
-        for j in range(len(doubles)):
-            doubles[j] = SubSpace(self, 2, SUBSPACE_RISK_MULTIPLIERS.get("Dorm"))
+        for i in range(len(self.singles)):
+            self.singles[i] = SubSpace(self, 1, SUBSPACE_RISK_MULTIPLIERS.get("Dorm"))
+        for j in range(len(self.doubles)):
+            self.doubles[j] = SubSpace(self, 2, SUBSPACE_RISK_MULTIPLIERS.get("Dorm"))
 
 class TransitSpace(Space):
     def __init__(self):
@@ -68,6 +69,7 @@ class Gym(Space):
 
 class Office(Space):
     def __init__(self, division):
+        self.division = division
         if self.division == "STEM":
             self.cv = PASSING_TIME * 6 * 50
             self.subcv = 50
@@ -93,6 +95,7 @@ class Academic(Space):
     medium_classroom_cv = 20
     large_classroom_cv = 30
     def __init__(self, size):
+        self.size = size
         if self.size == "Small":
             self.cv = PASSING_TIME * 45
             self.classrooms = [SubSpace(self, small_classroom_cv, SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 3
@@ -117,18 +120,6 @@ class SubSpace():
         self.space = space
         self.cv = cv
         self.rv = rv
-
-        # Initialize CV (Capacity) of the subspace
-        if self.space.type in SUBSPACE_CAPACITIES.keys():
-            self.cv = SUBSPACE_CAPACITIES.get(self.space.type)
-        else: # If there is an error, return 0
-            self.cv = 0
-
-        # Initialize RV (risk multiplier) of the subspace
-        if self.space.type in SUBSPACE_RISK_MULTIPLIERS.keys():
-            self.rv = SUBSPACE_RISK_MULTIPLIERS.get(self.space.type)
-        else: # If there is an error, return 0
-            return 0
     
     def closeSubspace(self):
         """
