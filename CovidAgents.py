@@ -1,9 +1,9 @@
-# from global_constants import TOTAL_AGENTS
+from global_constants import TOTAL_AGENTS
 import random
 
-n = 10  # number of agents
+# n = 10  # number of agents
 # n = 2380, on-campus: 1500, off-campus: 500, faculty: 380
-# n = TOTAL_AGENTS
+n = TOTAL_AGENTS
 
 vaccine_percentage = 0.5
 face_mask_comp = 0.5
@@ -14,19 +14,20 @@ initial_infection = 0.4  # proportion of students initially in the exposed state
 
 
 # ------------------------------------------------------------------------
-class agent:
+class Agent:
     def initialize(self):
         # global agents
         agents = []
         for i in range(n):
-            ag = agent()
+            ag = Agent()
             ag.vaccinated = 0  # vaccination status (0 = not vaccinated, 1 = vaccinated)
             ag.face_mask = 0  # face_mask compliance
             ag.screening = 0  # screening test compliance
             ag.type = "On-campus Student"
             ag.subtype = "STEM"  # agent subtype/major (either STEM, Humanities, or Arts)
             ag.seir = "S"  # agent infection states (either "S", "E", "Ia", "Im", "Ie", "R")
-            ag.social = random.choice([0, 0.25, 0.75])  # reduction in socializing - not sure if I should make this {0, 1}
+            time_range = [None] * 15  # time range is from 8 ~ 22, which is 15 blocks
+            ag.schedule = {"A": time_range, "B": time_range, "W": time_range}
             agents.append(ag)
 
 
@@ -77,7 +78,7 @@ class agent:
 
         # print all agents and their attributes
         for ag in agents:
-            print([ag.vaccinated, ag.face_mask, ag.screening, ag.type, ag.subtype, ag.seir, ag.social])
+            print([ag.vaccinated, ag.face_mask, ag.screening, ag.type, ag.subtype, ag.seir, ag.schedule])
 
 
 
