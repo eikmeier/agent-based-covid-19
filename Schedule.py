@@ -3,6 +3,21 @@ import CovidAgents
 import spaces
 from global_constants import DORM_BUILDINGS
 
+
+# initialize agents - list of agents
+agent_list = CovidAgents.Agent().initialize()  # list of all agents
+
+on_campus_students = []  # list of students living on-campus and need to be assigned to a dorm room
+for agent in agent_list:
+    if agent.type == "On-campus Student":
+        on_campus_students.append(agent)
+random.shuffle(on_campus_students)  # shuffle agents
+print(len(on_campus_students))
+
+
+
+
+# DORM ASSIGNMENT ------------------------------------------------------------------------------------------------------------------------------------
 # create dorm buildings (25 small, 10 medium, 10 large)
 small_dorms = []
 medium_dorms = []
@@ -22,51 +37,64 @@ for i in range(DORM_BUILDINGS.get("Large")):
     i += 1
 
 
-# initialize agents - list of agents
-agent_list = CovidAgents.Agent().initialize()
-random.shuffle(agent_list)  # shuffle agents
-
 # print("---------------------------------------------------------------")
-# randomly assign agents to dorm buildings
-for agent in agent_list:
-    dorm_size = random.choice(["Small", "Medium", "Large"])
-    if dorm_size == "Small":
-        # index = random.choice(range(DORM_BUILDINGS.get("Small")))
-        # agent.dorm_building = ["Small", index]
-        agent.dorm_building = small_dorms[random.choice(range(DORM_BUILDINGS.get("Small")))]
-    if dorm_size == "Medium":
-        # index = random.choice(range(DORM_BUILDINGS.get("Medium")))
-        # agent.dorm_building = ["Medium", index]
-        agent.dorm_building = medium_dorms[random.choice(range(DORM_BUILDINGS.get("Medium")))]
-    if dorm_size == "Large":
-        # index = random.choice(range(DORM_BUILDINGS.get("Large")))
-        # agent.dorm_building = ["Large", index]
-        agent.dorm_building = large_dorms[random.choice(range(DORM_BUILDINGS.get("Large")))]
-    # print(agent.dorm_building)
+# randomly assign agents to dorm buildings & dorm rooms
+for agent in on_campus_students:
+    # list of available dorms that are not fully occupied
+    available_small = []
+    available_medium = []
+    available_large = []
+    for dorm in small_dorms:
+        if dorm.status == "Available":
+            available_small.append(dorm)
+    for dorm in medium_dorms:
+        if dorm.status == "Available":
+            available_medium.append(dorm)
+    for dorm in large_dorms:
+        if dorm.status == "Available":
+            available_large.append(dorm)
+
+    # remove dorm sizes that are fully occupied
+    dorm_sizes = ["Small", "Medium", "Large"]
+    if len(available_small) == 0:  # there are no available small dorms
+        dorm_sizes.remove("Small")
+    if len(available_medium) == 0:  # there are no available medium dorms
+        dorm_sizes.remove("Medium")
+    if len(available_large) == 0:  # there are no available large dorms
+        dorm_sizes.remove("Large")
 
 
-# randomly assign agents to dorm rooms
-for agent in agent_list:
-    agent.dorm_room = agent.dorm_building.assignAgent(agent)
-    # print(agent.dorm_room)
-
+    if len(dorm_sizes) == 0:  #if there are no available dorms(all dorms are full)
+        print("All dorms are fully occupied")
+    else:
+        dorm_size = random.choice(dorm_sizes)  # randomly select a size for dorm building
+        if dorm_size == "Small":
+            agent.dorm_building = available_small[random.choice(range(len(available_small)))]  # randomly select one of the available small dorms
+            agent.dorm_room = agent.dorm_building.assignAgent(agent)
+        elif dorm_size == "Medium":
+            agent.dorm_building = available_medium[random.choice(range(len(available_medium)))]  # randomly select one of the available medium dorms
+            agent.dorm_room = agent.dorm_building.assignAgent(agent)
+        elif dorm_size == "Large":
+            agent.dorm_building = available_large[random.choice(range(len(available_large)))]  # randomly select one of the available large dorms
+            agent.dorm_room = agent.dorm_building.assignAgent(agent)
+        # print(agent.dorm_building)
+        # print(agent.dorm_room)
 
 
 # prints the list of agents for all the dorms
+# print("---------------------------------------------------------------------------------------------------------------------------")
 for dorm in small_dorms:
-    for room in dorm.singles:
-        print(room.agent)
-    for room in dorm.doubles:
-        print(room.agents)
-
+    dorm.returnAgents()
+print("---------------------------------------------------------------------------------------------------------------------------")
 for dorm in medium_dorms:
-    for room in dorm.singles:
-        print(room.agent)
-    for room in dorm.doubles:
-        print(room.agents)
-
+    dorm.returnAgents()
+print("---------------------------------------------------------------------------------------------------------------------------")
 for dorm in large_dorms:
-    for room in dorm.singles:
-        print(room.agent)
-    for room in dorm.doubles:
-        print(room.agents[0])
+    dorm.returnAgents()
+
+
+
+
+
+# CLASS ASSIGNMENT ------------------------------------------------------------------------------------------------------------------------------------
+

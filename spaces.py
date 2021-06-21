@@ -1,4 +1,4 @@
-from global_constants import PASSING_TIME, TOTAL_AGENTS, SPACE_CAPACITIES, \
+from MyGlobalConstants import PASSING_TIME, TOTAL_AGENTS, SPACE_CAPACITIES, \
     SPACE_RISK_MULTIPLIERS, SUBSPACE_CAPACITIES, SUBSPACE_RISK_MULTIPLIERS
 import math
 
@@ -25,6 +25,7 @@ class Space:
 
 class Dorm(Space):
     def __init__(self, size):
+        self.status = "Available"
         self.size = size
         self.rv = SPACE_RISK_MULTIPLIERS.get("Dorm")
         if self.size == "Small":
@@ -63,7 +64,8 @@ class Dorm(Space):
                 self.occupiedDoubles += 1
             return self.doubles[self.occupiedDoubles - 1]
         else:  # Return nothing if there are no open dorms to be assigned
-            return
+            self.status = "Full"
+            # return
 
     def returnAgents(self):
         print("Singles Agents:")
@@ -130,10 +132,14 @@ class LargeGatherings(Space):
         self.agents.append(agent)
 
 
+small_classroom_cv = 15
+medium_classroom_cv = 20
+large_classroom_cv = 30
+
 class Academic(Space):
-    small_classroom_cv = 15
-    medium_classroom_cv = 20
-    large_classroom_cv = 30
+    # small_classroom_cv = 15
+    # medium_classroom_cv = 20
+    # large_classroom_cv = 30
 
     def __init__(self, size):
         self.size = size
