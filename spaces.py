@@ -2,6 +2,7 @@ from global_constants import PASSING_TIME, TOTAL_AGENTS, SPACE_CAPACITIES, \
     SPACE_RISK_MULTIPLIERS, SUBSPACE_CAPACITIES, SUBSPACE_RISK_MULTIPLIERS
 import math
 
+
 class Space:
     def __init__(self, type, size = None, division = None):
         """ 
@@ -75,6 +76,31 @@ class Space:
         self.rv = 0
         self.numberAssigned = 0
 
+
+class Dorm(Space):
+    def __init__(self, size):
+        self.rv = 2
+        if self.size == "Small":
+            self.cv = PASSING_TIME * 15
+            self.singles = [None] * 5
+            self.doubles = [None] * 5
+        elif self.size == "Medium":
+            self.cv = PASSING_TIME * 45
+            self.singles = [None] * 15
+            self.doubles = [None] * 15
+        elif self.size == "Large":
+            self.cv = PASSING_TIME * 75
+            self.singles = [None] * 25
+            self.doubles = [None] * 25
+
+        for i in range(len(self.singles)):
+            self.singles[i] = SubSpace(1, 3)
+        for j in range(len(self.doubles)):
+            self.doubles[j] = SubSpace(2, 3)
+
+# small_dorms = [Dorm("Small"), Dorm("Small")... Dorm("Small")]
+
+
 class SubSpace():
     def __init__(self, space):
         self.space = space
@@ -99,9 +125,9 @@ class SubSpace():
                 self.cv = 1
             elif self.space.size == "Double":
                 self.cv = 2
-            else: # If dorm is small, medium, or large
+            else:  # If dorm is small, medium, or large
                 self.cv = 0
-        else: # If there is an error, return 0
+        else:  # If there is an error, return 0
             self.cv = 0
 
         # Initialize RV (risk multiplier) of the subspace
