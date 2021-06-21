@@ -8,5 +8,6 @@ SUBSPACE_CAPACITIES = {"Dining Hall": 100, "Faculty Dining Leaf": 20, "Library":
                        "Social Space": 10}
 SUBSPACE_RISK_MULTIPLIERS = {"Dining Hall": 2, "Faculty Dining Leaf": 2, "Library": 2, "Gym": 3,
                              "Office": 2, "Social Space": 3, "Classroom": 2, "Dorm": 3}
+ACADEMIC_SUBSPACE_CAPACITIES = {"Small": 15, "Medium": 20, "Large": 30}
 
 DORM_BUILDINGS = {"Small": 25, "Medium": 10, "Large": 10}  # number of dorm buildings for each size (small/medium/large)
