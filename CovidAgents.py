@@ -77,22 +77,5 @@ class Agent:
 
 
         # print all agents and their attributes
-        for ag in agents:
-            print([ag.vaccinated, ag.face_mask, ag.screening, ag.type, ag.subtype, ag.seir, ag.schedule])
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        # for ag in agents:
+          #  print([ag.vaccinated, ag.face_mask, ag.screening, ag.type, ag.subtype, ag.seir, ag.schedule])
