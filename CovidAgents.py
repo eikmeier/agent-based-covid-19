@@ -77,6 +77,13 @@ class Agent:
 
         return agents
 
+    def getMajorIndex(self):
+        if self.subtype == "STEM":
+            return 0
+        elif self.subtype == "Humanities":
+            return 1
+        else: # self.subtype == "Arts"
+            return 2
 
         # print all agents and their attributes
         # for ag in agents:
