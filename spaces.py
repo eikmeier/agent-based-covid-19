@@ -1,5 +1,5 @@
 from global_constants import PASSING_TIME, TOTAL_AGENTS, SPACE_CAPACITIES, SPACE_RISK_MULTIPLIERS, \
-    SUBSPACE_CAPACITIES, SUBSPACE_RISK_MULTIPLIERS, ACADEMIC_SUBSPACE_CAPACITIES
+    SUBSPACE_CAPACITIES, SUBSPACE_RISK_MULTIPLIERS, ACADEMIC_SUBSPACE_CAPACITIES, CLASSROOMS, ACADEMIC_SUBSPACE_SEATS
 import math
 
 class Space:
@@ -23,6 +23,7 @@ class Dorm(Space):
         Finally, the space has an occupiedSingles field and an occupiedDoubles field that counts how many of
          the rooms have already been assigned to agent(s).\n
         """
+        self.status = "Available"
         self.size = size
         self.rv = SPACE_RISK_MULTIPLIERS.get("Dorm")
         if self.size == "Small":
@@ -53,7 +54,7 @@ class Dorm(Space):
         Assign an agent to this dorm space.\n
         First, any unoccupied singles in the space will be assigned to the agent.\n
         Next, any double that is not fully occupied will be assigned to the agent.\n
-        Finally, if there are no available singles or doubles in the dorm space, then 
+        Finally, if there are no available singles or doubles in the dorm space, then
          the entire dorm space is occupied. In this case, the function returns False
          to indicate an agent was not assigned.\n
         Otherwise, if an agent is assigned, their room is returned in the function.\n
@@ -69,8 +70,19 @@ class Dorm(Space):
                 self.doubles[self.occupiedDoubles].agents[1] = agent
                 self.occupiedDoubles += 1
             return self.doubles[self.occupiedDoubles - 1]
-        else:  # Return False if there are no rooms available 
-            return False
+        else:  # Return False if there are no rooms available
+            self.status = "Full"
+
+    def returnAgents(self):
+        print("Singles Agents:")
+        for i in range(len(self.singles)):
+            print(self.singles[i].agent)
+
+        print("Doubles Agents:")
+        for j in range(len(self.doubles)):
+            print(self.doubles[j].agents)
+
+
 
 class TransitSpace(Space):
     def __init__(self):
@@ -128,7 +140,7 @@ class Office(Space):
         The Gym will be given a cv field based on the division the Office space is in and an rv that is pre-defined in
          global_constants.py\n
         Additionally, the Gym will get a leaves field which is a list of 6 subspaces of the Office, each of the subspaces
-         with a cv that is based on the division the Office space is in and and an rv field that is pre-defined in 
+         with a cv that is based on the division the Office space is in and and an rv field that is pre-defined in
          global_constants.py\n
         """
         self.division = division
@@ -157,7 +169,7 @@ class LargeGatherings(Space):
     def assignAgent(self, agent):
         """
         Assign an agent to the Large Gatherings space.\n
-        The numberAssigned field of the space will be increased by one and the cv field will be 
+        The numberAssigned field of the space will be increased by one and the cv field will be
          re-calculated as a result of the new agent added to the space.\n
         Additionally, the agent will be appended to the agents field of the space.\n
         """
@@ -166,7 +178,7 @@ class LargeGatherings(Space):
         self.agents.append(agent)
 
 class Academic(Space):
-    def __init__(self, size):
+    def __init__(self, size, day, time):
         """
         Initialize an Academic space with a size (must be "Small," "Medium," or "Large")\n
         The Academic space will then be given a cv field, based on the given size field\n
@@ -177,20 +189,51 @@ class Academic(Space):
          A large Academic space will have 5 small classrooms, 3 medium classrooms, and 3 large classrooms.\n
         Each of these elements of the classrooms field has a cv field and rv field which is pre-defined in global_constants.py\n
         """
+
         self.size = size
+        self.status = "Available"
+        self.day = day
+        self.time = time
+
         if self.size == "Small":
             self.cv = PASSING_TIME * 45
-            self.classrooms = [SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 3
+            self.classrooms = [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Small bldg")[0] + \
+                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Small bldg")[1] + \
+                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Small bldg")[2]
         elif self.size == "Medium":
             self.cv = PASSING_TIME * 90
-            self.classrooms = [SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 2 + \
-                              [SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 3
+            self.classrooms = [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Medium bldg")[0] + \
+                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Medium bldg")[1] + \
+                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Medium bldg")[2]
         elif self.size == "Large":
             self.cv = PASSING_TIME * 225
-            self.classrooms = [SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 5 + \
-                              [SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 3 + \
-                              [SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * 3
+            self.classrooms = [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Large bldg")[0] + \
+                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Large bldg")[1] + \
+                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Large bldg")[2]
         self.rv = SPACE_RISK_MULTIPLIERS.get("Academic")
+
+
+    """I added this - assigns agent to a class """
+    def assignClass(self, agent, academic, classroom):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
+        if len(classroom.agents) < classroom.cv:
+            classroom.agents.append(agent)
+        if len(classroom.agents) == classroom.cv:
+            classroom.status = "Full"
+
+        available_class = len(academic.classrooms)
+        for i in academic.classrooms:
+            if i.status == "Full":
+                available_class -= 1
+        if available_class == 0:
+            academic.status = "Full"
+
+
+    def returnClassAgents(self):
+        print("Agents taking this class:")
+        for i in self.classrooms:
+            print(self.classrooms[i].agents)
+
+
 
 class SocialSpace(Space):
     def __init__(self):
@@ -212,6 +255,12 @@ class SubSpace():
         self.space = space
         self.cv = cv
         self.rv = rv
+
+        """I added this - status of whether space is available/full & the list of agents in the space"""
+        self.status = "Available"
+        self.agents = []
+
+
 
     def closeSubspace(self):
         """

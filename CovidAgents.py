@@ -27,7 +27,7 @@ class Agent:
             ag.subtype = "STEM"  # agent subtype/major (either STEM, Humanities, or Arts)
             ag.seir = "S"  # agent infection states (either "S", "E", "Ia", "Im", "Ie", "R")
             time_range = [None] * 15  # time range is from 8 ~ 22, which is 15 blocks
-            ag.schedule = {"A": time_range, "B": time_range, "W": time_range}
+            ag.schedule = {"A": time_range, "B": time_range, "W": time_range}  # class times are at index 2, 4, 6, 8
             agents.append(ag)
 
 
@@ -74,6 +74,8 @@ class Agent:
         select_seir = random.sample(no_vaccine, k=int(n * initial_infection))  # randomly select initial number of agents (that haven't been vaccinated)
         for ag in select_seir:
                 ag.seir = random.choice(["Ia", "Im", "Ie"])  # randomly assign one of the infected states to agents
+
+        return agents
 
 
         # print all agents and their attributes
