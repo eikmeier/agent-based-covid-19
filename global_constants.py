@@ -15,4 +15,4 @@ ACADEMIC_SUBSPACE_SEATS = {"Small": 10, "Medium": 15, "Large": 20}  # number of 
 DORM_BUILDINGS = {"Small": 25, "Medium": 10, "Large": 10}  # number of dorm buildings for each size (small/medium/large)
 
 ACADEMIC_BUILDINGS = {"STEM": [2, 2, 3], "Humanities": [1, 2, 1], "Arts": [2, 1, 1]}  # number of [small, medium, large] buildings for each academic building
-CLASSROOMS = {"Small bldg": [3, 0, 0], "Medium bldg": [2, 3, 0], "Large bldg": [5, 3, 3]}  # number of [small, medium, large] classrooms for each building size(small/medium/large)
+CLASSROOMS = {"Small": [3, 0, 0], "Medium": [2, 3, 0], "Large": [5, 3, 3]}  # number of [small, medium, large] classrooms for each building size(small/medium/large)
