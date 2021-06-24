@@ -1,6 +1,8 @@
 from global_constants import PASSING_TIME, TOTAL_AGENTS, SPACE_CAPACITIES, SPACE_RISK_MULTIPLIERS, \
-    SUBSPACE_CAPACITIES, SUBSPACE_RISK_MULTIPLIERS, ACADEMIC_SUBSPACE_CAPACITIES, CLASSROOMS, ACADEMIC_SUBSPACE_SEATS
+    SUBSPACE_CAPACITIES, SUBSPACE_RISK_MULTIPLIERS, ACADEMIC_SUBSPACE_CAPACITIES, ACADEMIC_SPACE_CAPACITIES, \
+    CLASSROOMS, ACADEMIC_SUBSPACE_SEATS
 import math
+import random
 
 class Space:
     def closeSpace(self):
@@ -200,49 +202,53 @@ class Academic(Space):
         """
 
         self.size = size
-        self.status = "Available"
         self.day = day
         self.time = time
-
-        if self.size == "Small":
-            self.cv = PASSING_TIME * 45
-            self.classrooms = [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Small bldg")[0] + \
-                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Small bldg")[1] + \
-                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Small bldg")[2]
-        elif self.size == "Medium":
-            self.cv = PASSING_TIME * 90
-            self.classrooms = [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Medium bldg")[0] + \
-                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Medium bldg")[1] + \
-                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Medium bldg")[2]
-        elif self.size == "Large":
-            self.cv = PASSING_TIME * 225
-            self.classrooms = [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Large bldg")[0] + \
-                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Large bldg")[1] + \
-                              [SubSpace(self, ACADEMIC_SUBSPACE_SEATS.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom"))] * CLASSROOMS.get("Large bldg")[2]
+        self.cv = ACADEMIC_SPACE_CAPACITIES.get(self.size)
         self.rv = SPACE_RISK_MULTIPLIERS.get("Academic")
+        self.classrooms = []
 
+        for i in range(CLASSROOMS.get(self.size)[0]): # Insert small classrooms
+            self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
+            self.classrooms[i].seats = ACADEMIC_SUBSPACE_SEATS.get("Small")
+            self.classrooms[i].faculty = None
 
-    """I added this - assigns agent to a class """
-    def assignClass(self, agent, academic, classroom):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
-        if len(classroom.agents) < classroom.cv:
-            classroom.agents.append(agent)
-        if len(classroom.agents) == classroom.cv:
-            classroom.status = "Full"
+        for j in range(CLASSROOMS.get(self.size)[1]): # Insert medium classrooms
+            self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
+            self.classrooms[j + CLASSROOMS.get(self.size)[0]].seats = ACADEMIC_SUBSPACE_SEATS.get("Medium")
+            self.classrooms[j + CLASSROOMS.get(self.size)[0]].faculty = None
 
-        available_class = len(academic.classrooms)
-        for i in academic.classrooms:
-            if i.status == "Full":
-                available_class -= 1
-        if available_class == 0:
-            academic.status = "Full"
+        for k in range(CLASSROOMS.get(self.size)[2]): # Insert large classrooms
+            self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
+            self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].seats = ACADEMIC_SUBSPACE_SEATS.get("Large")
+            self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].faculty = None
 
+    def __str__(self):
+        return 'Academic of size ' + self.size
 
-    def returnClassAgents(self):
-        print("Agents taking this class:")
-        for i in self.classrooms:
-            print(self.classrooms[i].agents)
+    def __repr__(self):
+        return 'Academic building of size ' + self.size
 
+    def assignAgent(self, agent):
+        if agent.type == "Faculty":
+            return self.assignFaculty(agent)
+        else:
+            return self.assignStudent(agent)
 
+    def assignStudent(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
+        random.shuffle(self.classrooms)
+        for classroom in self.classrooms:
+            if len(classroom.agents) < classroom.seats:
+                classroom.agents.append(agent)
+                return classroom
+        return None
+
+    def assignFaculty(self, agent):
+        for classroom in self.classrooms:
+            if classroom.faculty is None:
+                classroom.faculty = agent
+                return classroom
+        return None
 
 class SocialSpace(Space):
     def __init__(self):
