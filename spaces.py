@@ -49,6 +49,9 @@ class Dorm(Space):
         self.occupiedSingles = 0
         self.occupiedDoubles = 0
 
+    def __str__(self):
+        return 'Dorm of size ' + self.size
+
     def assignAgent(self, agent):
         """
         Assign an agent to this dorm space.\n
@@ -82,6 +85,9 @@ class TransitSpace(Space):
         self.cv = SPACE_CAPACITIES.get("Transit Space")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Transit Space")
 
+    def __str__(self):
+        return 'Transit Space'
+
 class DiningHall(Space):
     def __init__(self):
         """
@@ -97,6 +103,8 @@ class DiningHall(Space):
                                 SUBSPACE_RISK_MULTIPLIERS.get("Dining Hall"))] * 5
         self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Faculty Dining Leaf"),
                                     SUBSPACE_RISK_MULTIPLIERS.get("Faculty Dining Leaf")))
+    def __str__(self):
+        return 'Dining Hall'
 
 class Library(Space):
     def __init__(self):
@@ -110,6 +118,9 @@ class Library(Space):
         self.rv = SPACE_RISK_MULTIPLIERS.get("Library")
         self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Library"), SUBSPACE_RISK_MULTIPLIERS.get("Library"))] * 6
 
+    def __str__(self):
+        return 'Library'
+
 class Gym(Space):
     def __init__(self):
         """
@@ -121,6 +132,9 @@ class Gym(Space):
         self.cv = SPACE_CAPACITIES.get("Gym")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Gym")
         self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Gym"), SUBSPACE_RISK_MULTIPLIERS.get("Gym"))] * 6
+
+    def __str__(self):
+        return 'Gym'
 
 class Office(Space):
     def __init__(self, division):
@@ -142,6 +156,9 @@ class Office(Space):
         self.rv = SPACE_RISK_MULTIPLIERS.get("Office")
         self.leaves = [SubSpace(self, self.subcv, SUBSPACE_RISK_MULTIPLIERS.get("Office"))] * 6
 
+    def __str__(self):
+        return self.division + ' Office'
+
 class LargeGatherings(Space):
     def __init__(self):
         """
@@ -154,6 +171,9 @@ class LargeGatherings(Space):
         self.numberAssigned = 0
         self.rv = SPACE_RISK_MULTIPLIERS.get("Large Gatherings")
         self.agents = []
+
+    def __str__(self):
+        return 'Large Gatherings'
 
     def assignAgent(self, agent):
         """
@@ -234,6 +254,9 @@ class SocialSpace(Space):
         self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Social Space"),
                                 SUBSPACE_RISK_MULTIPLIERS.get("Social Space"))] * 100
 
+    def __str__(self):
+        return 'Social Space'
+
 class SubSpace():
     def __init__(self, space, cv, rv):
         """
@@ -249,7 +272,11 @@ class SubSpace():
         self.status = "Available"
         self.agents = []
 
+    def __str__(self):
+        return 'Subspace of ' + self.space.__str__()
 
+    def __repr__(self):
+        return 'Subspace of ' + self.space.__str__()
 
     def closeSubspace(self):
         """
