@@ -8,6 +8,7 @@ SUBSPACE_CAPACITIES = {"Dining Hall": 100, "Faculty Dining Leaf": 20, "Library":
                        "Social Space": 10}
 SUBSPACE_RISK_MULTIPLIERS = {"Dining Hall": 2, "Faculty Dining Leaf": 2, "Library": 2, "Gym": 3,
                              "Office": 2, "Social Space": 3, "Classroom": 2, "Dorm": 3}
+ACADEMIC_SPACE_CAPACITIES = {"Small": PASSING_TIME * 45, "Medium": PASSING_TIME * 90, "Large": PASSING_TIME * 225}
 ACADEMIC_SUBSPACE_CAPACITIES = {"Small": 15, "Medium": 20, "Large": 30}  # capacity for small/medium/large classrooms
 ACADEMIC_SUBSPACE_SEATS = {"Small": 10, "Medium": 15, "Large": 20}  # number of seats for small/medium/large classrooms
 
