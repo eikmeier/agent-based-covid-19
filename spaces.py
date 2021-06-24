@@ -73,17 +73,6 @@ class Dorm(Space):
         else:  # Return False if there are no rooms available
             self.status = "Full"
 
-    def returnAgents(self):
-        print("Singles Agents:")
-        for i in range(len(self.singles)):
-            print(self.singles[i].agent)
-
-        print("Doubles Agents:")
-        for j in range(len(self.doubles)):
-            print(self.doubles[j].agents)
-
-
-
 class TransitSpace(Space):
     def __init__(self):
         """

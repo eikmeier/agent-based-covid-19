@@ -1,4 +1,4 @@
-PASSING_TIME = 10  # Common passing time between classes, in minutes(302-307)
+PASSING_TIME = 10  # Common passing time between classes, in minutes (302-307)
 TOTAL_AGENTS = 450  # 2380 # 1500 on-campus students, 500 off-campus students, and 380 faculties (217-218)
 SPACE_CAPACITIES = {"Transit Space": 100 * TOTAL_AGENTS, "Dining Hall": 650, "Library": 300 * PASSING_TIME,
                     "Gym": 60 * PASSING_TIME}
