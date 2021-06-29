@@ -91,7 +91,7 @@ class TransitSpace(Space):
         return 'Transit Space'
 
 class DiningHall(Space):
-    def __init__(self):
+    def __init__(self, day, time):
         """
         Initialize a Dining Hall space.\n
         The Dining Hall space will be given a cv and rv which are both pre-defined in global_constants.py\n
@@ -99,17 +99,23 @@ class DiningHall(Space):
          the Faculty Dining Leaf. Each of these leaves will be given the pre-defined cv and rv fields as given
          in global_constants.py\n
         """
+        self.day = day
+        self.time = time
         self.cv = SPACE_CAPACITIES.get("Dining Hall")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Dining Hall")
         self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Dining Hall"),
                                 SUBSPACE_RISK_MULTIPLIERS.get("Dining Hall"))] * 5
         self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Faculty Dining Leaf"),
                                     SUBSPACE_RISK_MULTIPLIERS.get("Faculty Dining Leaf")))
+
+    def assignAgent(self, agent):
+        self.leaves[agent.dhleaf].agents.append(agent)
+
     def __str__(self):
         return 'Dining Hall'
 
 class Library(Space):
-    def __init__(self):
+    def __init__(self, day, hour):
         """
         Initialize a Library Space.\n
         The Library will be given a cv and an rv field which are both pre-defined in global_constants.py\n
@@ -120,11 +126,14 @@ class Library(Space):
         self.rv = SPACE_RISK_MULTIPLIERS.get("Library")
         self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Library"), SUBSPACE_RISK_MULTIPLIERS.get("Library"))] * 6
 
+    def assignAgent(self, agent):
+        self.leaves[agent.lleaf].agents.append(agent)
+
     def __str__(self):
         return 'Library'
 
 class Gym(Space):
-    def __init__(self):
+    def __init__(self, day, time):
         """
         Initialize a Gym Space.\n
         The Gym will be given a cv and an rv field which are both pre-defined in global_constants.py\n
@@ -134,21 +143,28 @@ class Gym(Space):
         self.cv = SPACE_CAPACITIES.get("Gym")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Gym")
         self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Gym"), SUBSPACE_RISK_MULTIPLIERS.get("Gym"))] * 6
+        self.day = day
+        self.time = time
+
+    def assignAgent(self, agent):
+        self.leaves[agent.gleaf].agents.append(agent)
 
     def __str__(self):
         return 'Gym'
 
 class Office(Space):
-    def __init__(self, division):
+    def __init__(self, division, day, time):
         """
         Initialize an Office Space with a given division (must be either "STEM," "Humanities," or "Arts").\n
         The Gym will be given a cv field based on the division the Office space is in and an rv that is pre-defined in
          global_constants.py\n
-        Additionally, the Gym will get a leaves field which is a list of 6 subspaces of the Office, each of the subspaces
+        Additionally, the Office will get a leaves field which is a list of 6 subspaces of the Office, each of the subspaces
          with a cv that is based on the division the Office space is in and and an rv field that is pre-defined in
          global_constants.py\n
         """
         self.division = division
+        self.day = day
+        self.time = time
         if self.division == "STEM":
             self.cv = PASSING_TIME * 6 * 50
             self.subcv = 50
@@ -251,7 +267,7 @@ class Academic(Space):
         return None
 
 class SocialSpace(Space):
-    def __init__(self):
+    def __init__(self, day, time):
         """
         Initialize a Social Space.\n
         The Social Space only has a leaves field, a list of 100 subspaces each initialized with a cv and rv field that is pre-defined in
@@ -259,6 +275,11 @@ class SocialSpace(Space):
         """
         self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Social Space"),
                                 SUBSPACE_RISK_MULTIPLIERS.get("Social Space"))] * 100
+        self.day = day
+        self.time = time
+
+    def assignAgent(self, agent):
+        self.leaves[agent.ssleaf].agents.append(agent)
 
     def __str__(self):
         return 'Social Space'
