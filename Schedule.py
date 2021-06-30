@@ -1,7 +1,7 @@
 import random
 import copy
 import CovidAgents
-from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace
+from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace, OffCampus
 from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, PROBABILITY_G, PROBABILITY_S, PROBABILITY_L
 
 def initializeLeaves(agents):
@@ -44,43 +44,43 @@ def initializeLeaves(agents):
         # Only need ID for DH, L, G, and Social Space I think
     # All spaces with leaves: DH, L, G, O [6l], Academic [Variable - len(classrooms)], Social Space
 
-def getAvailableHours(start_hour, end_hour, day):
-    available_times = []
-    for i in range(start_hour, end_hour):
-        if(agent.schedule.get(day)[i-8]) == None:
-            available_times.append(i-8)
-    return available_times
-
-"""
-def createSpaces(space):
-    result = []
-    space_class = getattr(spaces, space) #TODO: Fix this
+def createSpaces(space, num_hours = 15):
+    result = [[[] for j in range(num_hours)] for i in range(3)]
+    all_methods = globals().copy()
+    space_class = all_methods.get(space)
     for i in range(3):
-        for j in range(12):
+        for j in range(num_hours):
             day = 'W'
             if i % 3 == 0:
                 day = 'A'
             elif i % 3 == 1:
                 day = 'B'
-
-            hour = j + 17
-            if(j % 4  == 0):
-                hour = j + 8
-            elif(i % 8 == 0):
-                hour = j + 12
-
-            result[i % 3][j % 12] = DiningHall(day, hour)
+            result[i % 3][j % num_hours] = space_class(day, j)
     return result
-"""
+
+def assignMeal(agent, day, start_hour, end_hour, dhArr):
+    #TODO: dhArr: dinner has an hour gap that is not accounted for (just 12 elements here)
+    day_index = 0
+    if day == 'B':
+        day_index = 1
+    elif day == 'W':
+        day_index = 2
+    possibleMealHours = agent.getAvailableHours(start_hour, end_hour, day)
+    if possibleMealHours:
+        mealHour = random.choice(possibleMealHours)
+        dhArr[day_index][mealHour].assignAgent(agent)
 
 # initialize agents - list of agents
 agent_list = CovidAgents.Agent().initialize()  # list of all agents
 initializeLeaves(agent_list)
 
 on_campus_students = []  # list of students living on-campus and need to be assigned to a dorm room
+off_campus_agents = []
 for agent in agent_list:
     if agent.type == "On-campus Student":
         on_campus_students.append(agent)
+    else:
+        off_campus_agents.append(agent)
 random.shuffle(on_campus_students)  # shuffle agents
 
 # DORM ASSIGNMENT ------------------------------------------------------------------------------------------------------------------------------------
@@ -105,8 +105,12 @@ for agent in on_campus_students:
         agent.dorm_room = agent.dorm_building.assignAgent(agent)
         if agent.dorm_building.status == "Full":
             available_dorms.remove(agent.dorm_building)
-    #  print(agent.dorm_building)
-    # print(agent.dorm_room)
+
+# Assign all off-campus agents (off-campus students or faculty) to off campus space
+offCampusSpace = OffCampus()
+for agent in off_campus_agents:
+    offCampusSpace.assignAgent(agent)
+    agent.dorm_room = offCampusSpace #TODO: Decide if to delete/modify this?
 
 # prints all the agents in each dorm
 # for dorm in dorms:
@@ -193,142 +197,56 @@ for agent in agent_list:
         class_num += 1
         classes.append(classroom)
 
-diningHallSpaces = [[[] for i in range(12)] for i in range(3)]
-for i in range(3):
-    for j in range(12):
-        day = 'W'
-        if i % 3 == 0:
-            day = 'A'
-        elif i % 3 == 1:
-            day = 'B'
-
-        hour = j + 17
-        if(j % 4  == 0):
-            hour = j + 8
-        elif(i % 8 == 0):
-            hour = j + 12
-
-        diningHallSpaces[i % 3][j % 12] = DiningHall(day, hour)
+diningHallSpaces = createSpaces("DiningHall", 13) # We have unused Dining Hall spaces (at time 16) because the hours are not consecutive
     
-for agent in agent_list:
+for agent in agent_list: # Assign dining hall times to all agents
     if agent.type == "Off-campus Student":
-        aLunchHours = getAvailableHours(12, 15, 'A')
-        aLunch = random.choice(aLunchHours)
-        diningHallSpaces[0][aLunch].assignAgent(agent)
-
-        bLunchHours = getAvailableHours(12, 15, 'B')
-        bLunch = random.choice(bLunchHours)
-        diningHallSpaces[0][bLunch].assignAgent(agent)
+        for day in ['A', 'B']:
+            assignMeal(agent, day, 12, 15, diningHallSpaces)
     elif agent.type == "Faculty":
-        aLunchHours = getAvailableHours(11, 13, 'A')
-        aLunch = random.choice(aLunchHours)
-        diningHallSpaces[0][aLunch].assignAgent(agent)
-
-        bLunchHours = getAvailableHours(11, 13, 'B')
-        bLunch = random.choice(bLunchHours)
-        diningHallSpaces[0][bLunch].assignAgent(agent)
+        for day in ['A', 'B']:
+            assignMeal(agent, day, 11, 13, diningHallSpaces)     
     else:
-        # First do W days, that is very simple since there will be no conflicts for any agents
-        wBreakfast = random.randrange(0, 4)
-        diningHallSpaces[2][wBreakfast].assignAgent(agent)
-        wLunch = random.randrange(5, 8)
-        diningHallSpaces[2][wLunch].assignAgent(agent)
-        wDinner = random.randrange(9, 12)
-        diningHallSpaces[2][wDinner].assignAgent(agent)
+        for day in ['A', 'B', 'W']:
+            assignMeal(agent, day, 8, 11, diningHallSpaces)
+            assignMeal(agent, day, 12, 15, diningHallSpaces)
+            assignMeal(agent, day, 17, 20, diningHallSpaces)
 
-        # A - Breakfast
-        aBreakfastHours = getAvailableHours(8, 11, 'A')
-        aBreakfast = random.choice(aBreakfastHours)
-        diningHallSpaces[0][aBreakfast].assignAgent(agent)
-        # A - Lunch
-        aLunchHours = getAvailableHours(12, 15, 'A')
-        aLunch = random.choice(aLunchHours)
-        diningHallSpaces[0][aLunch].assignAgent(agent)
-        # A - Dinner
-        aDinnerHours = getAvailableHours(17, 20, 'A')
-        aDinner = random.choice(aDinnerHours)
-        diningHallSpaces[0][aDinner].assignAgent(agent)
-        # B - Breakfast
-        bBreakfastHours = getAvailableHours(8, 11, 'B')
-        bBreakfast = random.choice(aBreakfastHours)
-        diningHallSpaces[0][bBreakfast].assignAgent(agent)
-        # B - Lunch
-        bLunchHours = getAvailableHours(12, 15, 'B')
-        bLunch = random.choice(bLunchHours)
-        diningHallSpaces[0][bLunch].assignAgent(agent)
-        # B - Dinner
-        bDinnerHours = getAvailableHours(17, 20, 'B')
-        bDinner = random.choice(bDinnerHours)
-        diningHallSpaces[0][bDinner].assignAgent(agent)
-
-gymSpaces = [[[] for j in range(15)] for i in range(3)]
-for i in range(3):
-    for j in range(15):
-        day = 'W'
-        if i % 3 == 0:
-            day = 'A'
-        elif i % 3 == 1:
-            day = 'B'
-
-        gymSpaces[i % 3][j % 15] = Gym(day, j + 8)
+gymSpaces = createSpaces("Gym")
 
 # Try to assign Gym slots
 for agent in agent_list:
     if agent.type != "Faculty":
-        rand_chance_a = random.random()
-        if rand_chance_a < PROBABILITY_G:
-            #print("Agent assigned on A!")
-            available_times_A = getAvailableHours(8, 22, 'A')
-            hour = random.choice(available_times_A)
-            gymSpaces[0][hour].assignAgent(agent)
-        rand_chance_b = random.random()
-        if rand_chance_b < PROBABILITY_G:
-            #print("Agent assigned on B!")
-            available_times_B = getAvailableHours(8, 22, 'B')
-            hour = random.choice(available_times_B)
-            gymSpaces[1][hour].assignAgent(agent)
-        if agent.type == "On-campus Student":
-            rand_chance_w = random.random()
-            if rand_chance_w < PROBABILITY_G:
-                print("Agent assigned on W!")
-                available_times_W = getAvailableHours(8, 22, 'W')
-                hour = random.choice(available_times_W)
-                gymSpaces[2][hour].assignAgent(agent)
+        for count, day in enumerate(['A', 'B', 'W']):
+            if day == 'W' and agent.type == "Off-campus Student":
+                break
+            rand_prob = random.random()
+            if rand_prob < PROBABILITY_G:
+                available_times = agent.getAvailableHours(8, 22, day)
+                gymHour = random.choice(available_times)
+                gymSpaces[count][gymHour].assignAgent(agent)
 
-librarySpaces = [[[] for j in range(15)] for i in range(3)]
-for i in range(3):
-    for j in range(15):
-        day = 'W'
-        if i % 3 == 0:
-            day = 'A'
-        elif i % 3 == 1:
-            day = 'B'
-
-        librarySpaces[i % 3][j % 15] = Library(day, j + 8)
-
-socialSpaces = [[[] for j in range(15)] for i in range(3)]
-for i in range(3):
-    for j in range(15):
-        day = 'W'
-        if i % 3 == 0:
-            day = 'A'
-        elif i % 3 == 1:
-            day = 'B'
-
-        socialSpaces[i % 3][j % 15] = SocialSpace(day, j + 8)
+librarySpaces = createSpaces("Library")
+socialSpaces = createSpaces("SocialSpace")
         
 # Remaining slots for social spaces, library leaf, or dorm room
 for agent in agent_list:
     if agent.type != "Faculty":
-        for hour in getAvailableHours(8, 22, 'A'):
+        for hour in agent.getAvailableHours(8, 22, 'A'):
             rand_number = random.random()
             if rand_number < PROBABILITY_S: # Assign social space
                 socialSpaces[0][hour].assignAgent(agent)
             elif rand_number < PROBABILITY_S + PROBABILITY_L: # Assign library space
                 librarySpaces[0][hour].assignAgent(agent)
             else: # Assign dorm room if on-campus, otherwise assign off-campus
-                pass
-        for hour in getAvailableHours(8, 22, 'B'):
+                if agent.type == "On-campus Student":
+                    agent.schedule.get('A')[hour] = "Dorm"
+                else:
+                    agent.schedule.get('A')[hour] = "Off-Campus Space"
+        print(agent.subtype +  " " + agent.type + " schedule: ")
+        print(agent.schedule.get('A'))
+
+        for hour in agent.getAvailableHours(8, 22, 'B'):
             rand_number = random.random()
             if rand_number < PROBABILITY_S: # Assign social space
                 socialSpaces[1][hour].assignAgent(agent)
@@ -337,7 +255,7 @@ for agent in agent_list:
             else: # Assign dorm room if on-campus, otherwise assign off-campus
                 pass
         if agent.type == "On-campus Student":
-            for hour in getAvailableHours(8, 22, 'W'):
+            for hour in agent.getAvailableHours(8, 22, 'W'):
                 rand_number = random.random()
                 if rand_number < PROBABILITY_S: # Assign social space
                     socialSpaces[2][hour].assignAgent(agent)
@@ -346,7 +264,9 @@ for agent in agent_list:
                 else: # Assign dorm room
                     pass
         else:
+            pass
             # Assign off-campus students to off-campus vertex for entire day
     else:
+        pass
         # Faculty are in off campus vertex at times 8, 9, 18-22
         # Otherwise, appropriate Division Office vertex
