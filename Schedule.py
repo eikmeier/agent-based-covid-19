@@ -59,7 +59,6 @@ def createSpaces(space, num_hours = 15):
     return result
 
 def assignMeal(agent, day, start_hour, end_hour, dhArr):
-    #TODO: dhArr: dinner has an hour gap that is not accounted for (just 12 elements here)
     day_index = 0
     if day == 'B':
         day_index = 1
@@ -232,41 +231,25 @@ socialSpaces = createSpaces("SocialSpace")
 # Remaining slots for social spaces, library leaf, or dorm room
 for agent in agent_list:
     if agent.type != "Faculty":
-        for hour in agent.getAvailableHours(8, 22, 'A'):
-            rand_number = random.random()
-            if rand_number < PROBABILITY_S: # Assign social space
-                socialSpaces[0][hour].assignAgent(agent)
-            elif rand_number < PROBABILITY_S + PROBABILITY_L: # Assign library space
-                librarySpaces[0][hour].assignAgent(agent)
-            else: # Assign dorm room if on-campus, otherwise assign off-campus
-                if agent.type == "On-campus Student":
-                    agent.schedule.get('A')[hour] = "Dorm"
-                else:
-                    agent.schedule.get('A')[hour] = "Off-Campus Space"
-        print(agent.subtype +  " " + agent.type + " schedule: ")
-        print(agent.schedule.get('A'))
-
-        for hour in agent.getAvailableHours(8, 22, 'B'):
-            rand_number = random.random()
-            if rand_number < PROBABILITY_S: # Assign social space
-                socialSpaces[1][hour].assignAgent(agent)
-            elif rand_number < PROBABILITY_S + PROBABILITY_L: # Assign library space
-                librarySpaces[1][hour].assignAgent(agent)
-            else: # Assign dorm room if on-campus, otherwise assign off-campus
-                pass
-        if agent.type == "On-campus Student":
-            for hour in agent.getAvailableHours(8, 22, 'W'):
+        for count, day in enumerate(['A', 'B', 'W']):
+            for hour in agent.getAvailableHours(8, 22, day):
+                if day == 'W' and agent.type == "Off-campus Student":
+                    agent.schedule.get(day)[hour] = "Off-Campus Space"
+                    continue
                 rand_number = random.random()
                 if rand_number < PROBABILITY_S: # Assign social space
-                    socialSpaces[2][hour].assignAgent(agent)
+                    socialSpaces[count][hour].assignAgent(agent)
                 elif rand_number < PROBABILITY_S + PROBABILITY_L: # Assign library space
-                    librarySpaces[2][hour].assignAgent(agent)
-                else: # Assign dorm room
-                    pass
-        else:
-            pass
-            # Assign off-campus students to off-campus vertex for entire day
+                    librarySpaces[count][hour].assignAgent(agent)
+                else: # Assign dorm room if on-campus, otherwise assign off-campus
+                    if agent.type == "On-campus Student":
+                        agent.schedule.get(day)[hour] = "Dorm"
+                    else:
+                        agent.schedule.get(day)[hour] = "Off-Campus Space"
     else:
-        pass
-        # Faculty are in off campus vertex at times 8, 9, 18-22
-        # Otherwise, appropriate Division Office vertex
+        for count, day in enumerate(['A', 'B', 'W']):
+            for hour in agent.getAvailableHours(8, 22, day):
+                if hour == 8 or hour == 9 or hour >= 18 and hour <= 22:
+                    agent.schedule.get(day)[hour] = "Off-Campus Space"
+                else: # Put into appropriate Division Office vertex
+                    pass
