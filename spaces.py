@@ -110,24 +110,28 @@ class DiningHall(Space):
 
     def assignAgent(self, agent):
         self.leaves[agent.dhleaf].agents.append(agent)
+        agent.schedule.get(self.day)[self.time] = "Dining Hall"
 
     def __str__(self):
         return 'Dining Hall'
 
 class Library(Space):
-    def __init__(self, day, hour):
+    def __init__(self, day, time):
         """
         Initialize a Library Space.\n
         The Library will be given a cv and an rv field which are both pre-defined in global_constants.py\n
         Additionally, the Library will get a leaves field which is a list of 6 subspaces of the Library, each of the subspaces
          with a cv and rv field that is pre-defined in global_constants.py\n
         """
+        self.day = day
+        self.time = time
         self.cv = SPACE_CAPACITIES.get("Library")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Library")
         self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Library"), SUBSPACE_RISK_MULTIPLIERS.get("Library"))] * 6
 
     def assignAgent(self, agent):
         self.leaves[agent.lleaf].agents.append(agent)
+        agent.schedule.get(self.day)[self.time] = "Library"
 
     def __str__(self):
         return 'Library'
@@ -148,6 +152,7 @@ class Gym(Space):
 
     def assignAgent(self, agent):
         self.leaves[agent.gleaf].agents.append(agent)
+        agent.schedule.get(self.day)[self.time] = "Gym"
 
     def __str__(self):
         return 'Gym'
@@ -246,6 +251,9 @@ class Academic(Space):
         return 'Academic building of size ' + self.size
 
     def assignAgent(self, agent):
+        # Put the class (for two hours) into the agent's schedule
+        agent.schedule.get(self.day)[self.time] = "Class"
+        agent.schedule.get(self.day)[self.time + 1] = "Class"
         if agent.type == "Faculty":
             return self.assignFaculty(agent)
         else:
@@ -280,9 +288,21 @@ class SocialSpace(Space):
 
     def assignAgent(self, agent):
         self.leaves[agent.ssleaf].agents.append(agent)
+        agent.schedule.get(self.day)[self.time] = "Social Space"
 
     def __str__(self):
         return 'Social Space'
+
+class OffCampus(Space):
+    def __init__(self):
+        """
+        Initialize an Off Campus Space.\n
+        The Off Campus Space only has a list of agents, as it has no leaves or a defined capacity or risk multiplier.\n
+        """
+        self.agents = []
+    
+    def assignAgent(self, agent):
+        self.agents.append(agent)
 
 class SubSpace():
     def __init__(self, space, cv, rv):
