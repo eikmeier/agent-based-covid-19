@@ -88,3 +88,10 @@ class Agent:
         # print all agents and their attributes
         # for ag in agents:
           #  print([ag.vaccinated, ag.face_mask, ag.screening, ag.type, ag.subtype, ag.seir, ag.schedule])
+
+    def getAvailableHours(self, start_hour, end_hour, day):
+        available_times = []
+        for i in range(start_hour, end_hour + 1):
+            if(self.schedule.get(day)[i-8]) == None:
+                available_times.append(i-8)
+        return available_times
