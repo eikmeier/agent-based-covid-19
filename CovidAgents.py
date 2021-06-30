@@ -26,8 +26,7 @@ class Agent:
             ag.type = "On-campus Student"
             ag.subtype = "STEM"  # agent subtype/major (either STEM, Humanities, or Arts)
             ag.seir = "S"  # agent infection states (either "S", "E", "Ia", "Im", "Ie", "R")
-            time_range = [None] * 15  # time range is from 8 ~ 22, which is 15 blocks
-            ag.schedule = {"A": time_range, "B": time_range, "W": time_range}  # class times are at index 2, 4, 6, 8
+            ag.schedule = {"A": [None] * 15, "B": [None] * 15, "W": [None] * 15}  # class times are at index 2, 4, 6, 8
             agents.append(ag)
 
 
