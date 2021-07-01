@@ -208,17 +208,17 @@ class Academic(Space):
         self.rv = SPACE_RISK_MULTIPLIERS.get("Academic")
         self.classrooms = []
 
-        for i in range(CLASSROOMS.get(self.size)[0]): # Insert small classrooms
+        for i in range(CLASSROOMS.get(self.size)[0]):  # Insert small classrooms
             self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
             self.classrooms[i].seats = ACADEMIC_SUBSPACE_SEATS.get("Small")
             self.classrooms[i].faculty = None
 
-        for j in range(CLASSROOMS.get(self.size)[1]): # Insert medium classrooms
+        for j in range(CLASSROOMS.get(self.size)[1]):  # Insert medium classrooms
             self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
             self.classrooms[j + CLASSROOMS.get(self.size)[0]].seats = ACADEMIC_SUBSPACE_SEATS.get("Medium")
             self.classrooms[j + CLASSROOMS.get(self.size)[0]].faculty = None
 
-        for k in range(CLASSROOMS.get(self.size)[2]): # Insert large classrooms
+        for k in range(CLASSROOMS.get(self.size)[2]):  # Insert large classrooms
             self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
             self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].seats = ACADEMIC_SUBSPACE_SEATS.get("Large")
             self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].faculty = None
