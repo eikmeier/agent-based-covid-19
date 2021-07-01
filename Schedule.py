@@ -33,12 +33,21 @@ def initializeLeaves(agents):
         agent.gleaf = total_counter % 6
         total_counter += 1
 
-    # Assign Social Space Leaves
+    # Assign Social Space Leaves (Days A & B)
     random.shuffle(agents)
     total_counter = 0
     for agent in agents:
-        agent.ssleaf = total_counter % 100
-        total_counter += 1
+        if agent.type != "Faculty":
+            agent.ssleaf = total_counter % 100
+            total_counter += 1
+
+    # Assign Social Space Leaves (Day W)
+    random.shuffle(agents)
+    total_counter = 0
+    for agent in agents:
+        if agent.type != "Faculty":
+            agent.ssleaf_w = total_counter % 100
+            total_counter += 1
 
     # Need to figure out where faculty can go to figure out how to distribute the leaves
         # Only need ID for DH, L, G, and Social Space I think

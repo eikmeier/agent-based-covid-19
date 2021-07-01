@@ -287,8 +287,12 @@ class SocialSpace(Space):
         self.time = time
 
     def assignAgent(self, agent):
-        self.leaves[agent.ssleaf].agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Social Space"
+        if self.day == 2:
+            self.leaves[agent.ssleaf_w].agents.append(agent)
+            agent.schedule.get(self.day)[self.time] = "Social Space"
+        else:
+            self.leaves[agent.ssleaf].agents.append(agent)
+            agent.schedule.get(self.day)[self.time] = "Social Space"
 
     def __str__(self):
         return 'Social Space'
