@@ -1,7 +1,7 @@
 import random
 import copy
 import CovidAgents
-from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace, OffCampus
+from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace, OffCampus, Office
 from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, PROBABILITY_G, PROBABILITY_S, PROBABILITY_L
 
 def initializeLeaves(agents):
@@ -49,11 +49,19 @@ def initializeLeaves(agents):
             agent.ssleaf_w = total_counter % 100
             total_counter += 1
 
+    # Assign Office Leaves
+    random.shuffle(agents)
+    total_counter = 0
+    for agent in agents:
+        if agent.type == "Faculty":
+            agent.oleaf = total_counter % 6
+            total_counter += 1
+
     # Need to figure out where faculty can go to figure out how to distribute the leaves
         # Only need ID for DH, L, G, and Social Space I think
     # All spaces with leaves: DH, L, G, O [6l], Academic [Variable - len(classrooms)], Social Space
 
-def createSpaces(space, num_hours = 15):
+def createSpaces(space, num_hours = 15, division = None):
     result = [[[] for j in range(num_hours)] for i in range(3)]
     all_methods = globals().copy()
     space_class = all_methods.get(space)
@@ -64,7 +72,10 @@ def createSpaces(space, num_hours = 15):
                 day = 'A'
             elif i % 3 == 1:
                 day = 'B'
-            result[i % 3][j % num_hours] = space_class(day, j)
+            if division is None:
+                result[i % 3][j % num_hours] = space_class(day, j)
+            else:
+                result[i % 3][j % num_hours] = space_class(division, day, j)
     return result
 
 def assignMeal(agent, day, start_hour, end_hour, dhArr):
@@ -84,11 +95,14 @@ initializeLeaves(agent_list)
 
 on_campus_students = []  # list of students living on-campus and need to be assigned to a dorm room
 off_campus_agents = []
+faculty_list = []
 for agent in agent_list:
     if agent.type == "On-campus Student":
         on_campus_students.append(agent)
     else:
         off_campus_agents.append(agent)
+        if agent.type == "Faculty":
+            faculty_list.append(agent)
 random.shuffle(on_campus_students)  # shuffle agents
 
 # DORM ASSIGNMENT ------------------------------------------------------------------------------------------------------------------------------------
@@ -236,6 +250,9 @@ for agent in agent_list:
 
 librarySpaces = createSpaces("Library")
 socialSpaces = createSpaces("SocialSpace")
+stem_office_spaces = createSpaces("Office", 10, "STEM") 
+arts_office_spaces = createSpaces("Office", 10, "Arts")
+humanities_office_spaces = createSpaces("Office", 10, "Humanities")
         
 # Remaining slots for social spaces, library leaf, or dorm room
 for agent in agent_list:
@@ -261,4 +278,9 @@ for agent in agent_list:
                 if hour == 8 or hour == 9 or hour >= 18 and hour <= 22:
                     agent.schedule.get(day)[hour] = "Off-Campus Space"
                 else: # Put into appropriate Division Office vertex
-                    pass
+                    if agent.subtype == "STEM":
+                        stem_office_spaces[count][hour].assignAgent(agent)
+                    elif agent.subtype == "Arts":
+                        arts_office_spaces[count][hour].assignAgent(agent)
+                    else: # Agent's major is Humanities
+                        humanities_office_spaces[count][hour].assignAgent(agent)

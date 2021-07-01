@@ -179,6 +179,10 @@ class Office(Space):
         self.rv = SPACE_RISK_MULTIPLIERS.get("Office")
         self.leaves = [SubSpace(self, self.subcv, SUBSPACE_RISK_MULTIPLIERS.get("Office"))] * 6
 
+    def assignAgent(self, agent):
+        self.leaves[agent.oleaf].agents.append(agent)
+        agent.schedule.get(self.day)[self.time] = "Office"
+
     def __str__(self):
         return self.division + ' Office'
 
