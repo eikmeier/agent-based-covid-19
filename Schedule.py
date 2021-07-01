@@ -118,6 +118,9 @@ for i in range(DORM_BUILDINGS.get("Large")):
 # list of available dorms that are not fully occupied
 available_dorms = copy.copy(dorms)
 
+doubles_students = []
+doubles_students_times = [[[] for j in range(15)] for i in range(3)]
+
 # randomly assigns agents(on-campus students) to dorms
 for agent in on_campus_students:
     if len(dorms) == 0:  # if there are no available dorms(all dorms are full)
@@ -125,6 +128,8 @@ for agent in on_campus_students:
     else:
         agent.dorm_building = random.choice(available_dorms)
         agent.dorm_room = agent.dorm_building.assignAgent(agent)
+        if agent.dorm_room in agent.dorm_building.doubles:
+            doubles_students.append(agent)
         if agent.dorm_building.status == "Full":
             available_dorms.remove(agent.dorm_building)
 
@@ -265,6 +270,8 @@ for agent in agent_list:
                 else: # Assign dorm room if on-campus, otherwise assign off-campus
                     if agent.type == "On-campus Student":
                         agent.schedule.get(day)[hour] = "Dorm"
+                        if agent in doubles_students:
+                            doubles_students_times[count][hour].append(agent)
                     else:
                         offCampusSpace[count][hour].assignAgent(agent)
     else:
