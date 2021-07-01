@@ -128,12 +128,6 @@ for agent in on_campus_students:
         if agent.dorm_building.status == "Full":
             available_dorms.remove(agent.dorm_building)
 
-# Assign all off-campus agents (off-campus students or faculty) to off campus space
-offCampusSpace = OffCampus()
-for agent in off_campus_agents:
-    offCampusSpace.assignAgent(agent)
-    agent.dorm_room = offCampusSpace #TODO: Decide if to delete/modify this?
-
 # prints all the agents in each dorm
 # for dorm in dorms:
 #   print(dorm.size + str(dorms.index(dorm) + 1))
@@ -253,6 +247,7 @@ socialSpaces = createSpaces("SocialSpace")
 stem_office_spaces = createSpaces("Office", 10, "STEM") 
 arts_office_spaces = createSpaces("Office", 10, "Arts")
 humanities_office_spaces = createSpaces("Office", 10, "Humanities")
+offCampusSpace = createSpaces("OffCampus")
         
 # Remaining slots for social spaces, library leaf, or dorm room
 for agent in agent_list:
@@ -260,7 +255,7 @@ for agent in agent_list:
         for count, day in enumerate(['A', 'B', 'W']):
             for hour in agent.getAvailableHours(8, 22, day):
                 if day == 'W' and agent.type == "Off-campus Student":
-                    agent.schedule.get(day)[hour] = "Off-Campus Space"
+                    offCampusSpace[count][hour].assignAgent(agent)
                     continue
                 rand_number = random.random()
                 if rand_number < PROBABILITY_S: # Assign social space
@@ -271,12 +266,15 @@ for agent in agent_list:
                     if agent.type == "On-campus Student":
                         agent.schedule.get(day)[hour] = "Dorm"
                     else:
-                        agent.schedule.get(day)[hour] = "Off-Campus Space"
+                        offCampusSpace[count][hour].assignAgent(agent)
     else:
         for count, day in enumerate(['A', 'B', 'W']):
             for hour in agent.getAvailableHours(8, 22, day):
-                if hour == 8 or hour == 9 or hour >= 18 and hour <= 22:
-                    agent.schedule.get(day)[hour] = "Off-Campus Space"
+                if day == 'W':
+                    offCampusSpace[count][hour].assignAgent(agent)
+                    continue
+                if hour == 0 or hour == 1 or hour >= 10 and hour <= 14:
+                    offCampusSpace[count][hour].assignAgent(agent)
                 else: # Put into appropriate Division Office vertex
                     if agent.subtype == "STEM":
                         stem_office_spaces[count][hour].assignAgent(agent)

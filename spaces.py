@@ -302,15 +302,18 @@ class SocialSpace(Space):
         return 'Social Space'
 
 class OffCampus(Space):
-    def __init__(self):
+    def __init__(self, day, time):
         """
         Initialize an Off Campus Space.\n
         The Off Campus Space only has a list of agents, as it has no leaves or a defined capacity or risk multiplier.\n
         """
         self.agents = []
+        self.day = day
+        self.time = time
     
     def assignAgent(self, agent):
         self.agents.append(agent)
+        agent.schedule.get(self.day)[self.time] = "Off-Campus Space"
 
 class SubSpace():
     def __init__(self, space, cv, rv):
