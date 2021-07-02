@@ -179,6 +179,10 @@ class Office(Space):
         self.rv = SPACE_RISK_MULTIPLIERS.get("Office")
         self.leaves = [SubSpace(self, self.subcv, SUBSPACE_RISK_MULTIPLIERS.get("Office"))] * 6
 
+    def assignAgent(self, agent):
+        self.leaves[agent.oleaf].agents.append(agent)
+        agent.schedule.get(self.day)[self.time] = "Office"
+
     def __str__(self):
         return self.division + ' Office'
 
@@ -262,15 +266,8 @@ class Academic(Space):
         else:
             return self.assignStudent(agent)
 
-    def assignStudent(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
-        random.shuffle(self.classrooms)
-        for classroom in self.classrooms:
-            if len(classroom.agents) < classroom.seats:
-                classroom.agents.append(agent)
-                return classroom
-        return None
 
-    def assignStudent2(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
+    def assignStudent(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
         random.shuffle(self.classrooms)
         for classroom in self.classrooms:
             if len(classroom.agents) < (classroom.seats + 1):  # if there are available seats in the classroom (should have +1 because it includes faculty)
@@ -284,14 +281,9 @@ class Academic(Space):
             else:  # when classroom is full (no more seats)
                 continue
 
-    def assignFaculty(self, agent):
-        for classroom in self.classrooms:
-            if classroom.faculty is None:
-                classroom.faculty = agent
-                return classroom
-        return None
 
-    def assignFaculty2(self, agent):
+
+    def assignFaculty(self, agent):
         # if there are classrooms without faculty
         for classroom in self.classrooms:
             if classroom.faculty is None:  # if there is no assigned faculty yet, assign agent to classroom
@@ -320,22 +312,29 @@ class SocialSpace(Space):
         self.time = time
 
     def assignAgent(self, agent):
-        self.leaves[agent.ssleaf].agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Social Space"
+        if self.day == 2:
+            self.leaves[agent.ssleaf_w].agents.append(agent)
+            agent.schedule.get(self.day)[self.time] = "Social Space"
+        else:
+            self.leaves[agent.ssleaf].agents.append(agent)
+            agent.schedule.get(self.day)[self.time] = "Social Space"
 
     def __str__(self):
         return 'Social Space'
 
 class OffCampus(Space):
-    def __init__(self):
+    def __init__(self, day, time):
         """
         Initialize an Off Campus Space.\n
         The Off Campus Space only has a list of agents, as it has no leaves or a defined capacity or risk multiplier.\n
         """
         self.agents = []
+        self.day = day
+        self.time = time
     
     def assignAgent(self, agent):
         self.agents.append(agent)
+        agent.schedule.get(self.day)[self.time] = "Off-Campus Space"
 
 class SubSpace():
     def __init__(self, space, cv, rv):

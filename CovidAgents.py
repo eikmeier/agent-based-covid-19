@@ -28,8 +28,10 @@ class Agent:
             ag.subtype = "STEM"  # agent subtype/major (either STEM, Humanities, or Arts)
             ag.seir = "S"  # agent infection states (either "S", "E", "Ia", "Im", "Ie", "R")
             ag.schedule = {"A": [None] * 15, "B": [None] * 15, "W": [None] * 15}  # class times are at index 2, 4, 6, 8
-            agents.append(ag)
             ag.social = "Not Social"
+            ag.classes = []
+
+            agents.append(ag)
 
 
 
@@ -98,7 +100,7 @@ class Agent:
     def getAvailableHours(self, start_hour, end_hour, day):
         available_times = []
         for i in range(start_hour, end_hour + 1):
-            if(self.schedule.get(day)[i-8]) == None:
+            if (self.schedule.get(day)[i-8]) == None:
                 available_times.append(i-8)
         return available_times
 
