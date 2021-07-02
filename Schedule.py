@@ -377,7 +377,6 @@ for agent in student_list:
 
 
 
-
 diningHallSpaces = createSpaces("DiningHall", 13) # We have unused Dining Hall spaces (at time 16) because the hours are not consecutive
     
 for agent in agent_list: # Assign dining hall times to all agents
