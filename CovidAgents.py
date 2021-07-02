@@ -11,6 +11,7 @@ screening_comp = 0.5
 type_ratio = [0.2, 0.3]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
 subtype_ratio = [0.1, 0.2]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
 initial_infection = 0.4  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
+social_ratio = 0.5  # proportion of students that are social
 
 
 # ------------------------------------------------------------------------
@@ -26,9 +27,10 @@ class Agent:
             ag.type = "On-campus Student"
             ag.subtype = "STEM"  # agent subtype/major (either STEM, Humanities, or Arts)
             ag.seir = "S"  # agent infection states (either "S", "E", "Ia", "Im", "Ie", "R")
-            time_range = [None] * 15  # time range is from 8 ~ 22, which is 15 blocks
-            ag.schedule = {"A": time_range, "B": time_range, "W": time_range}  # class times are at index 2, 4, 6, 8
+            ag.schedule = {"A": [None] * 15, "B": [None] * 15, "W": [None] * 15}  # class times are at index 2, 4, 6, 8
             agents.append(ag)
+            ag.social = "Not Social"
+
 
 
         # VACCINATION: randomly select and assign vaccination to certain proportion of agents
@@ -75,6 +77,10 @@ class Agent:
         for ag in select_seir:
                 ag.seir = random.choice(["Ia", "Im", "Ie"])  # randomly assign one of the infected states to agents
 
+        select_social = random.sample(agents, k=int(n * social_ratio))  # list of all social agents
+        for ag in select_social:
+            ag.social = "Social"
+
         return agents
 
     def getMajorIndex(self):
@@ -88,3 +94,17 @@ class Agent:
         # print all agents and their attributes
         # for ag in agents:
           #  print([ag.vaccinated, ag.face_mask, ag.screening, ag.type, ag.subtype, ag.seir, ag.schedule])
+
+    def getAvailableHours(self, start_hour, end_hour, day):
+        available_times = []
+        for i in range(start_hour, end_hour + 1):
+            if(self.schedule.get(day)[i-8]) == None:
+                available_times.append(i-8)
+        return available_times
+
+
+    def __str__(self):
+        return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
+
+    def __repr__(self):
+        return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
