@@ -1,9 +1,10 @@
 PASSING_TIME = 10  # Common passing time between classes, in minutes (302-307)
-TOTAL_AGENTS = 2380  # 1500 on-campus students, 500 off-campus students, and 380 faculties (217-218)
+TOTAL_AGENTS = 2380  # 2380 # 1500 on-campus students, 500 off-campus students, and 380 faculties (217-218)
 SPACE_CAPACITIES = {"Transit Space": 100 * TOTAL_AGENTS, "Dining Hall": 650, "Library": 300 * PASSING_TIME,
                     "Gym": 60 * PASSING_TIME}
 SPACE_RISK_MULTIPLIERS = {"Transit Space": 1, "Dining Hall": 1, "Library": 1, "Gym": 3,
                           "Office": 1, "Large Gatherings": 3, "Academic": 1, "Dorm": 2}
+SPACE_SUBSPACE_AMOUNT = {"Dining Hall": 6, "Library": 6, "Gym": 6, "Office": 6, "Social Space": 100}
 SUBSPACE_CAPACITIES = {"Dining Hall": 100, "Faculty Dining Leaf": 20, "Library": 50, "Gym": 10,
                        "Social Space": 10}
 SUBSPACE_RISK_MULTIPLIERS = {"Dining Hall": 2, "Faculty Dining Leaf": 2, "Library": 2, "Gym": 3,
@@ -20,3 +21,11 @@ CLASSROOMS = {"Small": [3, 0, 0], "Medium": [2, 3, 0], "Large": [5, 3, 3]}  # nu
 PROBABILITY_G = 0.15
 PROBABILITY_S = 0.15
 PROBABILITY_L = 0.15
+
+SCHEDULE_DAYS = ['A', 'B', 'W']
+SCHEDULE_WEEKDAYS = ['A', 'B']
+
+PROBABILITY_E = 0.5
+PROBABILITY_A = 0.15
+
+TUNING_PARAMETER = 1.25
