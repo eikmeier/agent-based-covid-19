@@ -127,3 +127,22 @@ def change_states(agents):
         elif agent.days_in_state == 5 and agent.seir == "Ie": # After 5 days, agents in state Ie is bed-ridden and does not leave their room
             agent.bedridden = True
 
+def initialize_leaves(agents):
+    spaces = agents[0].leaves.keys()
+    for space in spaces:
+        random.shuffle(agents)
+        if space == "Dining Hall":
+            for count, agent in enumerate(agents):
+                if agent.type == "Faculty":
+                    agent.leaves[space] = SPACE_SUBSPACE_AMOUNT.get(space) - 1 # Assign all faculty to the faculty dining leaf
+                else:
+                    agent.leaves[space] = count % (SPACE_SUBSPACE_AMOUNT.get(space) - 1) # We cannot assign students to the last DH space, which is faculty dining
+        elif space == "Social Space":
+            for count, agent in enumerate(agents):
+                agent.leaves[space][0] = count % SPACE_SUBSPACE_AMOUNT.get(space)
+            random.shuffle(agents)
+            for count, agent in enumerate(agents):
+                agent.leaves[space][1] = count % SPACE_SUBSPACE_AMOUNT.get(space)
+        else: # Gym, Library, Office spaces
+            for count, agent in enumerate(agents):
+                agent.leaves[space] = count % SPACE_SUBSPACE_AMOUNT.get(space)
