@@ -108,5 +108,22 @@ class Agent:
     def __str__(self):
         return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
 
-    def __repr__(self):
-        return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
+def change_states(agents):
+    for agent in agents:
+        if agent.days_in_state == 2:
+            if agent.seir == "Ia":
+                rand_num = random.random()
+                if rand_num < PROBABILITY_E:
+                    agent.changeState("Ie")
+                elif rand_num < PROBABILITY_E + PROBABILITY_A:
+                    agent.changeState("Ia")
+                else: # An agent transitions from Ia -> Im with a probability 1 - (a + e)
+                    agent.changeState("Im")
+            elif agent.seir == "E":
+                agent.changeState("Ia")
+        elif agent.days_in_state == 10 and "I" in agent.seir:
+            agent.changeState("R")
+            agent.bedridden = False
+        elif agent.days_in_state == 5 and agent.seir == "Ie": # After 5 days, agents in state Ie is bed-ridden and does not leave their room
+            agent.bedridden = True
+
