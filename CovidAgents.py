@@ -1,4 +1,4 @@
-from global_constants import TOTAL_AGENTS
+from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A
 import random
 
 # n = 10  # number of agents
@@ -13,7 +13,6 @@ subtype_ratio = [0.1, 0.2]  # proportion of ["Humanities", "Arts"] - default val
 initial_infection = 0.4  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
 social_ratio = 0.5  # proportion of students that are social
 
-
 # ------------------------------------------------------------------------
 class Agent:
     def initialize(self):
@@ -27,13 +26,13 @@ class Agent:
             ag.type = "On-campus Student"
             ag.subtype = "STEM"  # agent subtype/major (either STEM, Humanities, or Arts)
             ag.seir = "S"  # agent infection states (either "S", "E", "Ia", "Im", "Ie", "R")
+            ag.days_in_state = 0
+            ag.bedridden = False
             ag.schedule = {"A": [None] * 15, "B": [None] * 15, "W": [None] * 15}  # class times are at index 2, 4, 6, 8
             ag.social = "Not Social"
-            ag.classes = []
-
+            # Initialize leaves - the first social space leaf is for A & B days and the second is for W days
+            ag.leaves = {"Dining Hall": -1, "Library": -1, "Gym": -1, "Social Space": [-1, -1], "Office": -1}
             agents.append(ag)
-
-
 
         # VACCINATION: randomly select and assign vaccination to certain proportion of agents
         select_vaccine = random.sample(agents, k=int(n * vaccine_percentage))
@@ -82,8 +81,12 @@ class Agent:
         select_social = random.sample(agents, k=int(n * social_ratio))  # list of all social agents
         for ag in select_social:
             ag.social = "Social"
-
+        initialize_leaves(agents)
         return agents
+
+    def changeState(self, state):
+        self.seir = state
+        self.days_in_state = 0
 
     def getMajorIndex(self):
         if self.subtype == "STEM":
@@ -93,17 +96,12 @@ class Agent:
         else: # self.subtype == "Arts"
             return 2
 
-        # print all agents and their attributes
-        # for ag in agents:
-          #  print([ag.vaccinated, ag.face_mask, ag.screening, ag.type, ag.subtype, ag.seir, ag.schedule])
-
-    def getAvailableHours(self, start_hour, end_hour, day):
+    def get_available_hours(self, start_hour, end_hour, day):
         available_times = []
         for i in range(start_hour, end_hour + 1):
-            if (self.schedule.get(day)[i-8]) == None:
+            if self.schedule.get(day)[i-8] == None:
                 available_times.append(i-8)
         return available_times
-
 
     def __str__(self):
         return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
