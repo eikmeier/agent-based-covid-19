@@ -4,58 +4,6 @@ import CovidAgents
 from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace, OffCampus, Office
 from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, PROBABILITY_G, PROBABILITY_S, PROBABILITY_L
 
-def initializeLeaves(agents):
-    # Dining Hall has 5 leaves for students, 1 for faculty
-    # Library has 6 leaves
-    # Gym has 6 leaves
-    # Social Space has 100 leaves
-    random.shuffle(agents)
-    student_counter = 0
-    # Assign DH Leaves
-    for agent in agents:
-        if agent.type == "Faculty":
-            agent.dhleaf = 5 # 5th to represent Faculty Dining Leaf
-        else:
-            agent.dhleaf = student_counter % 6
-            student_counter += 1
-
-    # Assign L leaves
-    random.shuffle(agents)
-    total_counter = 0
-    for agent in agents:
-        agent.lleaf = total_counter % 6
-        total_counter += 1
-
-    # Assign G Leaves
-    random.shuffle(agents)
-    total_counter = 0
-    for agent in agents:
-        agent.gleaf = total_counter % 6
-        total_counter += 1
-
-    # Assign Social Space Leaves (Days A & B)
-    random.shuffle(agents)
-    total_counter = 0
-    for agent in agents:
-        if agent.type != "Faculty":
-            agent.ssleaf = total_counter % 100
-            total_counter += 1
-
-    # Assign Social Space Leaves (Day W)
-    random.shuffle(agents)
-    total_counter = 0
-    for agent in agents:
-        if agent.type != "Faculty":
-            agent.ssleaf_w = total_counter % 100
-            total_counter += 1
-
-    # Assign Office Leaves
-    random.shuffle(agents)
-    total_counter = 0
-    for agent in agents:
-        if agent.type == "Faculty":
-            agent.oleaf = total_counter % 6
-            total_counter += 1
 
     # Need to figure out where faculty can go to figure out how to distribute the leaves
         # Only need ID for DH, L, G, and Social Space I think
