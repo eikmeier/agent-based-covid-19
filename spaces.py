@@ -368,11 +368,7 @@ class SubSpace():
         self.numberAssigned = 0
 
     def get_agents(self):
-        result = []
-        for agent in self.agents:
-            if agent.bedridden == False: # Bed-ridden agents stay in their room and do not follow the schedule
-                result.append(agent)
-        return result
+        return [agent for agent in self.agents if agent.bedridden == False]
 
     def get_space(self):
         """
@@ -381,18 +377,14 @@ class SubSpace():
         return self.space
 
     def get_agents(self, state):
-        result = []
-        for agent in self.agents:
-            if agent.seir == state:
-                result.append(agent)
-        return result
+        return [agent for agent in self.agents if agent.seir == state]
 
     def get_infection_prob(self):
         return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia"))) 
                            / self.cv) * TUNING_PARAMETER
 
     def spread_infection(self):
-        susceptible_agents = [agent for agent in self.agents if agent.seir == "S"]
+        susceptible_agents = self.get_agents("S")
         infection_prob = self.get_infection_prob() / 100.0
         for agent in susceptible_agents:
             rand_num = random.random()
