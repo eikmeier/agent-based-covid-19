@@ -214,7 +214,7 @@ class LargeGatherings(Space):
         self.agents.append(agent)
 
 class Academic(Space):
-    def __init__(self, size, day, time):
+    def __init__(self, size, major, day, time):
         """
         Initialize an Academic space with a size (must be "Small," "Medium," or "Large")\n
         The Academic space will then be given a cv field, based on the given size field\n
@@ -232,6 +232,8 @@ class Academic(Space):
         self.cv = ACADEMIC_SPACE_CAPACITIES.get(self.size)
         self.rv = SPACE_RISK_MULTIPLIERS.get("Academic")
         self.classrooms = []
+        self.major = major
+        self.status = "Available"
 
         for i in range(CLASSROOMS.get(self.size)[0]):  # Insert small classrooms
             self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
@@ -259,12 +261,28 @@ class Academic(Space):
 
     def assignAgent(self, agent):
         # Put the class (for two hours) into the agent's schedule
-        agent.schedule.get(self.day)[self.time] = "Class"
-        agent.schedule.get(self.day)[self.time + 1] = "Class"
+        #agent.schedule.get(self.day)[self.time] = "Class"
+        #agent.schedule.get(self.day)[self.time + 1] = "Class"
         if agent.type == "Faculty":
             return self.assignFaculty(agent)
         else:
             return self.assignStudent(agent)
+
+
+
+    def assignFaculty(self, agent):
+        for classroom in self.classrooms:
+            if len(classroom.agents) == 0:  # classroom.faculty is None:  # if there is no assigned faculty yet
+                classroom.faculty = agent
+                classroom.agents.append(agent)
+                classroom.status = "Faculty assigned"
+
+                if all(classroom.status == "Faculty assigned" for classroom in self.classrooms):  # if all classes have faculty assigned
+                    self.status = "All classes have assigned faculty"
+                return classroom
+            else:  # if there is an assigned faculty in the current classroom already
+                continue  # move onto next classroom in the list
+        return None
 
 
     def assignStudent(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
@@ -283,20 +301,7 @@ class Academic(Space):
 
 
 
-    def assignFaculty(self, agent):
-        # if there are classrooms without faculty
-        for classroom in self.classrooms:
-            if classroom.faculty is None:  # if there is no assigned faculty yet, assign agent to classroom
-                classroom.faculty = agent
-                classroom.agents.append(agent)
-                classroom.status = "Faculty assigned"
 
-                if all(elem.status == "Faculty assigned" for elem in self.classrooms):  # if all classes have faculty assigned
-                    self.status = "All classes have assigned faculty"
-                return classroom
-            else:  # if there is an assigned faculty in the current classroom already
-                continue  # move onto next classroom in the list
-        return None
 
 
 class SocialSpace(Space):
@@ -371,6 +376,15 @@ class SubSpace():
         """
         return self.space
 
+    def getInfected(self):
+        """
+        Return the number of infected agents in this subspace
+        """
+        n = 0
+        for agent in self.agents:
+            if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie":
+                n += 1
+        return n
 # ***Below are some notes that need to be addressed, along with some notes for future reference***
 
 """
