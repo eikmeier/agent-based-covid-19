@@ -180,43 +180,20 @@ for agent in student_list:
             classroom = space.assignAgent(agent)
             if classroom != None:
                 break
-            else:
-                major_spaces.remove(space)
 
 # Next, randomly assign 2 non-major classes
 for agent in student_list:
     while agent.num_of_classes < 4:  # select two classes regardless of agent's major
         class_time = agent.class_times[agent.num_of_classes]
         # We want to get a building from this major, at the time and day we have been given, and then assign an agent to that space.
-        day = 0
+        day = 0 # Day is by default 'A'
         if class_time[0] == 'B':
             day = 1
-        rand_major_index = random.randint(0, 2)
-        other_spaces = academic_buildings[rand_major_index][day][int((class_time[1] - 2) / 2)]
-        if agent.schedule.get(class_time[0])[class_time[1]] is None:
-            for space in other_spaces:
-                classroom = space.assignAgent(agent)
-                if classroom is not None:
-                    break
-                else:
-                    other_spaces.remove(space)
-        else: # The agent cannot schedule a class at this day-time combo, choose another one
-            available_times = []
-            for major_count, major in enumerate(academic_buildings):
-                for day_count, day in enumerate(major):
-                    for time_count, time in enumerate(day):
-                        if len(academic_buildings[major_count][day_count][time_count]) != 0:
-                            available_times.append(day_time[day_count * len(academic_buildings[major_count][0]) + time_count])
-                agent.class_times[agent.num_of_classes] = random.choice(available_times)
-
-        if len(other_spaces) == 0: # None of the spaces are available at this time, let's choose from spaces that are actually open
-            available_times = []
-            for major_count, major in enumerate(academic_buildings):
-                for day_count, day in enumerate(major):
-                    for time_count, time in enumerate(day):
-                        if len(academic_buildings[major_count][day_count][time_count]) != 0:
-                            available_times.append(day_time[day_count * len(academic_buildings[major_count][0]) + time_count])
-            agent.class_times[agent.num_of_classes] = random.choice(available_times)
+        other_spaces = academic_buildings[random.randint(0, 2)][day][int((class_time[1] - 2) / 2)]
+        for space in other_spaces:
+            classroom = space.assignAgent(agent)
+            if classroom is not None:
+                break
 
 diningHallSpaces = create_spaces("DiningHall", 13) # We have unused Dining Hall spaces (at time 16) because the hours are not consecutive
     
