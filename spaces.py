@@ -371,6 +371,26 @@ class SubSpace():
         """
         return self.space
 
+    def get_agents(self, state):
+        result = []
+        for agent in self.agents:
+            if agent.seir == state:
+                result.append(agent)
+        return result
+
+    def get_infection_prob(self):
+        return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia"))) 
+                           / self.cv) * TUNING_PARAMETER
+
+    def spread_infection(self):
+        susceptible_agents = [agent for agent in self.agents if agent.seir == "S"]
+        infection_prob = self.get_infection_prob() / 100.0
+        for agent in susceptible_agents:
+            rand_num = random.random()
+            if rand_num < infection_prob: # Agent is now exposed
+                agent.changeState("E")
+
+
 # ***Below are some notes that need to be addressed, along with some notes for future reference***
 
 """
