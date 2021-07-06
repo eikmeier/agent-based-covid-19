@@ -187,84 +187,62 @@ for faculty in copy.copy(remaining_faculty):
                 remaining_faculty.remove(faculty)
                 break # No need to go through the other buildings for this faculty since they have been successfully assigned
 
-# -----------------------------------------------------------------------------------------------------------------------------
-# randomly assign two major classes to students
 
+# First randomly assign an agent's 2 major classes
 for agent in student_list:
     agent.class_times = random.sample(day_time, k=4)
-    class_times = [agent.class_times[0], agent.class_times[1]]
-    major_index = agent.getMajorIndex()
-    class_num = 0  # selecting 1st and 2nd class for agent
-    #print(agent.major)
-    #print(agent.class_times)
+    major_index = agent.get_major_index()
 
-    while class_num < 2:  # select two classes within agent's major
-        class_time = class_times[class_num]  # a specific [day, time] for one class
-        #print(class_time)
+    while agent.num_of_classes < 2:  # select two classes within agent's major
+        class_time = agent.class_times[agent.num_of_classes]
 
         # We want to get a building from this major, at the time and day we have been given, and then assign an agent to that space.
-        day = 0  # default for day A
-        if class_time[0] == 'B':
-            day = 1
-
-        major_spaces = academic_buildings[major_index][day][int((class_time[1] - 2) / 2)]  # list of major academic(buildings) at the specific [day, time]
-        random.shuffle(major_spaces)
-        #print(major_spaces)
-
-        for space in major_spaces:
-            if space.status == "Full":
-                continue
-            else:
-                major_classroom = space.assignAgent(agent)
-                if major_classroom is not None:
-                    break
-
-        class_num += 1
-        agent.classes.append(major_classroom)
-
-# -----------------------------------------------------------------------------------------------------
-# randomly assign two other classes to students
-
-for agent in student_list:
-    class_times = [agent.class_times[2], agent.class_times[3]]
-    major_index = agent.getMajorIndex()
-    class_num = 0  # selecting 3rd and 4th class for agent
-
-    while class_num < 2:   # select two classes randomly (regardless of major)
-        class_time = class_times[class_num]  # a specific [day, time] for one class
-
-        # We want to get a building from a random major, at the time and day we have been given, and then assign an agent to that space.
         day = 0
         if class_time[0] == 'B':
             day = 1
-        other_spaces = academic_buildings[random.randint(0, 2)][day][int((class_time[1] - 2) / 2)]
-        random.shuffle(other_spaces)
-
-        for space in other_spaces:
-            if space.status == "Full":
-                continue
+        
+        major_spaces = academic_buildings[major_index][day][int((class_time[1] - 2) / 2)]
+        for space in copy.copy(major_spaces):
+            classroom = space.assignAgent(agent)
+            if classroom != None:
+                break
             else:
-                other_classroom = space.assignAgent(agent)
-                if other_classroom is not None:
+                major_spaces.remove(space)
+
+# Next, randomly assign 2 non-major classes
+for agent in student_list:
+    while agent.num_of_classes < 4:  # select two classes regardless of agent's major
+        class_time = agent.class_times[agent.num_of_classes]
+        # We want to get a building from this major, at the time and day we have been given, and then assign an agent to that space.
+        day = 0
+        if class_time[0] == 'B':
+            day = 1
+        rand_major_index = random.randint(0, 2)
+        other_spaces = academic_buildings[rand_major_index][day][int((class_time[1] - 2) / 2)]
+        if agent.schedule.get(class_time[0])[class_time[1]] is None:
+            for space in other_spaces:
+                classroom = space.assignAgent(agent)
+                if classroom is not None:
                     break
+                else:
+                    other_spaces.remove(space)
+        else: # The agent cannot schedule a class at this day-time combo, choose another one
+            available_times = []
+            for major_count, major in enumerate(academic_buildings):
+                for day_count, day in enumerate(major):
+                    for time_count, time in enumerate(day):
+                        if len(academic_buildings[major_count][day_count][time_count]) != 0:
+                            available_times.append(day_time[day_count * len(academic_buildings[major_count][0]) + time_count])
+                agent.class_times[agent.num_of_classes] = random.choice(available_times)
 
-        class_num += 1
-        agent.classes.append(other_classroom)
-
-    # add assigned classes to agent's schedule attribute
-    for classroom in agent.classes:
-        i = agent.classes.index(classroom)
-        time = agent.class_times[i]  # [day, time] of i-th class
-        timeslot = agent.schedule.get(time[0])[time[1]] = classroom
-
-    #print(agent.classes)
-    #print(agent.type)
-    #print(class_times)
-    #print(agent.schedule.get("A"))
-    #print(agent.schedule.get("B"))
-    #print("-------------------------------------------------------------------------------------------")
-
-
+        if len(other_spaces) == 0: # None of the spaces are available at this time, let's choose from spaces that are actually open
+            available_times = []
+            for major_count, major in enumerate(academic_buildings):
+                for day_count, day in enumerate(major):
+                    for time_count, time in enumerate(day):
+                        if len(academic_buildings[major_count][day_count][time_count]) != 0:
+                            available_times.append(day_time[day_count * len(academic_buildings[major_count][0]) + time_count])
+            agent.class_times[agent.num_of_classes] = random.choice(available_times)
 
 diningHallSpaces = createSpaces("DiningHall", 13) # We have unused Dining Hall spaces (at time 16) because the hours are not consecutive
     
