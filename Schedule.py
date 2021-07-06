@@ -139,112 +139,53 @@ for i in day_range:
 # randomly assign two major classes to faculty - assign all the faculty first
 
 # list of faculty by major
-stem_faculty = []
-humanities_faculty = []
-arts_faculty = []
+stem_faculty = [faculty for faculty in faculty_list if faculty.subtype == "STEM"]
+humanities_faculty = [faculty for faculty in faculty_list if faculty.subtype == "Humanities"]
+arts_faculty = [faculty for faculty in faculty_list if faculty.subtype == "Arts"]
 faculty_by_major = [stem_faculty, humanities_faculty, arts_faculty]
-
-
-for agent in faculty_list:
-    if agent.major == "STEM":
-        stem_faculty.append(agent)
-    elif agent.major == "Humanities":
-        humanities_faculty.append(agent)
-    else:  # if agent.major == "Arts"
-        arts_faculty.append(agent)
-
-
-stem_faculty_copy = copy.copy(stem_faculty)  # copy of list of faculty for each major to keep track of agents that still need to be assigned to classes
-humanities_faculty_copy = copy.copy(humanities_faculty)
-arts_faculty_copy = copy.copy(arts_faculty)
-faculty_by_major_copy = [stem_faculty_copy, humanities_faculty_copy, arts_faculty_copy]
-
 remaining_buildings = []
 
 for major in academic_buildings:
-
     major_index = academic_buildings.index(major)
-
-    if major_index == 0:
-        major_faculty = stem_faculty_copy
-    elif major_index == 1:
-        major_faculty = humanities_faculty_copy
-    else:  # if major_index == 2
-        major_faculty = arts_faculty_copy
+    major_faculty = faculty_by_major[major_index]
 
     for day in major:
         for time in day:
-            random.shuffle(time)  # shuffles the list of buildings for each specific [day, time]
             for building in time:
                 class_num = len(building.classrooms)  # number of classrooms in building
-
-                major_faculty_copy = copy.copy(major_faculty)
-                for faculty in major_faculty:
-                    if len(faculty.classes) == 1:
+                select_faculty = []
+                zero_class_faculty = [faculty for faculty in major_faculty if faculty.num_of_classes == 0]
+                one_class_faculty = [faculty for faculty in major_faculty if faculty.num_of_classes == 1]
+                random.shuffle(zero_class_faculty)
+                random.shuffle(one_class_faculty)
+                for faculty in copy.copy(zero_class_faculty + one_class_faculty):
+                    if len(select_faculty) == class_num:
+                        break
+                    elif faculty.num_of_classes == 1:
                         # if faculty is already assigned to one class with the same [day, time] as the current building, exclude from selection
-                        if faculty.classes[0].space.day == building.day and faculty.classes[0].space.time == building.time:
-                            major_faculty_copy.remove(faculty)
-
-                random.shuffle(major_faculty_copy)
-                if len(major_faculty_copy) < class_num:  # if there are more available classrooms than faculty(there will be empty classrooms)
-                    select_faculty = major_faculty_copy
-                else:
-                    select_faculty = random.sample(major_faculty_copy, k=class_num)  # select faculty to assign to each classroom in building
-
+                        if faculty.schedule.get(building.day)[building.time] == None:
+                            select_faculty.append(faculty)
+                    else:
+                        select_faculty.append(faculty)
                 for faculty in select_faculty:
-                    classroom = building.assignAgent(faculty)  # assign agent to a classroom
-                    faculty.classes.append(classroom)  # add the classroom to the agent's .classes attribute
-
-                    if len(faculty.classes) == 2:  # if agent is already assigned to 2 classes, remove them from list
+                    building.assignAgent(faculty)  # assign agent to a classroom
+                    if faculty.num_of_classes == 2:  # if agent is already assigned to 2 classes, remove them from list
                         major_faculty.remove(faculty)
 
-                if building.status != "All classes have assigned faculty":  # after assigning all selected faculty, if building is not full (with faculty) and has remaining classrooms that need faculty assigned
+                if len(select_faculty) < class_num:  # after assigning all selected faculty, if building is not full (with faculty) and has remaining classrooms that need faculty assigned
                     remaining_buildings.append(building)
 
-# ---------------------------------------------------------------------------------------------------
-# assigning classes to remaining faculty
+remaining_faculty = [faculty for major in faculty_by_major for faculty in major]
 
-remaining_faculty = []  # list of faculty that haven't been assigned two classes yet
-for major in faculty_by_major_copy:
-    for faculty in major:
-        remaining_faculty.append(faculty)
-
-remaining_buildings2 = []
-# print("-----------------------------------------------------------------------------------------------------------------------------------------")
-for building in remaining_buildings:
-    available_classrooms = []
-    for classroom in building.classrooms:
-        if classroom.status == "Faculty assigned":
-            continue
-        else:
-            available_classrooms.append(classroom)
-
-    class_num = len(available_classrooms)  # number of classrooms that are available in the building
-
-    remaining_faculty_copy = copy.copy(remaining_faculty)
-    for faculty in remaining_faculty:
-        if len(faculty.classes) == 1:
-            # if faculty is already assigned to one class with the same [day, time] as current building
-            if faculty.classes[0].space.day == building.day and faculty.classes[0].space.time == building.time:
-                remaining_faculty_copy.remove(faculty)
-
-    random.shuffle(remaining_faculty_copy)
-    if len(remaining_faculty_copy) < class_num:  # if there are more available classrooms than faculty(there will be empty classrooms)
-        select_faculty = remaining_faculty_copy
-    else:
-        select_faculty = random.sample(remaining_faculty_copy, k=class_num)  # select faculty to assign to classrooms in building
-
-    for faculty in select_faculty:
-        classroom = building.assignAgent(faculty)
-        faculty.classes.append(classroom)
-        # print(faculty.classes)
-
-        if len(faculty.classes) == 2:  # if agent is already assigned to 2 classes, remove them from list
-            remaining_faculty.remove(faculty)
-
-    if building.status != "All classes have assigned faculty":  # if all classrooms have assigned faculty
-        remaining_buildings2.append(building)
-
+for faculty in copy.copy(remaining_faculty):
+    for building in copy.copy(remaining_buildings):
+        if faculty.schedule.get(building.day)[building.time] == None:
+            classroom = building.assignAgent(faculty)  # assign agent to a classroom
+            if classroom == None:
+                remaining_buildings.remove(building)
+            else:
+                remaining_faculty.remove(faculty)
+                break # No need to go through the other buildings for this faculty since they have been successfully assigned
 
 # -----------------------------------------------------------------------------------------------------------------------------
 # randomly assign two major classes to students
