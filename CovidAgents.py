@@ -1,4 +1,4 @@
-from global_constants import TOTAL_AGENTS
+from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A
 import random
 
 # n = 10  # number of agents
@@ -13,7 +13,6 @@ type_ratio = [500/2380, 380/2380]  # proportion of ["Off-campus Students", "Facu
 major_ratio = [0.25, 0.25]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
 initial_infection = 0.4  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
 social_ratio = 0.5  # proportion of students that are social
-
 
 # ------------------------------------------------------------------------
 class Agent:
@@ -32,6 +31,11 @@ class Agent:
             ag.class_times = []  # list of [[day, time], major_index]
             ag.social = "Not Social"  # default value
             ag.schedule = {"A": [None] * 15, "B": [None] * 15, "W": [None] * 15}  # time range is from 8 ~ 22, which is 15 blocks & class times are at index 2, 4, 6, 8
+            ag.days_in_state = 0
+            ag.bedridden = False
+            ag.num_of_classes = 0
+            # Initialize leaves - the first social space leaf is for A & B days and the second is for W days
+            ag.leaves = {"Dining Hall": -1, "Library": -1, "Gym": -1, "Social Space": [-1, -1], "Office": -1}
 
             agents.append(ag)
 
@@ -101,9 +105,15 @@ class Agent:
             # print([ag.vaccinated, ag.face_mask, ag.screening, ag.type, ag.major, ag.seir, ag.social, ag.schedule])
             # print([ag.type, ag.major])
 
+        initialize_leaves(agents)
         return agents
 
-    def getMajorIndex(self):
+
+    def changeState(self, state):
+        self.seir = state
+        self.days_in_state = 0
+
+    def get_major_index(self):
         if self.major == "STEM":
             return 0
         elif self.major == "Humanities":
@@ -121,13 +131,53 @@ class Agent:
     def getAvailableHours(self, start_hour, end_hour, day):
         available_times = []
         for i in range(start_hour, end_hour + 1):
-            if (self.schedule.get(day)[i-8]) == None:
+            if self.schedule.get(day)[i-8] == None:
                 available_times.append(i-8)
         return available_times
 
 
     def __str__(self):
-        return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
+        return 'Agent: ' + self.type + '/' + self.major + '/' + self.seir
 
     def __repr__(self):
         return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
+
+
+def change_states(agents):
+    for agent in agents:
+        if agent.days_in_state == 2:
+            if agent.seir == "Ia":
+                rand_num = random.random()
+                if rand_num < PROBABILITY_E:
+                    agent.changeState("Ie")
+                elif rand_num < PROBABILITY_E + PROBABILITY_A:
+                    agent.changeState("Ia")
+                else: # An agent transitions from Ia -> Im with a probability 1 - (a + e)
+                    agent.changeState("Im")
+            elif agent.seir == "E":
+                agent.changeState("Ia")
+        elif agent.days_in_state == 10 and "I" in agent.seir:
+            agent.changeState("R")
+            agent.bedridden = False
+        elif agent.days_in_state == 5 and agent.seir == "Ie": # After 5 days, agents in state Ie is bed-ridden and does not leave their room
+            agent.bedridden = True
+
+def initialize_leaves(agents):
+    spaces = agents[0].leaves.keys()
+    for space in spaces:
+        random.shuffle(agents)
+        if space == "Dining Hall":
+            for count, agent in enumerate(agents):
+                if agent.type == "Faculty":
+                    agent.leaves[space] = SPACE_SUBSPACE_AMOUNT.get(space) - 1 # Assign all faculty to the faculty dining leaf
+                else:
+                    agent.leaves[space] = count % (SPACE_SUBSPACE_AMOUNT.get(space) - 1) # We cannot assign students to the last DH space, which is faculty dining
+        elif space == "Social Space":
+            for count, agent in enumerate(agents):
+                agent.leaves[space][0] = count % SPACE_SUBSPACE_AMOUNT.get(space)
+            random.shuffle(agents)
+            for count, agent in enumerate(agents):
+                agent.leaves[space][1] = count % SPACE_SUBSPACE_AMOUNT.get(space)
+        else: # Gym, Library, Office spaces
+            for count, agent in enumerate(agents):
+                agent.leaves[space] = count % SPACE_SUBSPACE_AMOUNT.get(space)
