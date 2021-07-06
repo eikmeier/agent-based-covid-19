@@ -13,6 +13,26 @@ class Space:
         self.rv = 0
         self.numberAssigned = 0
 
+    def get_agents(self, state):
+        result = 0
+        if 'self.classrooms' in vars():
+            self.classrooms = self.leaves
+        for leaf in self.leaves:
+            result += leaf.get_agents(state)
+        return result
+
+    def get_infection_prob(self):
+        return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia"))) 
+                           / self.cv) * TUNING_PARAMETER
+
+    def spread_infection(self):
+        susceptible_agents = self.get_agents("S")
+        infection_prob = self.get_infection_prob() / 100.0
+        for agent in susceptible_agents:
+            rand_num = random.random()
+            if rand_num < infection_prob: # Agent is now exposed
+                agent.changeState("E")
+
 
 class Dorm(Space):
     general_counter = 0
