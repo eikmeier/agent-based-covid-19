@@ -8,8 +8,8 @@ n = TOTAL_AGENTS
 vaccine_percentage = 0.5
 face_mask_comp = 0.5
 screening_comp = 0.5
-type_ratio = [0.2, 0.3]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
-subtype_ratio = [0.1, 0.2]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
+type_ratio = [0.21, 0.16]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
+subtype_ratio = [0.25, 0.25]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
 initial_infection = 0.4  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
 social_ratio = 0.5  # proportion of students that are social
 
@@ -29,6 +29,7 @@ class Agent:
             ag.days_in_state = 0
             ag.bedridden = False
             ag.schedule = {"A": [None] * 15, "B": [None] * 15, "W": [None] * 15}  # class times are at index 2, 4, 6, 8
+            ag.num_of_classes = 0
             ag.social = "Not Social"
             # Initialize leaves - the first social space leaf is for A & B days and the second is for W days
             ag.leaves = {"Dining Hall": -1, "Library": -1, "Gym": -1, "Social Space": [-1, -1], "Office": -1}
@@ -88,7 +89,7 @@ class Agent:
         self.seir = state
         self.days_in_state = 0
 
-    def getMajorIndex(self):
+    def get_major_index(self):
         if self.subtype == "STEM":
             return 0
         elif self.subtype == "Humanities":
@@ -104,7 +105,7 @@ class Agent:
         return available_times
 
     def __str__(self):
-        return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
+        return 'Agent: ' + self.type + '/' + self.subtype + '/' + self.seir
 
 def change_states(agents):
     for agent in agents:
