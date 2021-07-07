@@ -2,38 +2,19 @@ import random
 import copy
 import CovidAgents
 from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace, OffCampus, Office
-from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, PROBABILITY_G, PROBABILITY_S, PROBABILITY_L, \
+from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, PROBABILITY_G, PROBABILITY_S, PROBABILITY_L, \
     SCHEDULE_DAYS, SCHEDULE_WEEKDAYS
-"""
-def initializeLeaves(agents):
-    # Dining Hall has 5 leaves for students, 1 for faculty
-    # Library has 6 leaves
-    # Gym has 6 leaves
-    # Social Space has 100 leaves
-    random.shuffle(agents)
-    student_counter = 0
-    # Assign DH Leaves
-    for agent in agents:
-        if agent.type == "Faculty":
-            agent.dhleaf = 5 # 5th to represent Faculty Dining Leaf
-        else:
-            agent.dhleaf = student_counter % 6
-            student_counter += 1
 
-    # Assign L leaves
-    random.shuffle(agents)
-    total_counter = 0
-    for agent in agents:
-        agent.lleaf = total_counter % 6
-        total_counter += 1
-
-    # Assign G Leaves
-    random.shuffle(agents)
-    total_counter = 0
-    for agent in agents:
-        agent.gleaf = total_counter % 6
-        total_counter += 1
-"""
+def assign_meal(agent, day, start_hour, end_hour, dhArr):
+    day_index = 0
+    if day == 'B':
+        day_index = 1
+    elif day == 'W':
+        day_index = 2
+    possibleMealHours = agent.get_available_hours(start_hour, end_hour, day)
+    if possibleMealHours:
+        mealHour = random.choice(possibleMealHours)
+        dhArr[day_index][mealHour].assign_agent(agent)
 
 def create_spaces(space, num_hours = 15, division = None):
     result = [[[] for j in range(num_hours)] for i in range(3)]
@@ -61,7 +42,7 @@ def assign_meal(agent, day, start_hour, end_hour, dhArr):
     possibleMealHours = agent.get_available_hours(start_hour, end_hour, day)
     if possibleMealHours:
         mealHour = random.choice(possibleMealHours)
-        dhArr[day_index][mealHour].assignAgent(agent)
+        dhArr[day_index][mealHour].assign_agent(agent)
 
 
 # agent_list = CovidAgents.Agent().initialize()  # initialize agents - list of all agents
@@ -73,7 +54,7 @@ doubles_students = []
 temp_doubles_dorm_times = [[[] for j in range(15)] for i in range(3)]
 doubles_dorm_times = [[[] for j in range(15)] for i in range(3)]
 
-def assignDorms(dorms, on_campus_students):
+def assign_dorms(dorms, on_campus_students):
     # list of available dorms that are not fully occupied
     available_dorms = copy.copy(dorms)
 
@@ -83,20 +64,11 @@ def assignDorms(dorms, on_campus_students):
             print("All dorms are fully occupied")
         else:
             agent.dorm_building = random.choice(available_dorms)
-            agent.dorm_room = agent.dorm_building.assignAgent(agent)
+            agent.dorm_room = agent.dorm_building.assign_agent(agent)
             if agent.dorm_room in agent.dorm_building.doubles:
                 doubles_students.append(agent)
             if agent.dorm_building.status == "Full":
                 available_dorms.remove(agent.dorm_building)
-        # randomly assigns agents(on-campus students) to dorms
-        for agent in on_campus_students:
-            if len(dorms) == 0:  # if there are no available dorms(all dorms are full)
-                print("All dorms are fully occupied")
-            else:
-                agent.dorm_building = random.choice(available_dorms)
-                agent.dorm_room = agent.dorm_building.assignAgent(agent)
-                if agent.dorm_building.status == "Full":
-                    available_dorms.remove(agent.dorm_building)
             # print(agent.dorm_building)
             # print(agent.dorm_room)
 
@@ -107,7 +79,7 @@ def assignDorms(dorms, on_campus_students):
 #  dorm.returnAgents()
 
 # CLASS ASSIGNMENT ------------------------------------------------------------------------------------------------------------------------------------
-def assignFacultyClasses(day_time, academic_buildings, faculty_by_major):
+def assign_faculty_classes(day_time, academic_buildings, faculty_by_major):
     # dictionary of number of available classrooms for each timeslot for each major
     stem_available_timeslots = {}  # {'A2': 49, 'A4': 49, 'A6': 49, 'A8': 49, 'B2': 49, 'B4': 49, 'B6': 49, 'B8': 49}
     humanities_available_timeslots = {}  # {'A2': 24, 'A4': 24, 'A6': 24, 'A8': 24, 'B2': 24, 'B4': 24, 'B6': 24, 'B8': 24}
@@ -228,7 +200,7 @@ def assignFacultyClasses(day_time, academic_buildings, faculty_by_major):
                         class_num = len(building.classrooms)
 
                     for i in range(class_num):
-                        classroom = building.assignAgent(class_faculty[0])
+                        classroom = building.assign_agent(class_faculty[0])
                         class_faculty[0].classes.append(classroom)
                         class_faculty.remove(class_faculty[0])
 
@@ -262,7 +234,7 @@ for major in academic_buildings:
 
 
 # -----------------------------------------------------------------------------------------------------------------------------------
-def assignStudentClasses(day_time, academic_buildings, student_by_major):
+def assign_student_classes(day_time, academic_buildings, student_by_major):
     # assign two major classes to student agents
     for major_student in student_by_major:
         for agent in major_student:
@@ -276,7 +248,7 @@ def assignStudentClasses(day_time, academic_buildings, student_by_major):
             while class_num < 2:
                 class_time = class_times[class_num]
                 other_majors = [0, 1, 2]
-                major_index = agent.getMajorIndex()
+                major_index = agent.get_major_index()
                 other_majors.remove(major_index)
 
                 if class_time[0] == "A":
@@ -298,7 +270,7 @@ def assignStudentClasses(day_time, academic_buildings, student_by_major):
                     if building.status == "Full":
                         continue
                     else:
-                        classroom = building.assignAgent(agent)
+                        classroom = building.assign_agent(agent)
                         agent.classes.append(classroom)
                         agent.class_times.append([class_time, major_index])
                         break
@@ -342,7 +314,7 @@ def assignStudentClasses(day_time, academic_buildings, student_by_major):
                     if building.status == "Full":
                         continue
                     else:
-                        classroom = building.assignAgent(agent)
+                        classroom = building.assign_agent(agent)
                         agent.classes.append(classroom)
                         agent.class_times.append([class_time, major_index])
                         break
@@ -350,7 +322,7 @@ def assignStudentClasses(day_time, academic_buildings, student_by_major):
                 class_num += 1
 
 
-def addClassToSchedule(agent_list):
+def add_class_to_schedule(agent_list):
     # after all agents have been assigned to classes, add the classes into their schedule attribute
     for agent in agent_list:
         # add assigned classes to agent's schedule attribute
@@ -358,166 +330,82 @@ def addClassToSchedule(agent_list):
             i = agent.classes.index(classroom)
             class_time = agent.class_times[i][0]  # [day, time] of i-th class
             agent.schedule[class_time[0]][class_time[1]] = classroom
-            # timeslot = agent.schedule.get(time[0])[time[1]] = classroom
+            agent.schedule[class_time[0]][class_time[1]+1] = classroom
 
 
 # DINING HALL / GYM / LIBRARY ####################################################################################################################
 # diningHallSpaces = createSpaces("DiningHall", 13) # We have unused Dining Hall spaces (at time 16) because the hours are not consecutive
 
-def assignDiningTimes(agent_list, diningHallSpaces):
+def assign_dining_times(agent_list, diningHallSpaces):
     for agent in agent_list:  # Assign dining hall times to all agents
         if agent.type == "Off-campus Student":
-            for day in ['A', 'B']:
-                assignMeal(agent, day, 12, 15, diningHallSpaces)
+            for day in SCHEDULE_WEEKDAYS:
+                assign_meal(agent, day, 12, 15, diningHallSpaces)
         elif agent.type == "Faculty":
-            for day in ['A', 'B']:
-                assignMeal(agent, day, 11, 13, diningHallSpaces)
+            for day in SCHEDULE_WEEKDAYS:
+                assign_meal(agent, day, 11, 13, diningHallSpaces)
         else:
-            for day in ['A', 'B', 'W']:
-                assignMeal(agent, day, 8, 11, diningHallSpaces)
-                assignMeal(agent, day, 12, 15, diningHallSpaces)
-                assignMeal(agent, day, 17, 20, diningHallSpaces)
+            for day in SCHEDULE_DAYS:
+                assign_meal(agent, day, 8, 11, diningHallSpaces)
+                assign_meal(agent, day, 12, 15, diningHallSpaces)
+                assign_meal(agent, day, 17, 20, diningHallSpaces)
 
 
 
 # gymSpaces = createSpaces("Gym")
 
-def assignGym(agent_list, gymSpaces):
+def assign_gym(agent_list, gymSpaces):
     # Try to assign Gym slots
     for agent in agent_list:
         if agent.type != "Faculty":
-            for count, day in enumerate(['A', 'B', 'W']):
+            for count, day in enumerate(SCHEDULE_DAYS):
                 if day == 'W' and agent.type == "Off-campus Student":
                     break
                 rand_prob = random.random()
                 if rand_prob < PROBABILITY_G:
-                    available_times = agent.getAvailableHours(8, 22, day)
+                    available_times = agent.get_available_hours(8, 22, day)
                     gymHour = random.choice(available_times)
-                    gymSpaces[count][gymHour].assignAgent(agent)
+                    gymSpaces[count][gymHour].assign_agent(agent)
 
-""" DOESN'T WORK BECAUSE OF DOUBLE_STUDENTS AND DOUBLE_STUDENTS_TIMES ---------------------------------------------------------------------------------
-def assignRemainingTime(agent_list, librarySpaces, socialSpaces, stem_office_spaces, arts_office_spaces, humanities_office_spaces, offCampusSpace):
-    # Remaining slots for social spaces, library leaf, or dorm room
+
+# Remaining slots for social spaces, library leaf, or dorm room
+def assign_remaining_time(agent_list, librarySpaces, socialSpaces, stem_office_spaces, arts_office_spaces, humanities_office_spaces, offCampusSpace):
     for agent in agent_list:
         if agent.type != "Faculty":
-            for count, day in enumerate(['A', 'B', 'W']):
-                for hour in agent.getAvailableHours(8, 22, day):
+            for count, day in enumerate(SCHEDULE_DAYS):
+                for hour in agent.get_available_hours(8, 22, day):
                     if day == 'W' and agent.type == "Off-campus Student":
-                        offCampusSpace[count][hour].assignAgent(agent)
+                        offCampusSpace[count][hour].assign_agent(agent)
                         continue
                     rand_number = random.random()
                     if rand_number < PROBABILITY_S:  # Assign social space
-                        socialSpaces[count][hour].assignAgent(agent)
+                        socialSpaces[count][hour].assign_agent(agent)
                     elif rand_number < PROBABILITY_S + PROBABILITY_L:  # Assign library space
-                        librarySpaces[count][hour].assignAgent(agent)
+                        librarySpaces[count][hour].assign_agent(agent)
                     else:  # Assign dorm room if on-campus, otherwise assign off-campus
                         if agent.type == "On-campus Student":
                             agent.schedule.get(day)[hour] = "Dorm"
                             if agent in doubles_students:
-                                doubles_students_times[count][hour].append(agent)
+                                if agent.dorm_room in temp_doubles_dorm_times[count][hour]:
+                                    doubles_dorm_times[count][hour].append(agent.dorm_room)
+                                else:
+                                    temp_doubles_dorm_times[count][hour].append(agent.dorm_room)
                         else:
-                            offCampusSpace[count][hour].assignAgent(agent)
+                            offCampusSpace[count][hour].assign_agent(agent)
         else:
-            for count, day in enumerate(['A', 'B', 'W']):
-                for hour in agent.getAvailableHours(8, 22, day):
+            for count, day in enumerate(SCHEDULE_DAYS):
+                for hour in agent.get_available_hours(8, 22, day):
                     if day == 'W':
-                        offCampusSpace[count][hour].assignAgent(agent)
+                        offCampusSpace[count][hour].assign_agent(agent)
                         continue
                     if hour == 0 or hour == 1 or hour >= 10 and hour <= 14:
-                        offCampusSpace[count][hour].assignAgent(agent)
+                        offCampusSpace[count][hour].assign_agent(agent)
                     else:  # Put into appropriate Division Office vertex
                         if agent.major == "STEM":
-                            stem_office_spaces[count][hour].assignAgent(agent)
+                            stem_office_spaces[count][hour].assign_agent(agent)
                         elif agent.major == "Arts":
-                            arts_office_spaces[count][hour].assignAgent(agent)
+                            arts_office_spaces[count][hour].assign_agent(agent)
                         else:  # Agent's major is Humanities
-                            humanities_office_spaces[count][hour].assignAgent(agent)
-"""
+                            humanities_office_spaces[count][hour].assign_agent(agent)
 
-
-
-"""
-        if len(other_spaces) == 0: # None of the spaces are available at this time, let's choose from spaces that are actually open
-            available_times = []
-            for major_count, major in enumerate(academic_buildings):
-                for day_count, day in enumerate(major):
-                    for time_count, time in enumerate(day):
-                        if len(academic_buildings[major_count][day_count][time_count]) != 0:
-                            available_times.append(day_time[day_count * len(academic_buildings[major_count][0]) + time_count])
-            agent.class_times[agent.num_of_classes] = random.choice(available_times)
-"""
-diningHallSpaces = create_spaces("DiningHall", 13) # We have unused Dining Hall spaces (at time 16) because the hours are not consecutive
-    
-for agent in agent_list: # Assign dining hall times to all agents
-    if agent.type == "Off-campus Student":
-        for day in SCHEDULE_WEEKDAYS:
-            assign_meal(agent, day, 12, 15, diningHallSpaces)
-    elif agent.type == "Faculty":
-        for day in SCHEDULE_WEEKDAYS:
-            assign_meal(agent, day, 11, 13, diningHallSpaces)
-    else:
-        for day in SCHEDULE_DAYS:
-            assign_meal(agent, day, 8, 11, diningHallSpaces)
-            assign_meal(agent, day, 12, 15, diningHallSpaces)
-            assign_meal(agent, day, 17, 20, diningHallSpaces)
-
-gymSpaces = create_spaces("Gym")
-
-# Try to assign Gym slots
-for agent in agent_list:
-    if agent.type != "Faculty":
-        for count, day in enumerate(SCHEDULE_DAYS):
-            if day == 'W' and agent.type == "Off-campus Student":
-                break
-            rand_prob = random.random()
-            if rand_prob < PROBABILITY_G:
-                available_times = agent.get_available_hours(8, 22, day)
-                gymHour = random.choice(available_times)
-                gymSpaces[count][gymHour].assignAgent(agent)
-
-librarySpaces = create_spaces("Library")
-socialSpaces = create_spaces("SocialSpace")
-stem_office_spaces = create_spaces("Office", 10, "STEM")
-arts_office_spaces = create_spaces("Office", 10, "Arts")
-humanities_office_spaces = create_spaces("Office", 10, "Humanities")
-offCampusSpace = create_spaces("OffCampus")
-        
-# Remaining slots for social spaces, library leaf, or dorm room
-for agent in agent_list:
-    if agent.type != "Faculty":
-        for count, day in enumerate(SCHEDULE_DAYS):
-            for hour in agent.get_available_hours(8, 22, day):
-                if day == 'W' and agent.type == "Off-campus Student":
-                    offCampusSpace[count][hour].assignAgent(agent)
-                    continue
-                rand_number = random.random()
-                if rand_number < PROBABILITY_S: # Assign social space
-                    socialSpaces[count][hour].assignAgent(agent)
-                elif rand_number < PROBABILITY_S + PROBABILITY_L: # Assign library space
-                    librarySpaces[count][hour].assignAgent(agent)
-                else: # Assign dorm room if on-campus, otherwise assign off-campus
-                    if agent.type == "On-campus Student":
-                        agent.schedule.get(day)[hour] = "Dorm"
-                        if agent in doubles_students:
-                            if agent.dorm_room in temp_doubles_dorm_times[count][hour]:
-                                doubles_dorm_times[count][hour].append(agent.dorm_room)
-                            else:
-                                temp_doubles_dorm_times[count][hour].append(agent.dorm_room)
-                    else:
-                        offCampusSpace[count][hour].assignAgent(agent)
-    else:
-        for count, day in enumerate(SCHEDULE_DAYS):
-            for hour in agent.get_available_hours(8, 22, day):
-                if day == 'W':
-                    offCampusSpace[count][hour].assignAgent(agent)
-                    continue
-                if hour == 0 or hour == 1 or hour >= 10 and hour <= 14:
-                    offCampusSpace[count][hour].assignAgent(agent)
-                else: # Put into appropriate Division Office vertex
-                    if agent.major == "STEM":
-                        stem_office_spaces[count][hour].assignAgent(agent)
-                    elif agent.major == "Arts":
-                        arts_office_spaces[count][hour].assignAgent(agent)
-                    else: # Agent's major is Humanities
-                        humanities_office_spaces[count][hour].assignAgent(agent)
 

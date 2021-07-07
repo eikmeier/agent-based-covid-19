@@ -109,7 +109,7 @@ class Agent:
         return agents
 
 
-    def changeState(self, state):
+    def change_state(self, state):
         self.seir = state
         self.days_in_state = 0
 
@@ -128,7 +128,7 @@ class Agent:
         return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
 
 
-    def getAvailableHours(self, start_hour, end_hour, day):
+    def get_available_hours(self, start_hour, end_hour, day):
         available_times = []
         for i in range(start_hour, end_hour + 1):
             if self.schedule.get(day)[i-8] == None:
