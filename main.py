@@ -71,8 +71,8 @@ def initialize():
             for l in range(ACADEMIC_BUILDINGS.get(major)[2]):
                 building_list[i // 4][i % 4].append(Academic("Large", major, day_type, 2 + 2 * (i % 4)))
     # ------------------------------------------------------------------------------------------------------
-    # list of faculty by each major
-    stem_faculty = []
+    # divide agents by major
+    stem_faculty = []     # list of faculty by each major
     humanities_faculty = []
     arts_faculty = []
     faculty_by_major = [stem_faculty, humanities_faculty, arts_faculty]  # list of all faculty, but divided by major
@@ -96,7 +96,7 @@ def initialize():
             humanities_students.append(agent)
         else:  # if agent.major == "Arts"
             arts_students.append(agent)
-
+    # ----------------------------------------------------------------------------------------
     # list of [day, time] combinations for classes
     # Class assignment for each day & time
     day_range = ["A", "B"]  # days for classes
@@ -105,7 +105,7 @@ def initialize():
     for i in day_range:
         for j in time_range:
             day_time.append([i, j])
-
+    # -------------------------------------------------------------------------------------------
     initialize_leaves(agent_list)
     assign_dorms(dorms, on_campus_students)
     assign_faculty_classes(day_time, academic_buildings, faculty_by_major)
