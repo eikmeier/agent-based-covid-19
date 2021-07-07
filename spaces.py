@@ -7,11 +7,31 @@ import random
 class Space:
     def close_space(self):
         """
-        Close a space, setting CV, RV, and numberAssigned to 0.
+        Close a space, setting CV, RV, and number_assigned to 0.
         """
         self.cv = 0
         self.rv = 0
-        self.numberAssigned = 0
+        self.number_assigned = 0
+
+    def get_agents(self, state):
+        result = 0
+        if 'self.classrooms' in vars():
+            self.classrooms = self.leaves
+        for leaf in self.leaves:
+            result += leaf.get_agents(state)
+        return result
+
+    def get_infection_prob(self):
+        return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia")))
+                           / self.cv) * TUNING_PARAMETER
+
+    def spread_infection(self):
+        susceptible_agents = self.get_agents("S")
+        infection_prob = self.get_infection_prob() / 100.0
+        for agent in susceptible_agents:
+            rand_num = random.random()
+            if rand_num < infection_prob: # Agent is now exposed
+                agent.changeState("E")
 
 
 class Dorm(Space):
@@ -196,11 +216,11 @@ class LargeGatherings(Space):
         """
         Initialize a Large Gatherings space.\n
         The Large Gatherings space will be given an rv field which is pre-defined in global_constants.py\n
-        Additionally, the Large Gatherings space will be given a cv field and a numberAssigned field, both initialized to 0.\n
+        Additionally, the Large Gatherings space will be given a cv field and a number_assigned field, both initialized to 0.\n
         Finally, the Large Gatherings space will also initialize an agents field as an empty list.\n
         """
         self.cv = 0
-        self.numberAssigned = 0
+        self.number_assigned = 0
         self.rv = SPACE_RISK_MULTIPLIERS.get("Large Gatherings")
         self.agents = []
 
@@ -210,12 +230,12 @@ class LargeGatherings(Space):
     def assign_agent(self, agent):
         """
         Assign an agent to the Large Gatherings space.\n
-        The numberAssigned field of the space will be increased by one and the cv field will be
+        The number_assigned field of the space will be increased by one and the cv field will be
          re-calculated as a result of the new agent added to the space.\n
         Additionally, the agent will be appended to the agents field of the space.\n
         """
-        self.numberAssigned += 1
-        self.cv = 40 * math.ceil(self.numberAssigned / 40.0)
+        self.number_assigned += 1
+        self.cv = 40 * math.ceil(self.number_assigned / 40.0)
         self.agents.append(agent)
 
 class Academic(Space):
@@ -380,18 +400,14 @@ class SubSpace():
 
     def close_subspace(self):
         """
-        Close a subspace, setting CV, RV, and numberAssigned to 0.
+        Close a subspace, setting CV, RV, and number_assigned to 0.
         """
         self.cv = 0
         self.rv = 0
-        self.numberAssigned = 0
+        self.number_assigned = 0
 
     def get_agents(self):
-        result = []
-        for agent in self.agents:
-            if agent.bedridden == False: # Bed-ridden agents stay in their room and do not follow the schedule
-                result.append(agent)
-        return result
+        return [agent for agent in self.agents if agent.bedridden == False]
 
     def get_space(self):
         """
@@ -410,18 +426,14 @@ class SubSpace():
         return n
 
     def get_agents(self, state):
-        result = []
-        for agent in self.agents:
-            if agent.seir == state:
-                result.append(agent)
-        return result
+        return [agent for agent in self.agents if agent.seir == state]
 
     def get_infection_prob(self):
         return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia")))
                            / self.cv) * TUNING_PARAMETER
 
     def spread_infection(self):
-        susceptible_agents = [agent for agent in self.agents if agent.seir == "S"]
+        susceptible_agents = self.get_agents("S")
         infection_prob = self.get_infection_prob() / 100.0
         for agent in susceptible_agents:
             rand_num = random.random()
