@@ -106,9 +106,42 @@ def initialize():
         for j in time_range:
             day_time.append([i, j])
     # -------------------------------------------------------------------------------------------
+    # SCHEDULING FUNCTIONS
     initialize_leaves(agent_list)
+
     assign_dorms(dorms, on_campus_students)
+    """  # CODE TO CHECK IF DORM ASSIGNMENT WORKS
+    # prints all the agents in each dorm
+    for dorm in dorms:
+        print(dorm.size + str(dorms.index(dorm) + 1))
+        print("< SINGLES >")
+        for single in dorm.singles:
+            print(single.agent)
+        print("\n")
+        print("< DOUBLES >")
+        for doubles in dorm.doubles:
+            print(doubles.agents)
+        print("---------------------------------------------------------------------------------------")
+    """
+
     assign_faculty_classes(day_time, academic_buildings, faculty_by_major)
+    """  # CODE TO CHECK IF FACULTY CLASS ASSIGNMENT IS DONE PROPERLY
+    for faculty in faculty_list:
+        if len(faculty.classes) != 2:
+            print("not assigned two classes")
+        elif faculty.class_times[0][0] == faculty.class_times[1][0]:
+            print("time conflict")
+        else:
+            print(faculty.classes)
+
+    for major in academic_buildings:  # check if all classrooms have a faculty(not always necessary in different cases, such as when there are either more faculty or classrooms)
+        for day in major:
+            for time in day:
+                for building in time:
+                    for classroom in building.classrooms:
+                        print(classroom.faculty)
+    """
+
     assign_student_classes(day_time, academic_buildings, student_by_major)
     add_class_to_schedule(agent_list)
 
@@ -133,20 +166,20 @@ def initialize():
     """
 
 
-    diningHallSpaces = create_spaces("DiningHall", 13)  # We have unused Dining Hall spaces (at time 16) because the hours are not consecutive
-    assign_dining_times(agent_list, diningHallSpaces)
+    dining_hall_space = create_spaces("DiningHall", 13)  # We have unused Dining Hall spaces (at time 16) because the hours are not consecutive
+    assign_dining_times(agent_list, dining_hall_space)
 
-    gymSpaces = create_spaces("Gym")
-    assign_gym(agent_list, gymSpaces)
+    gym_spaces = create_spaces("Gym")
+    assign_gym(agent_list, gym_spaces)
 
-    librarySpaces = create_spaces("Library")
-    socialSpaces = create_spaces("SocialSpace")
+    library_spaces = create_spaces("Library")
+    social_spaces = create_spaces("SocialSpace")
     stem_office_spaces = create_spaces("Office", 10, "STEM")
     arts_office_spaces = create_spaces("Office", 10, "Arts")
     humanities_office_spaces = create_spaces("Office", 10, "Humanities")
-    offCampusSpace = create_spaces("OffCampus")
+    off_campus_space = create_spaces("OffCampus")
 
-    assign_remaining_time(agent_list, librarySpaces, socialSpaces, stem_office_spaces, arts_office_spaces,humanities_office_spaces, offCampusSpace)
+    assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, arts_office_spaces, humanities_office_spaces, off_campus_space)
 
 
 initialize()

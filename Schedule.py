@@ -33,15 +33,7 @@ def assign_meal(agent, day, start_hour, end_hour, dhArr):
         mealHour = random.choice(possibleMealHours)
         dhArr[day_index][mealHour].assign_agent(agent)
 
-# initialize agents - list of agents
-agent_list = CovidAgents.Agent().initialize()  # list of all agents
 
-
-# agent_list = CovidAgents.Agent().initialize()  # initialize agents - list of all agents
-# initializeLeaves(agent_list)
-
-
-##############################################################################################################################
 doubles_students = []
 temp_doubles_dorm_times = [[[] for j in range(15)] for i in range(3)]
 doubles_dorm_times = [[[] for j in range(15)] for i in range(3)]
@@ -65,10 +57,7 @@ def assign_dorms(dorms, on_campus_students):
             # print(agent.dorm_room)
 
 
-# prints all the agents in each dorm
-# for dorm in dorms:
-#   print(dorm.size + str(dorms.index(dorm) + 1))
-#  dorm.returnAgents()
+
 
 # CLASS ASSIGNMENT ------------------------------------------------------------------------------------------------------------------------------------
 def assign_faculty_classes(day_time, academic_buildings, faculty_by_major):
@@ -204,24 +193,6 @@ def assign_faculty_classes(day_time, academic_buildings, faculty_by_major):
                 faculty.classes.remove(second_class)
                 faculty.classes.append(second_class)  # remove and then append again to organize order
 
-"""
-for faculty in faculty_list:
-    if len(faculty.classes) != 2:
-        print("not assigned two classes")
-    elif faculty.class_times[0][0] == faculty.class_times[1][0]:
-        print("time conflict")
-    else:
-        print(faculty.classes)
-
-
-
-for major in academic_buildings:
-    for day in major:
-        for time in day:
-            for building in time:
-                for classroom in building.classrooms:
-                    print(classroom.faculty)
-"""
 
 
 
@@ -326,27 +297,25 @@ def add_class_to_schedule(agent_list):
 
 
 # DINING HALL / GYM / LIBRARY ####################################################################################################################
-# diningHallSpaces = createSpaces("DiningHall", 13) # We have unused Dining Hall spaces (at time 16) because the hours are not consecutive
 
-def assign_dining_times(agent_list, diningHallSpaces):
+def assign_dining_times(agent_list, dining_hall_space):
     for agent in agent_list:  # Assign dining hall times to all agents
         if agent.type == "Off-campus Student":
             for day in SCHEDULE_WEEKDAYS:
-                assign_meal(agent, day, 12, 15, diningHallSpaces)
+                assign_meal(agent, day, 12, 15, dining_hall_space)
         elif agent.type == "Faculty":
             for day in SCHEDULE_WEEKDAYS:
-                assign_meal(agent, day, 11, 13, diningHallSpaces)
+                assign_meal(agent, day, 11, 13, dining_hall_space)
         else:
             for day in SCHEDULE_DAYS:
-                assign_meal(agent, day, 8, 11, diningHallSpaces)
-                assign_meal(agent, day, 12, 15, diningHallSpaces)
-                assign_meal(agent, day, 17, 20, diningHallSpaces)
+                assign_meal(agent, day, 8, 11, dining_hall_space)
+                assign_meal(agent, day, 12, 15, dining_hall_space)
+                assign_meal(agent, day, 17, 20, dining_hall_space)
 
 
 
-# gymSpaces = createSpaces("Gym")
 
-def assign_gym(agent_list, gymSpaces):
+def assign_gym(agent_list, gym_spaces):
     # Try to assign Gym slots
     for agent in agent_list:
         if agent.type != "Faculty":
@@ -356,8 +325,8 @@ def assign_gym(agent_list, gymSpaces):
                 rand_prob = random.random()
                 if rand_prob < PROBABILITY_G:
                     available_times = agent.get_available_hours(8, 22, day)
-                    gymHour = random.choice(available_times)
-                    gymSpaces[count][gymHour].assign_agent(agent)
+                    gym_hour = random.choice(available_times)
+                    gym_spaces[count][gym_hour].assign_agent(agent)
 
 
 # Remaining slots for social spaces, library leaf, or dorm room
