@@ -393,9 +393,9 @@ def assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office
                     if hour == 0 or hour == 1 or hour >= 10 and hour <= 14:
                         off_campus_space[count][hour].assign_agent(agent)
                     else:  # Put into appropriate Division Office vertex
-                        if agent.division == "STEM":
+                        if agent.major == "STEM":
                             stem_office_spaces[count][hour].assign_agent(agent)
-                        elif agent.division == "Arts":
+                        elif agent.major == "Arts":
                             arts_office_spaces[count][hour].assign_agent(agent)
                         else:  # Agent's major is Humanities
                             humanities_office_spaces[count][hour].assign_agent(agent)

@@ -112,8 +112,8 @@ def initialize():
     assign_student_classes(day_time, academic_buildings, student_by_major)
     add_class_to_schedule(agent_list)
 
-
-    #  CODE TO CHECK CLASS ASSIGNMENT
+    """
+    #  CODE TO CHECK IF CLASS ASSIGNMENT IS DONE PROPERLY
     for agent in faculty_list:
         for classroom in agent.classes:
             index = agent.classes.index(classroom)
@@ -130,7 +130,7 @@ def initialize():
             print(agent.classes)
             print(agent.schedule)
             print("---------------------------------")
-
+    """
 
 
     diningHallSpaces = create_spaces("DiningHall", 13)  # We have unused Dining Hall spaces (at time 16) because the hours are not consecutive
@@ -138,7 +138,6 @@ def initialize():
 
     gymSpaces = create_spaces("Gym")
     assign_gym(agent_list, gymSpaces)
-
 
     librarySpaces = create_spaces("Library")
     socialSpaces = create_spaces("SocialSpace")

@@ -117,10 +117,10 @@ class Agent:
 
     def get_major_index(self):
         """
-        Returns a number, 0-2, representing the division of an agent.\n
-        0 is returned if an agent is in the STEM division.\n
-        1 is returned if an agent is in the Humanities division.\n
-        2 is returned if an agent is in the Arts division.\n
+        Returns a number, 0-2, representing the major of an agent.\n
+        0 is returned if an agent is in the STEM major.\n
+        1 is returned if an agent is in the Humanities major.\n
+        2 is returned if an agent is in the Arts major.\n
         """
         if self.major == "STEM":
             return 0
@@ -154,7 +154,7 @@ class Agent:
     def __str__(self):
         """
         Returns a string representation of an agent with their type (On campus student, Off campus student, Faculty),
-         their division (STEM, Humanities, Arts), and their seir state (S, E, Ia, Im, Ie, R).\n
+         their division/major (STEM, Humanities, Arts), and their seir state (S, E, Ia, Im, Ie, R).\n
         """
         return 'Agent: ' + self.type + '/' + self.major + '/' + self.seir
     """
@@ -216,12 +216,12 @@ def initialize_leaves(agents):
                 student.leaves[space][1] = count % SPACE_SUBSPACE_AMOUNT.get(space)
         else:
             if space == "Office":
-                stem_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.division == "STEM"]
-                humanities_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.division == "Humanities"]
-                arts_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.division == "Arts"]
-                for division_faculty in [stem_faculty, humanities_faculty, arts_faculty]:
-                    random.shuffle(division_faculty)
-                    for count, faculty in enumerate(division_faculty):
+                stem_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.major == "STEM"]
+                humanities_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.major == "Humanities"]
+                arts_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.major == "Arts"]
+                for major_faculty in [stem_faculty, humanities_faculty, arts_faculty]:
+                    random.shuffle(major_faculty)
+                    for count, faculty in enumerate(major_faculty):
                         faculty.leaves[space] = count % SPACE_SUBSPACE_AMOUNT.get(space)
             else: # Gym or Library space
                 random.shuffle(student_agents)
