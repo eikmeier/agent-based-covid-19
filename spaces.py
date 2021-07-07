@@ -103,6 +103,7 @@ class Dorm(Space):
         else:  # Return False if there are no rooms available
             self.status = "Full"
 
+
 class TransitSpace(Space):
     def __init__(self):
         """
