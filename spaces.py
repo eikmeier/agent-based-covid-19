@@ -14,28 +14,37 @@ class Space:
         self.number_assigned = 0
 
     def get_agents(self, state):
-        result = 0
-        if 'self.classrooms' in vars():
-            self.classrooms = self.leaves
+        """
+        Returns a list of agents in the space with a given state.\n
+        """
+        result = []
         for leaf in self.leaves:
             result += leaf.get_agents(state)
         return result
 
     def get_infection_prob(self):
+        """
+        Returns the infection probability of a space.\n
+        """
         return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia")))
                            / self.cv) * TUNING_PARAMETER
 
     def spread_infection(self):
+        """
+        Spreads infection at a given space by changing a variable amount of agent states from "S" to "E".\n
+        Also spreads infection in all the subspaces a space has.
+        """
+        for leaf in self.leaves: # First, spread infection in all the leaves
+            leaf.spread_infection()
         susceptible_agents = self.get_agents("S")
         infection_prob = self.get_infection_prob() / 100.0
         for agent in susceptible_agents:
             rand_num = random.random()
             if rand_num < infection_prob: # Agent is now exposed
-                agent.changeState("E")
-
+                agent.change_state("E")
+                agent.exposed_space = self
 
 class Dorm(Space):
-    general_counter = 0
     def __init__(self, size):
         """
         Initialize a dorm space with a size (must be "Small," "Medium," or "Large")\n
@@ -119,8 +128,8 @@ class TransitSpace(Space):
 class DiningHall(Space):
     def __init__(self, day, time):
         """
-        Initialize a Dining Hall space.\n
-        The Dining Hall space will be given a cv and rv which are both pre-defined in global_constants.py\n
+        Initialize a Dining Hall space with a given day and time.\n
+        The Dining Hall space will be given a cv and rv field which are both pre-defined in global_constants.py\n
         Additionally, the Dining Hall will be given 6 subspaces in a leaves field, the last subspace being
          the Faculty Dining Leaf. Each of these leaves will be given the pre-defined cv and rv fields as given
          in global_constants.py\n
@@ -144,7 +153,7 @@ class DiningHall(Space):
 class Library(Space):
     def __init__(self, day, time):
         """
-        Initialize a Library Space.\n
+        Initialize a Library Space with a given day and time.\n
         The Library will be given a cv and an rv field which are both pre-defined in global_constants.py\n
         Additionally, the Library will get a leaves field which is a list of 6 subspaces of the Library, each of the subspaces
          with a cv and rv field that is pre-defined in global_constants.py\n
@@ -165,7 +174,7 @@ class Library(Space):
 class Gym(Space):
     def __init__(self, day, time):
         """
-        Initialize a Gym Space.\n
+        Initialize a Gym Space with a given day and time.\n
         The Gym will be given a cv and an rv field which are both pre-defined in global_constants.py\n
         Additionally, the Gym will get a leaves field which is a list of 6 subspaces of the Gym, each of the subspaces
          with a cv and rv field that is pre-defined in global_constants.py\n
@@ -186,7 +195,7 @@ class Gym(Space):
 class Office(Space):
     def __init__(self, division, day, time):
         """
-        Initialize an Office Space with a given division (must be either "STEM," "Humanities," or "Arts").\n
+        Initialize an Office Space with a given division (must be either "STEM," "Humanities," or "Arts") and a given day and time.\n
         The Gym will be given a cv field based on the division the Office space is in and an rv that is pre-defined in
          global_constants.py\n
         Additionally, the Office will get a leaves field which is a list of 6 subspaces of the Office, each of the subspaces
@@ -228,21 +237,39 @@ class LargeGatherings(Space):
     def __str__(self):
         return 'Large Gatherings'
 
-    def assign_agent(self, agent):
+    def assign_agents(self, agents):
         """
-        Assign an agent to the Large Gatherings space.\n
-        The number_assigned field of the space will be increased by one and the cv field will be
-         re-calculated as a result of the new agent added to the space.\n
-        Additionally, the agent will be appended to the agents field of the space.\n
+        Assign a list of agents to the Large Gatherings space.\n
+        The number_assigned field of the space will be increased by the amount of agents assigned and the cv field will be
+         re-calculated as a result of the new agents added to the space.\n
+        Additionally, the list of agents will be assigned to the agents field of the space.\n
         """
-        self.number_assigned += 1
+        self.number_assigned += len(agents)
         self.cv = 40 * math.ceil(self.number_assigned / 40.0)
-        self.agents.append(agent)
+        self.agents = agents
+
+    def get_agents(self, state):
+        """
+        Returns a list of agents in the space with a given state.\n
+        """
+        return [agent for agent in self.agents if agent.seir == state]
+
+    def spread_infection(self):
+        """
+        Spreads infection at a given space by changing a variable amount of agent states from "S" to "E"
+        """
+        infection_prob = self.get_infection_prob() / 100.0
+        for agent in self.get_agents("S"):
+            rand_num = random.random()
+            if rand_num < infection_prob: # Agent is now exposed
+                agent.change_state("E")
+                agent.exposed_space = self
+
 
 class Academic(Space):
-    def __init__(self, size, major, day, time):
+    def __init__(self, size, day, time):
         """
-        Initialize an Academic space with a size (must be "Small," "Medium," or "Large")\n
+        Initialize an Academic space with a size (must be "Small," "Medium," or "Large") and a given day and time\n
         The Academic space will then be given a cv field, based on the given size field\n
         Additionally, the Academic Space will be given an rv field as pre-defined in global_constants.py\n
         Finally, the Academic Space is given a classrooms field that is a list of all the subspaces of classrooms.\n
@@ -258,7 +285,7 @@ class Academic(Space):
         self.cv = ACADEMIC_SPACE_CAPACITIES.get(self.size)
         self.rv = SPACE_RISK_MULTIPLIERS.get("Academic")
         self.classrooms = []
-        self.major = major
+        self.leaves = self.classrooms
         self.status = "Available"
 
         for i in range(CLASSROOMS.get(self.size)[0]): # Insert small classrooms
@@ -276,11 +303,15 @@ class Academic(Space):
             self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].seats = ACADEMIC_SUBSPACE_SEATS.get("Large")
             self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].faculty = None
 
-
     def __str__(self):
         return 'Academic building: ' + self.size + '/' + self.day + '/' + str(self.time)
 
     def assign_agent(self, agent):
+        """
+        Assigns the given agent to any open classroom in this space.\n 
+        If a classroom was able to assign the agent, then the classroom is returned.\n
+        Otherwise, None is returned.\n
+        """
         # Put the class (for two hours) into the agent's schedule
         if agent.type == "Faculty":
             classroom = self.assign_faculty(agent)
@@ -294,6 +325,11 @@ class Academic(Space):
 
 
     def assign_faculty(self, agent):
+        """
+        Assigns a faculty to a classroom.\n 
+        If a classroom was able to assign the faculty, then the classroom is returned.\n
+        Otherwise, None is returned.\n
+        """
         for classroom in self.classrooms:
             if len(classroom.agents) == 0:  # classroom.faculty is None:  # if there is no assigned faculty yet
                 classroom.faculty = agent
@@ -309,6 +345,11 @@ class Academic(Space):
 
 
     def assign_student(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
+        """
+        Assigns a student to a classroom.\n 
+        If a classroom was able to assign the student, then the classroom is returned.\n
+        Otherwise, None is returned.\n
+        """
         random.shuffle(self.classrooms)
         for classroom in self.classrooms:
             if len(classroom.agents) < (classroom.seats + 1):  # if there are available seats in the classroom (should have +1 because it includes faculty)
@@ -324,7 +365,7 @@ class Academic(Space):
 
 
 """
-    def assignStudent(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
+    def assign_student(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
         random.shuffle(self.classrooms)
         for classroom in self.classrooms:
             if len(classroom.agents) <= classroom.seats and agent.schedule.get(self.day)[self.time] == None:
@@ -332,7 +373,7 @@ class Academic(Space):
                 return classroom
         return None
 
-    def assignFaculty(self, agent):
+    def assign_faculty(self, agent):
         for classroom in self.classrooms: 
             if classroom.faculty is None: # if there is no assigned faculty yet, assign agent to classroom
                 classroom.agents.append(agent)
@@ -351,8 +392,17 @@ class SocialSpace(Space):
                                 SUBSPACE_RISK_MULTIPLIERS.get("Social Space"))] * SPACE_SUBSPACE_AMOUNT.get("Social Space")
         self.day = day
         self.time = time
+        # RV set to 0 so it is impossible to spread infection in the social space core, since the core has no meaning
+        #  CV is set to 1 for a similar reason
+        self.cv = 1
+        self.rv = 0
 
     def assign_agent(self, agent):
+        """
+        Assigns a given agent to the space. The agent must be a student.\n
+        If the space has a day field of 'W', then the agent will be assigned based on their weekend social space leaf.\n
+        Otherwise, the agent will be assigned based on their weekday social space leaf.\n
+        """
         if self.day == 2:
             self.leaves[agent.leaves.get("Social Space")[1]].agents.append(agent)
             agent.schedule.get(self.day)[self.time] = "Social Space"
@@ -374,8 +424,27 @@ class OffCampus(Space):
         self.time = time
     
     def assign_agent(self, agent):
-        self.agents.append(agent)
+        if agent not in self.agents:
+            self.agents.append(agent)
         agent.schedule.get(self.day)[self.time] = "Off-Campus Space"
+
+    def get_agents(self, state):
+        """
+        Returns a list of agents in the space with a given state.\n
+        """
+        return [agent for agent in self.agents if agent.seir == state]
+
+    def spread_infection(self):
+        """
+        Upon leaving the off-campus vertex at t= 8, each agent in state S transitions to state E with probability o.  
+        For agents returning from off-campus, we choose o=.125 / (no + nf) so that, on average, 
+         one off campus agent becomes infected every 8 class days (two weeks).
+        """
+        probability_o = 0.125 / len(self.agents)
+        for agent in self.get_agents("S"):
+            rand_num = random.random()
+            if rand_num < probability_o:
+                agent.change_state("E")
 
 class SubSpace():
     def __init__(self, space, cv, rv):
@@ -387,16 +456,10 @@ class SubSpace():
         self.space = space
         self.cv = cv
         self.rv = rv
-
-        """I added this - status of whether space is available/full & the list of agents in the space"""
         self.status = "Available"
         self.agents = []
 
     def __str__(self):
-        return 'Subspace of cv:' + str(self.cv) + " of " + self.space.__str__()
-        # return 'Subspace of ' + self.space.__str__()
-
-    def __repr__(self):
         return 'Subspace of cv:' + str(self.cv) + " of " + self.space.__str__()
 
     def close_subspace(self):
@@ -408,6 +471,9 @@ class SubSpace():
         self.number_assigned = 0
 
     def get_agents(self):
+        """
+        Return a list of agents assigned to the subspace that are not bedridden
+        """
         return [agent for agent in self.agents if agent.bedridden == False]
 
     def get_space(self):
@@ -427,30 +493,36 @@ class SubSpace():
         return n
 
     def get_agents(self, state):
+        """
+        Returns a list of agents in the space with a given state.\n
+        """
         return [agent for agent in self.agents if agent.seir == state]
 
     def get_infection_prob(self):
+        """
+        Returns the infection probability of a space.\n
+        """
         return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia")))
                            / self.cv) * TUNING_PARAMETER
 
     def spread_infection(self):
-        susceptible_agents = self.get_agents("S")
+        """
+        Spreads infection at a given space by changing a variable amount of agent states from "S" to "E".\n
+        """
         infection_prob = self.get_infection_prob() / 100.0
-        for agent in susceptible_agents:
+        for agent in self.get_agents("S"):
             rand_num = random.random()
             if rand_num < infection_prob: # Agent is now exposed
                 agent.change_state("E")
+                agent.exposed_space = self
 
 
 # ***Below are some notes that need to be addressed, along with some notes for future reference***
 
 """
 ** Problems (or so-called problems, more like a running list of stuff for Erik to reference) with the code to fix:
- 1. Add in functionality to add agents to spaces (move from spaces to subspaces and vice versa as well...)
- 2. Consider adding in closing spaces (gym/library/dining hall/large gatherings) based on h? Or to have this elsewhere
+ 1. Consider adding in closing spaces (gym/library/dining hall/large gatherings) based on h? Or to have this elsewhere
 """
-
-# Our network has one gym, one library, one dining hall, and three faculty offices.
 
 # We close the gym, library, and dining hall with h = 0.50 and h = 1
 # h = 0.50, close gym and library
@@ -461,8 +533,3 @@ class SubSpace():
 # When facing a building closure, faculties spend that time in their
 #  office instead
 # When O are closed, we assume faculty only spend time in the classes they teach
-
-# Some abbreviations used in the paper
-# D - Dorm, DH - Dining Hall, Ci - ith class,
-# S - Social Space, L - Library, G - Gym,
-# OC - Off Campus, O - Office
