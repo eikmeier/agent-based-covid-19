@@ -8,9 +8,9 @@ n = TOTAL_AGENTS
 vaccine_percentage = 0.5
 face_mask_comp = 0.5
 screening_comp = 0.5
-type_ratio = [500/2380, 380/2380]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
+type_ratio = [500/2380.0, 380/2380.0]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
 major_ratio = [0.25, 0.25]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
-initial_infection = 0.4  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
+initial_infection = 10/2380.0  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
 social_ratio = 0.5  # proportion of students that are social
 
 # ------------------------------------------------------------------------
@@ -20,15 +20,16 @@ class Agent:
         agents = []
         for i in range(n):
             ag = Agent()
-            ag.vaccinated = 0  # vaccination status (0 = not vaccinated, 1 = vaccinated)
+            #ag.vaccinated = 0  # vaccination status (0 = not vaccinated, 1 = vaccinated)
             ag.face_mask = 0  # face_mask compliance
             ag.screening = 0  # screening test compliance
             ag.type = "On-campus Student"
             ag.major = "STEM"  # agent subtype/major (either STEM, Humanities, or Arts)
             ag.seir = "S"  # agent infection states (either "S", "E", "Ia", "Im", "Ie", "R")
+            ag.exposed_space = None # By default, agents do not have a space that exposed them
             ag.classes = []  # list of subspaces/classrooms
             ag.class_times = []  # list of [[day, time], major_index]
-            ag.social = "Not Social"  # default value
+            ag.social = False  # default value is that an agent is not social
             ag.schedule = {"A": [None] * 15, "B": [None] * 15, "W": [None] * 15}  # time range is from 8 ~ 22, which is 15 blocks & class times are at index 2, 4, 6, 8
             ag.days_in_state = 0
             ag.bedridden = False
@@ -39,9 +40,9 @@ class Agent:
             agents.append(ag)
 
         # VACCINATION: randomly select and assign vaccination to certain proportion of agents
-        select_vaccine = random.sample(agents, k=int(n * vaccine_percentage))
-        for ag in select_vaccine:
-            ag.vaccinated = 1
+        #select_vaccine = random.sample(agents, k=int(n * vaccine_percentage))
+        #for ag in select_vaccine:
+        #    ag.vaccinated = 1
 
         # FACE MASK COMPLIANCE: randomly select and assign face mask compliance to certain proportion of agents
         select_face_mask = random.sample(agents, k=int(n * face_mask_comp))
@@ -86,18 +87,18 @@ class Agent:
                 i += 1
 
         # INITIAL INFECTION: randomly select and assign agents that are initially infected
-        no_vaccine = []  # list of agents that haven't been vaccinated
-        for ag in agents:
-            if ag.vaccinated == 0:
-                no_vaccine.append(ag)
-        select_seir = random.sample(no_vaccine, k=int(
+        #no_vaccine = []  # list of agents that haven't been vaccinated
+        #for ag in agents:
+        #    if ag.vaccinated == 0:
+        #        no_vaccine.append(ag)
+        select_seir = random.sample(agents, k=int(
             n * initial_infection))  # randomly select initial number of agents (that haven't been vaccinated)
         for ag in select_seir:
             ag.seir = random.choice(["Ia", "Im", "Ie"])  # randomly assign one of the infected states to agents
 
-        select_social = random.sample(agents, k=int(n * social_ratio))  # list of all social agents
+        select_social = random.sample(student_list, k=int(n * social_ratio))  # list of all social agents
         for ag in select_social:
-            ag.social = "Social"
+            ag.social = True
 
         # print all agents and their attributes
         # for ag in agents:
@@ -169,6 +170,8 @@ def change_states(agents):
     If an agent has been in any infected seir state for 10 days, the agent changes to the state "R" and, if
      the agent was previously bedridden, they now no longer are.\n
     Finally, if an agent has been in the seir state "Ie" for 5 days, the agent becomes bedridden.\n
+    At the end of the loop, each agent has their days_in_state field increased by one to signify that
+     the current day has ended.\n
     """
     for agent in agents:
         if agent.days_in_state == 2:
@@ -187,6 +190,7 @@ def change_states(agents):
             agent.bedridden = False
         elif agent.days_in_state == 5 and agent.seir == "Ie": # After 5 days, agents in state Ie is bed-ridden and does not leave their room
             agent.bedridden = True
+        agent.days_in_state += 1
 
 def initialize_leaves(agents):
     """
