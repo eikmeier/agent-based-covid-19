@@ -192,6 +192,26 @@ def initialize():
     off_campus_space = create_spaces("OffCampus")
     assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, arts_office_spaces, humanities_office_spaces, off_campus_space)
 
+def update():
+    for week in range(SIMULATION_LENGTH):
+        for day in ['A', 'B', 'A', 'B', 'A', 'W', 'S']:
+            day_index = 0 # Default day is 'A'
+            if day == 'B':
+                day_index = 1
+            elif day == 'W':
+                day_index = 2
+            elif day == 'S':
+                large_gatherings = [LargeGatherings(), LargeGatherings(), LargeGatherings()]
+                for large_gathering in large_gatherings:
+                    large_gathering.assign_agents(random.sample(social_students, k=random.randrange(20, 60)))
+                    large_gathering.spread_infection()
+                continue
+            for hour in range(8, 23):
+                for space in spaces:
+                    if hour-8 < len(space[day_index]):
+                        space[day_index][hour-8].spread_infection()
+            change_states(agent_list)
+        infected_agents = [agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie" or agent.seir == "R"]
 
 
 

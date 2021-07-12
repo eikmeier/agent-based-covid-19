@@ -13,7 +13,15 @@ for day in SCHEDULE_DAYS:
         all_transit_spaces[day].append(spaces.TransitSpace(day, time))
 
 
-def create_spaces(space, num_hours=15, division=None):
+def create_spaces(space, num_hours = 15, division = None):
+    """
+    Creates spaces from spaces.py with a given space, num_hours, and division.\n
+    By default, num_hours = 15 to represent a full day (8 AM - 10 PM) and division is None
+     as most spaces do not have a division.\n
+    A list of spaces, separated by days and then separated by hours is returned.
+     Ex: [[DiningHall()], [DiningHall()], [DiningHall()], [DiningHall()], [DiningHall()], [DiningHall()]]
+     if num_hours = 2.\n
+    """
     result = [[[] for j in range(num_hours)] for i in range(3)]
     all_methods = globals().copy()
     space_class = all_methods.get(space)
@@ -32,6 +40,12 @@ def create_spaces(space, num_hours=15, division=None):
 
 
 def assign_meal(agent, day, start_hour, end_hour, dhArr):
+    """
+    Assigns a meal to an agent on a given day, start_hour, and end_hour.\n
+    Takes in a day (a character that is either 'A', 'B', or 'W'), a start_hour and an end hour
+     (a number between 8-20 to represent when agents are doing activities)
+     and a Dining Hall array that is storing the spaces used to assign agents to the Dining Hall.
+    """
     day_index = 0
     if day == 'B':
         day_index = 1
