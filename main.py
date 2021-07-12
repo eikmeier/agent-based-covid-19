@@ -238,4 +238,5 @@ def update():
                         space[day_index][hour-8].spread_infection()
             change_states(agent_list)
         infected_agents = [agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie" or agent.seir == "R"]
+
 """
