@@ -226,7 +226,7 @@ def initialize_leaves(agents):
                     random.shuffle(major_faculty)
                     for count, faculty in enumerate(major_faculty):
                         faculty.leaves[space] = count % SPACE_SUBSPACE_AMOUNT.get(space)
-            else: # Gym or Library space
+            else:  # Gym or Library space
                 random.shuffle(student_agents)
                 for count, student in enumerate(student_agents):
                     student.leaves[space] = count % SPACE_SUBSPACE_AMOUNT.get(space)

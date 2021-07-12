@@ -432,5 +432,3 @@ def assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office
 
                         if agent.schedule[day][hour - 1] != "Office":
                             all_transit_spaces[day][hour].agents.append(agent)
-
-
