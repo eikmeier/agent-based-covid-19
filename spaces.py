@@ -4,6 +4,7 @@ from global_constants import PASSING_TIME, TOTAL_AGENTS, SPACE_CAPACITIES, SPACE
 import math
 import random
 
+
 class Space:
     def close_space(self):
         """
@@ -23,19 +24,20 @@ class Space:
 
     def get_infection_prob(self):
         return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia")))
-                           / self.cv) * TUNING_PARAMETER
+                          / self.cv) * TUNING_PARAMETER
 
     def spread_infection(self):
         susceptible_agents = self.get_agents("S")
         infection_prob = self.get_infection_prob() / 100.0
         for agent in susceptible_agents:
             rand_num = random.random()
-            if rand_num < infection_prob: # Agent is now exposed
+            if rand_num < infection_prob:  # Agent is now exposed
                 agent.changeState("E")
 
 
 class Dorm(Space):
     general_counter = 0
+
     def __init__(self, size):
         """
         Initialize a dorm space with a size (must be "Small," "Medium," or "Large")\n
@@ -76,7 +78,7 @@ class Dorm(Space):
 
     def __str__(self):
         return 'Dorm of size ' + self.size
-        #return 'Dorm #' + str(self.id)
+        # return 'Dorm #' + str(self.id)
 
     def assign_agent(self, agent):
         """
@@ -104,17 +106,23 @@ class Dorm(Space):
             self.status = "Full"
 
 
+
 class TransitSpace(Space):
-    def __init__(self):
+    def __init__(self, day, time):
         """
         Initialize a Transit Space.\n
         The Transit Space will be given a cv and an rv field which are both pre-defined in global_constants.py\n
         """
         self.cv = SPACE_CAPACITIES.get("Transit Space")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Transit Space")
+        self.day = day
+        self.time = time
+        self.agents = []  # list of agents that were in the transit space at the corresponding [day, time]
 
     def __str__(self):
         return 'Transit Space'
+
+
 
 class DiningHall(Space):
     def __init__(self, day, time):
@@ -141,6 +149,7 @@ class DiningHall(Space):
     def __str__(self):
         return 'Dining Hall'
 
+
 class Library(Space):
     def __init__(self, day, time):
         """
@@ -153,7 +162,8 @@ class Library(Space):
         self.time = time
         self.cv = SPACE_CAPACITIES.get("Library")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Library")
-        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Library"), SUBSPACE_RISK_MULTIPLIERS.get("Library"))] * SPACE_SUBSPACE_AMOUNT.get("Library")
+        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Library"),
+                                SUBSPACE_RISK_MULTIPLIERS.get("Library"))] * SPACE_SUBSPACE_AMOUNT.get("Library")
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Library")].agents.append(agent)
@@ -161,6 +171,7 @@ class Library(Space):
 
     def __str__(self):
         return 'Library'
+
 
 class Gym(Space):
     def __init__(self, day, time):
@@ -172,7 +183,8 @@ class Gym(Space):
         """
         self.cv = SPACE_CAPACITIES.get("Gym")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Gym")
-        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Gym"), SUBSPACE_RISK_MULTIPLIERS.get("Gym"))] * SPACE_SUBSPACE_AMOUNT.get("Gym")
+        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Gym"),
+                                SUBSPACE_RISK_MULTIPLIERS.get("Gym"))] * SPACE_SUBSPACE_AMOUNT.get("Gym")
         self.day = day
         self.time = time
 
@@ -182,6 +194,7 @@ class Gym(Space):
 
     def __str__(self):
         return 'Gym'
+
 
 class Office(Space):
     def __init__(self, division, day, time):
@@ -203,7 +216,8 @@ class Office(Space):
             self.cv = PASSING_TIME * 6 * 25
             self.subcv = 20
         self.rv = SPACE_RISK_MULTIPLIERS.get("Office")
-        self.leaves = [SubSpace(self, self.subcv, SUBSPACE_RISK_MULTIPLIERS.get("Office"))] * SPACE_SUBSPACE_AMOUNT.get("Office")
+        self.leaves = [SubSpace(self, self.subcv, SUBSPACE_RISK_MULTIPLIERS.get("Office"))] * SPACE_SUBSPACE_AMOUNT.get(
+            "Office")
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Office")].agents.append(agent)
@@ -211,6 +225,7 @@ class Office(Space):
 
     def __str__(self):
         return self.division + ' Office'
+
 
 class LargeGatherings(Space):
     def __init__(self):
@@ -239,6 +254,7 @@ class LargeGatherings(Space):
         self.cv = 40 * math.ceil(self.number_assigned / 40.0)
         self.agents.append(agent)
 
+
 class Academic(Space):
     def __init__(self, size, major, day, time):
         """
@@ -261,24 +277,28 @@ class Academic(Space):
         self.major = major
         self.status = "Available"
 
-        for i in range(CLASSROOMS.get(self.size)[0]): # Insert small classrooms
-            self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
+        for i in range(CLASSROOMS.get(self.size)[0]):  # Insert small classrooms
+            self.classrooms.append(
+                SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
             self.classrooms[i].seats = ACADEMIC_SUBSPACE_SEATS.get("Small")
             self.classrooms[i].faculty = None
 
-        for j in range(CLASSROOMS.get(self.size)[1]): # Insert medium classrooms
-            self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
+        for j in range(CLASSROOMS.get(self.size)[1]):  # Insert medium classrooms
+            self.classrooms.append(
+                SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
             self.classrooms[j + CLASSROOMS.get(self.size)[0]].seats = ACADEMIC_SUBSPACE_SEATS.get("Medium")
             self.classrooms[j + CLASSROOMS.get(self.size)[0]].faculty = None
 
-        for k in range(CLASSROOMS.get(self.size)[2]): # Insert large classrooms
-            self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
-            self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].seats = ACADEMIC_SUBSPACE_SEATS.get("Large")
+        for k in range(CLASSROOMS.get(self.size)[2]):  # Insert large classrooms
+            self.classrooms.append(
+                SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
+            self.classrooms[
+                k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].seats = ACADEMIC_SUBSPACE_SEATS.get(
+                "Large")
             self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].faculty = None
 
-
     def __str__(self):
-        return 'Academic building: ' + self.size + '/' + self.day + '/' + str(self.time)
+        return "Academic building: " + self.major + '/' + self.size + '/' + self.day + '/' + str(self.time)
 
     def assign_agent(self, agent):
         # Put the class (for two hours) into the agent's schedule
@@ -292,7 +312,6 @@ class Academic(Space):
             # agent.schedule.get(self.day)[self.time + 1] = "Class"
         return classroom
 
-
     def assign_faculty(self, agent):
         for classroom in self.classrooms:
             if len(classroom.agents) == 0:  # classroom.faculty is None:  # if there is no assigned faculty yet
@@ -300,46 +319,33 @@ class Academic(Space):
                 classroom.agents.append(agent)
                 classroom.status = "Faculty assigned"
 
-                if all(classroom.status == "Faculty assigned" for classroom in self.classrooms):  # if all classes have faculty assigned
+                if all(classroom.status == "Faculty assigned" for classroom in
+                       self.classrooms):  # if all classes have faculty assigned
                     self.status = "All classes have assigned faculty"
                 return classroom
             else:  # if there is an assigned faculty in the current classroom already
                 continue  # move onto next classroom in the list
         return None
 
-
-    def assign_student(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
+    def assign_student(self,
+                       agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
         random.shuffle(self.classrooms)
         for classroom in self.classrooms:
-            if len(classroom.agents) < (classroom.seats + 1):  # if there are available seats in the classroom (should have +1 because it includes faculty)
+            if len(classroom.agents) < (
+                    classroom.seats + 1):  # if there are available seats in the classroom (should have +1 because it includes faculty)
                 classroom.agents.append(agent)
 
-                if len(classroom.agents) == (classroom.seats + 1):  # if classroom becomes full after assigning the current agent, change classroom.status to "Full"
+                if len(classroom.agents) == (
+                        classroom.seats + 1):  # if classroom becomes full after assigning the current agent, change classroom.status to "Full"
                     classroom.status = "Full"
-                if all(room.status == "Full" for room in self.classrooms):  # if all the classrooms in the building are full, change academic building status to "Full"
+                if all(room.status == "Full" for room in
+                       self.classrooms):  # if all the classrooms in the building are full, change academic building status to "Full"
                     self.status = "Full"
                 return classroom
             else:  # when classroom is full (no more seats)
                 continue
 
 
-"""
-    def assignStudent(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
-        random.shuffle(self.classrooms)
-        for classroom in self.classrooms:
-            if len(classroom.agents) <= classroom.seats and agent.schedule.get(self.day)[self.time] == None:
-                classroom.agents.append(agent)
-                return classroom
-        return None
-
-    def assignFaculty(self, agent):
-        for classroom in self.classrooms: 
-            if classroom.faculty is None: # if there is no assigned faculty yet, assign agent to classroom
-                classroom.agents.append(agent)
-                classroom.faculty = agent
-                return classroom
-        return None
-"""
 class SocialSpace(Space):
     def __init__(self, day, time):
         """
@@ -348,7 +354,8 @@ class SocialSpace(Space):
          global_constants.py. The space itself does not have a cv or rv because the core social space has no actual meaning.\n
         """
         self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Social Space"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Social Space"))] * SPACE_SUBSPACE_AMOUNT.get("Social Space")
+                                SUBSPACE_RISK_MULTIPLIERS.get("Social Space"))] * SPACE_SUBSPACE_AMOUNT.get(
+            "Social Space")
         self.day = day
         self.time = time
 
@@ -363,6 +370,7 @@ class SocialSpace(Space):
     def __str__(self):
         return 'Social Space'
 
+
 class OffCampus(Space):
     def __init__(self, day, time):
         """
@@ -372,10 +380,11 @@ class OffCampus(Space):
         self.agents = []
         self.day = day
         self.time = time
-    
+
     def assign_agent(self, agent):
         self.agents.append(agent)
         agent.schedule.get(self.day)[self.time] = "Off-Campus Space"
+
 
 class SubSpace():
     def __init__(self, space, cv, rv):
@@ -394,7 +403,7 @@ class SubSpace():
 
     def __str__(self):
         return 'Subspace of cv:' + str(self.cv) + " of " + self.space.__str__()
-        # return 'Subspace of ' + self.space.__str__()
+
 
     def __repr__(self):
         return 'Subspace of cv:' + str(self.cv) + " of " + self.space.__str__()
@@ -431,14 +440,14 @@ class SubSpace():
 
     def get_infection_prob(self):
         return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia")))
-                           / self.cv) * TUNING_PARAMETER
+                          / self.cv) * TUNING_PARAMETER
 
     def spread_infection(self):
         susceptible_agents = self.get_agents("S")
         infection_prob = self.get_infection_prob() / 100.0
         for agent in susceptible_agents:
             rand_num = random.random()
-            if rand_num < infection_prob: # Agent is now exposed
+            if rand_num < infection_prob:  # Agent is now exposed
                 agent.change_state("E")
 
 

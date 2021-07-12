@@ -1,9 +1,13 @@
 import random
 import CovidAgents
+import spaces
 from CovidAgents import initialize_leaves
-from Schedule import create_spaces, assign_dorms, assign_faculty_classes, assign_student_classes, add_class_to_schedule, assign_dining_times, assign_gym, assign_remaining_time
-from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS
+from Schedule import create_spaces, assign_dorms, assign_faculty_classes, assign_student_classes, add_class_to_schedule, \
+    assign_dining_times, assign_gym, assign_remaining_time
+from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SCHEDULE_DAYS
 from spaces import Dorm, Academic
+from Schedule import all_transit_spaces
+
 
 def initialize():
     # initialize agents - list of agents
@@ -106,10 +110,18 @@ def initialize():
         for j in time_range:
             day_time.append([i, j])
     # -------------------------------------------------------------------------------------------
+    # create transit spaces for each [day, time]
+    # all_transit_spaces = create_spaces("TransitSpace")
+    """
+    all_transit_spaces = []
+    for i in day_time:
+        all_transit_spaces.append(MySpaces.TransitSpace(i[0], i[1]))
+    """
+    # -------------------------------------------------------------------------------------------
     # SCHEDULING FUNCTIONS
     initialize_leaves(agent_list)
 
-    assign_dorms(dorms, on_campus_students)
+    assign_dorms(dorms, on_campus_students, off_campus_students)
     """  # CODE TO CHECK IF DORM ASSIGNMENT WORKS
     # prints all the agents in each dorm
     for dorm in dorms:
@@ -178,8 +190,41 @@ def initialize():
     arts_office_spaces = create_spaces("Office", 10, "Arts")
     humanities_office_spaces = create_spaces("Office", 10, "Humanities")
     off_campus_space = create_spaces("OffCampus")
-
     assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, arts_office_spaces, humanities_office_spaces, off_campus_space)
+
+
+
+
+    """# CODE PRINTS AGENTS' SCHEDULE & THE TRANSIT SPACES THEY'RE ASSIGNED TO
+    for agent in agent_list:
+        print(agent.type)
+        print(agent.schedule)
+
+        transit_spaces = []
+
+        for day in SCHEDULE_DAYS:
+            for time in range(15):
+                transit = all_transit_spaces[day][time]
+                if agent in transit.agents:
+                    transit_spaces.append([transit.day, transit.time])
+        print(transit_spaces)
+        print("----------------------------------------------------------------------------------------------------------------")
+    """
+
+
+    # CODE TO CHECK IF TRANSIT SPACE ASSIGNMENT IS DONE PROPERLY
+    for agent in agent_list:
+        # print(agent.type)
+        # print(agent.schedule)
+
+        for day in SCHEDULE_DAYS:
+            for i in range(14):
+                day_schedule = agent.schedule.get(day)
+                if day_schedule[i] != day_schedule[i + 1]:
+                    # print("there should be transit space")
+                    if agent not in all_transit_spaces[day][i + 1].agents:  # if agent is not assigned to a transit space that they are supposed to be assigned to
+                        print("NOT IN TRANSIT SPACE")
+
 
 
 initialize()
