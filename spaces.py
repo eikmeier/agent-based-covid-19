@@ -310,17 +310,13 @@ class Academic(Space):
             self.classrooms[i].faculty = None
 
         for j in range(CLASSROOMS.get(self.size)[1]):  # Insert medium classrooms
-            self.classrooms.append(
-                SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
+            self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
             self.classrooms[j + CLASSROOMS.get(self.size)[0]].seats = ACADEMIC_SUBSPACE_SEATS.get("Medium")
             self.classrooms[j + CLASSROOMS.get(self.size)[0]].faculty = None
 
         for k in range(CLASSROOMS.get(self.size)[2]):  # Insert large classrooms
-            self.classrooms.append(
-                SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
-            self.classrooms[
-                k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].seats = ACADEMIC_SUBSPACE_SEATS.get(
-                "Large")
+            self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
+            self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].seats = ACADEMIC_SUBSPACE_SEATS.get("Large")
             self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].faculty = None
 
     def __str__(self):
@@ -372,15 +368,12 @@ class Academic(Space):
         """
         random.shuffle(self.classrooms)
         for classroom in self.classrooms:
-            if len(classroom.agents) < (
-                    classroom.seats + 1):  # if there are available seats in the classroom (should have +1 because it includes faculty)
+            if len(classroom.agents) < (classroom.seats + 1):  # if there are available seats in the classroom (should have +1 because it includes faculty)
                 classroom.agents.append(agent)
 
-                if len(classroom.agents) == (
-                        classroom.seats + 1):  # if classroom becomes full after assigning the current agent, change classroom.status to "Full"
+                if len(classroom.agents) == (classroom.seats + 1):  # if classroom becomes full after assigning the current agent, change classroom.status to "Full"
                     classroom.status = "Full"
-                if all(room.status == "Full" for room in
-                       self.classrooms):  # if all the classrooms in the building are full, change academic building status to "Full"
+                if all(room.status == "Full" for room in self.classrooms):  # if all the classrooms in the building are full, change academic building status to "Full"
                     self.status = "Full"
                 return classroom
             else:  # when classroom is full (no more seats)
@@ -396,8 +389,7 @@ class SocialSpace(Space):
          global_constants.py. The space itself does not have a cv or rv because the core social space has no actual meaning.\n
         """
         self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Social Space"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Social Space"))] * SPACE_SUBSPACE_AMOUNT.get(
-            "Social Space")
+                                SUBSPACE_RISK_MULTIPLIERS.get("Social Space"))] * SPACE_SUBSPACE_AMOUNT.get("Social Space")
         self.day = day
         self.time = time
         # RV set to 0 so it is impossible to spread infection in the social space core, since the core has no meaning

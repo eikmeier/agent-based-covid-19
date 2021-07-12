@@ -80,7 +80,6 @@ def assign_dorms(dorms, on_campus_students, off_campus_students):
                 doubles_students.append(agent)
             if agent.dorm_building.status == "Full":
                 available_dorms.remove(agent.dorm_building)
-
             for day in SCHEDULE_DAYS:  # For on-campus students, each day begins and ends in their assigned dorm room at 8 and 22.
                 agent.schedule[day][0] = "Dorm"
                 agent.schedule[day][14] = "Dorm"

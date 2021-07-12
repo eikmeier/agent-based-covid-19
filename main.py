@@ -246,6 +246,5 @@ def update():
                         print("NOT IN TRANSIT SPACE")
 
 
-
 initialize()
 
