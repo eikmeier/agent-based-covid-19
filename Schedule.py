@@ -108,20 +108,21 @@ def assign_dorms(dorms, on_campus_students, off_campus_students):
     # list of available dorms that are not fully occupied
     available_dorms = copy.copy(dorms)
 
+def assign_dorms(dorms, agent_list):
     # randomly assigns agents(on-campus students) to dorms
+    on_campus_students = [agent for agent in agent_list if agent.type == "On-campus Student"]
+    off_campus_students = [agent for agent in agent_list if agent.type == "Off-campus Student"]
     for agent in on_campus_students:
-        if len(dorms) == 0:  # if there are no available dorms (all dorms are full)
-            print("All dorms are fully occupied")
-        else:
-            agent.dorm_building = random.choice(available_dorms)
-            agent.dorm_room = agent.dorm_building.assign_agent(agent)
-            if agent.dorm_room in agent.dorm_building.doubles:
-                doubles_students.append(agent)
-            if agent.dorm_building.status == "Full":
-                available_dorms.remove(agent.dorm_building)
-            for day in SCHEDULE_DAYS:  # For on-campus students, each day begins and ends in their assigned dorm room at 8 and 22.
-                agent.schedule[day][0] = "Dorm"
-                agent.schedule[day][14] = "Dorm"
+        for day in SCHEDULE_DAYS:  # For on-campus students, each day begins and ends in their assigned dorm room at 8 and 22.
+            agent.schedule[day][0] = "Dorm"
+            agent.schedule[day][14] = "Dorm"
+        random.shuffle(dorms)
+        for dorm_building in dorms:
+            agent.dorm_room = dorm_building.assign_agent(agent)
+            if agent.dorm_room != False:
+                if agent.dorm_room in dorm_building.doubles:
+                    doubles_students.append(agent)
+                break
 
     for agent in off_campus_students:  # For off-campus students, A and B days begin and end at their off-campus house at times 8, 9 and 18–22.
         for day in SCHEDULE_WEEKDAYS:
