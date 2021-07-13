@@ -35,13 +35,13 @@ class Space:
         Spreads infection at a given space by changing a variable amount of agent states from "S" to "E".\n
         Also spreads infection in all the subspaces a space has.
         """
-        for leaf in self.leaves: # First, spread infection in all the leaves
+        for leaf in self.leaves:  # First, spread infection in all the leaves
             leaf.spread_infection()
         susceptible_agents = self.get_agents("S")
         infection_prob = self.get_infection_prob() / 100.0
         for agent in susceptible_agents:
             rand_num = random.random()
-            if rand_num < infection_prob: # Agent is now exposed
+            if rand_num < infection_prob:  # Agent is now exposed
                 agent.change_state("E")
                 agent.exposed_space = self
 

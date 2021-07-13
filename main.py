@@ -217,11 +217,11 @@ def initialize():
 initialize()
 
 
-"""
+
 def update():
     for week in range(SIMULATION_LENGTH):
         for day in ['A', 'B', 'A', 'B', 'A', 'W', 'S']:
-            day_index = 0 # Default day is 'A'
+            day_index = 0  # Default day is 'A'
             if day == 'B':
                 day_index = 1
             elif day == 'W':
@@ -239,4 +239,4 @@ def update():
             change_states(agent_list)
         infected_agents = [agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie" or agent.seir == "R"]
 
-"""
+
