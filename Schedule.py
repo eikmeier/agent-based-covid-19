@@ -49,6 +49,35 @@ def create_dorms():
         dorms.append(Dorm("Large"))
     return dorms
 
+def create_academic_spaces(stem_buildings, humanities_buildings, arts_buildings):
+    # create academic buildings (STEM, Humanities, Arts) for class times ([10AM, 12PM, 14PM, 16PM] - index [2, 4, 6, 8])
+    # one list of all the classrooms at specific day(A or B) and time (2, 4, 6, 8)
+
+    # create all buildings at all day and times -> First list is split up by Day A and then Day B. Then list is split up by times (10, 12, 14, 16). Then,
+    # finally, each entry at a specific day and time contains all academic buildings.
+    academic_buildings = [stem_buildings, humanities_buildings, arts_buildings]
+    for i in range(8):
+        for index, building_list in enumerate(academic_buildings):
+            if i // 4 == 0:
+                day_type = 'A'
+            else:
+                day_type = 'B'
+
+            if index == 0:
+                division = "STEM"
+            elif index == 1:
+                division = "Humanities"
+            else: # index == 2
+                division = "Arts"
+
+            for j in range(ACADEMIC_BUILDINGS.get(division)[0]):
+                building_list[i // 4][i % 4].append(Academic("Small", day_type, 2 + 2 * (i % 4)))
+            for k in range(ACADEMIC_BUILDINGS.get(division)[1]):
+                building_list[i // 4][i % 4].append(Academic("Medium", day_type, 2 + 2 * (i % 4)))
+            for l in range(ACADEMIC_BUILDINGS.get(division)[2]):
+                building_list[i // 4][i % 4].append(Academic("Large", day_type, 2 + 2 * (i % 4)))
+    return academic_buildings
+
 def assign_meal(agent, day, start_hour, end_hour, dhArr):
     """
     Assigns a meal to an agent on a given day, start_hour, and end_hour.\n
