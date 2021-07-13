@@ -132,244 +132,113 @@ def assign_dorms(dorms, agent_list):
 
 
 # CLASS ASSIGNMENT ------------------------------------------------------------------------------------------------------------------------------------
-def assign_faculty_classes(day_time, academic_buildings, faculty_by_major):
-    # dictionary of number of available classrooms for each timeslot for each major
-    stem_available_timeslots = {}  # {'A2': 49, 'A4': 49, 'A6': 49, 'A8': 49, 'B2': 49, 'B4': 49, 'B6': 49, 'B8': 49}
-    humanities_available_timeslots = {}  # {'A2': 24, 'A4': 24, 'A6': 24, 'A8': 24, 'B2': 24, 'B4': 24, 'B6': 24, 'B8': 24}
-    arts_available_timeslots = {}  # {'A2': 22, 'A4': 22, 'A6': 22, 'A8': 22, 'B2': 22, 'B4': 22, 'B6': 22, 'B8': 22}
-    available_timeslots = [stem_available_timeslots, humanities_available_timeslots, arts_available_timeslots]
-    for major in available_timeslots:
-        major_index = available_timeslots.index(major)
 
-        if major_index == 0:
-            major_timeslots = "STEM"
-        elif major_index == 1:
-            major_timeslots = "Humanities"
-        else:  # if major_index == 2
-            major_timeslots = "Arts"
+def assign_agents_to_classes(academic_buildings, agent_list):
+    faculty = [agent for agent in agent_list if agent.type == "Faculty"]
+    students = [agent for agent in agent_list if agent.type != "Faculty"]
 
-        # list of the number of small/medium/large buildings for each major
-        num_of_buildings = ACADEMIC_BUILDINGS.get(major_timeslots)
-        # total number of classrooms for each major
-        num_of_classrooms = num_of_buildings[0] * sum(CLASSROOMS.get("Small")) + num_of_buildings[1] * sum(
-            CLASSROOMS.get("Medium")) + num_of_buildings[2] * sum(CLASSROOMS.get("Large"))
+    assign_faculty_classes(academic_buildings, faculty)
+    assign_student_classes(academic_buildings, students)
 
-        for dt in day_time:
-            available_timeslots[major_index].update({dt[0] + str(dt[1]): num_of_classrooms})
+def assign_faculty_classes(academic_buildings, faculty_list):
+    # list of faculty by division
+    stem_faculty = [faculty for faculty in faculty_list if faculty.division == "STEM"]
+    humanities_faculty = [faculty for faculty in faculty_list if faculty.division == "Humanities"]
+    arts_faculty = [faculty for faculty in faculty_list if faculty.division == "Arts"]
+    faculty_by_division = [stem_faculty, humanities_faculty, arts_faculty]
+    remaining_buildings = []
 
-    # assign faculty to two timeslots until there are no more timeslots in the agent's major
-    remaining_faculty = []  # list of faculty who can't get a class of their major (because the major classrooms are out of space)
+    for division in academic_buildings:
+        division_index = academic_buildings.index(division)
+        division_faculty = faculty_by_division[division_index]
 
-    for major in available_timeslots:
-        num_of_classrooms = list(major.values())[
-            0]  # number of classrooms for every timeslot (they're all the same for same majors)
-        major_index = available_timeslots.index(major)
-        major_faculty = copy.copy(faculty_by_major[major_index])
-        major_timeslots = available_timeslots[major_index]
-
-        for i in range(num_of_classrooms):
-            class_day_time = copy.copy(day_time)
-
-            if len(major_faculty) < 4:
-                four_faculty = copy.copy(major_faculty)
-            else:
-                four_faculty = random.sample(major_faculty, k=4)
-
-            for faculty in four_faculty:
-                two_classes = random.sample(class_day_time, k=2)
-                for classes in two_classes:
-                    class_day_time.remove(classes)
-                    timeslot = classes[0] + str(classes[1])
-                    major_timeslots[timeslot] -= 1
-                    faculty.class_times.append([classes,
-                                                major_index])  # appending [[day, time], major] of classroom because there will be agents who are assigned to classes that are not of their major
-
-                major_faculty.remove(faculty)
-
-        for faculty in major_faculty:
-            remaining_faculty.append(faculty)
-    # print(available_timeslots)
-
-    remaining_majors = copy.copy(available_timeslots)  # list of major buildings that still have available timeslots
-    for major in remaining_majors:
-        if all(elem == 0 for elem in major.values()):
-            remaining_majors.remove(major)
-    random.shuffle(remaining_majors)
-
-    # assign remaining faculty to timeslots of different majors that have available timeslots
-    for major in remaining_majors:
-        major_index = remaining_majors.index(major)
-        major_timeslots = remaining_majors[major_index]
-
-        for i in range(max(major.values())):
-            available_times = []  # list of available timeslots in the major building
-            for time in major.keys():
-                if major.get(time) != 0:
-                    available_times.append(time)
-
-            if len(remaining_faculty) < (len(available_times) // 2):
-                other_major_faculty = copy.copy(remaining_faculty)
-            else:
-                other_major_faculty = random.sample(remaining_faculty, k=(len(available_times) // 2))
-
-            for faculty in other_major_faculty:
-
-                two_timeslots = random.sample(available_times, k=2)
-                for timeslot in two_timeslots:
-                    available_times.remove(timeslot)
-                    faculty.class_times.append([[timeslot[0], int(timeslot[1])], available_timeslots.index(
-                        major)])  # appending [[day, time], major] of classroom
-                    major_timeslots[timeslot] -= 1
-
-                remaining_faculty.remove(faculty)
-    # print(available_timeslots)
-
-    # now assign all faculty to classes of corresponding major and [day, time]
-    for major in academic_buildings:
-        for day in major:
+        for day in division:
             for time in day:
-
-                major_index = academic_buildings.index(major)
-                day_index = major.index(day)
-                if day_index == 0:
-                    class_day = "A"
-                else:  # day_index == 1:
-                    class_day = "B"
-                time_index = (day.index(time) + 1) * 2
-
-                class_faculty = []
-                # for faculty in faculty_list:
-                #   if faculty.class_times[0] == [[class_day, time_index], major_index] or faculty.class_times[1] == [[class_day, time_index], major_index]:
-                #      class_faculty.append(faculty)
-                for major_faculty in faculty_by_major:
-                    for faculty in major_faculty:
-                        if faculty.class_times[0] == [[class_day, time_index], major_index] or faculty.class_times[1] == [[class_day, time_index], major_index]:
-                            class_faculty.append(faculty)
-
                 for building in time:
-                    if len(class_faculty) < len(building.classrooms):
-                        class_num = len(class_faculty)
-                    else:
-                        class_num = len(building.classrooms)
+                    class_num = len(building.classrooms)  # number of classrooms in building
+                    select_faculty = []
+                    zero_class_faculty = [faculty for faculty in division_faculty if faculty.num_of_classes == 0]
+                    one_class_faculty = [faculty for faculty in division_faculty if faculty.num_of_classes == 1]
+                    random.shuffle(zero_class_faculty)
+                    random.shuffle(one_class_faculty)
+                    for faculty in copy.copy(zero_class_faculty + one_class_faculty):
+                        if len(select_faculty) == class_num:
+                            break
+                        elif faculty.num_of_classes == 1:
+                            # if faculty is already assigned to one class with the same [day, time] as the current building, exclude from selection
+                            if faculty.schedule.get(building.day)[building.time] == None:
+                                select_faculty.append(faculty)
+                        else:
+                            select_faculty.append(faculty)
+                    for faculty in select_faculty:
+                        building.assign_agent(faculty)  # assign agent to a classroom
+                        if faculty.num_of_classes == 2:  # if agent is already assigned to 2 classes, remove them from list
+                            division_faculty.remove(faculty)
 
-                    for i in range(class_num):
-                        classroom = building.assign_agent(class_faculty[0])
-                        class_faculty[0].classes.append(classroom)
-                        class_faculty.remove(class_faculty[0])
+                    if len(select_faculty) < class_num:  # after assigning all selected faculty, if building is not full (with faculty) and has remaining classrooms that need faculty assigned
+                        remaining_buildings.append(building)
 
-    # if order of class times and classroom may not match, switch the order of first and second classroom to make it match
-    for major_faculty in faculty_by_major:
-        for faculty in major_faculty:
-            if [faculty.classes[0].space.day, faculty.classes[0].space.time] != faculty.class_times[0][0]:
-                second_class = faculty.classes[0]
-                faculty.classes.remove(second_class)
-                faculty.classes.append(second_class)  # remove and then append again to organize order
+    remaining_faculty = [faculty for division in faculty_by_division for faculty in division]
 
+    for faculty in copy.copy(remaining_faculty):
+        for building in copy.copy(remaining_buildings):
+            if faculty.schedule.get(building.day)[building.time] == None:
+                classroom = building.assign_agent(faculty)  # assign agent to a classroom
+                
+                if classroom == None:
+                    remaining_buildings.remove(building)
+                else:
+                    remaining_faculty.remove(faculty)
+                    break # No need to go through the other buildings for this faculty since they have been successfully assigned
 
-# -----------------------------------------------------------------------------------------------------------------------------------
-def assign_student_classes(day_time, academic_buildings, student_by_major):
-    # assign two major classes to student agents
-    for major_student in student_by_major:
-        for agent in major_student:
-            # for agent in student_list:
-            day_time_copy = copy.copy(day_time)
-            class_times = random.sample(day_time_copy, k=2)
-            day_time_copy.remove(class_times[0])
-            day_time_copy.remove(class_times[1])
-            class_num = 0
+def assign_student_classes(academic_buildings, student_list):
+    time_range = [2, 4, 6, 8]  # index of time slots for classes
+    day_time = [[day, time] for day in SCHEDULE_WEEKDAYS for time in time_range] # [day, time] combinations for classes
+    # First randomly assign an agent's 2 division classes
+    for agent in student_list:
+        # Class assignment for each day & time
+        agent.class_times = random.sample(day_time, k=4)
+        division_index = agent.get_division_index()
 
-            while class_num < 2:
-                class_time = class_times[class_num]
-                other_majors = [0, 1, 2]
-                major_index = agent.get_major_index()
-                other_majors.remove(major_index)
+        while agent.num_of_classes < 2:  # select two classes within agent's division
+            class_time = agent.class_times[agent.num_of_classes]
 
-                if class_time[0] == "A":
-                    day_index = 0
-                else:  # if class_time[0] == "B"
-                    day_index = 1
-                time_index = class_time[1] // 2 - 1
+            # We want to get a building from this division, at the time and day we have been given, and then assign an agent to that space.
+            day = 0
+            if class_time[0] == 'B':
+                day = 1
+            
+            division_spaces = academic_buildings[division_index][day][int((class_time[1] - 2) / 2)]
+            for space in copy.copy(division_spaces):
+                classroom = space.assign_agent(agent)
+                if classroom != None:
+                    """
+                    if agent.schedule.get(class_time[0])[class_time[1] + 1] == space:
+                        all_transit_spaces[class_time[0]][class_time[1]].agents.remove(agent) # Remove agent from that time
+                    elif agent.schedule.get(class_time[0])[class_time[1] - 1] != space:  # If previous agent's location is not the classroom that has just been assigned,
+                        all_transit_spaces[class_time[0]][class_time[1]].agents.append(agent)  # assign agent to transit space at corresponding [day, time]
+                    """
+                    break
 
-                major_buildings = academic_buildings[major_index][day_index][
-                    time_index]  # list of buildings at the corresponding [day, time]
-                random.shuffle(major_buildings)
-
-                while all(building.status == "Full" for building in major_buildings):
-                    major_index = random.choice(other_majors)
-                    major_buildings = academic_buildings[major_index][day_index][time_index]
-                    other_majors.remove(major_index)
-
-                for building in major_buildings:
-                    if building.status == "Full":
-                        continue
-                    else:
-                        classroom = building.assign_agent(agent)
-                        agent.classes.append(classroom)
-                        agent.class_times.append([class_time, major_index])
-                        break
-
-                class_num += 1
-
-    # assign two other classes (not necessarily of their major) to student agents
-    for major_student in student_by_major:
-        for agent in major_student:
-            # for agent in student_list:
-            day_time_copy = copy.copy(day_time)
-            day_time_copy.remove(agent.class_times[0][0])
-            day_time_copy.remove(agent.class_times[1][0])
-            class_times = random.sample(day_time_copy, k=2)
-            day_time_copy.remove(class_times[0])
-            day_time_copy.remove(class_times[1])
-            class_num = 0
-
-            while class_num < 2:
-                class_time = class_times[class_num]
-                other_majors = [0, 1, 2]
-                major_index = random.randint(0, 2)
-                other_majors.remove(major_index)
-
-                if class_time[0] == "A":
-                    day_index = 0
-                else:  # if class_time[0] == "B"
-                    day_index = 1
-                time_index = class_time[1] // 2 - 1
-
-                major_buildings = academic_buildings[major_index][day_index][
-                    time_index]  # list of buildings at the corresponding [day, time]
-                random.shuffle(major_buildings)
-
-                while all(building.status == "Full" for building in major_buildings):
-                    major_index = random.choice(other_majors)
-                    major_buildings = academic_buildings[major_index][day_index][time_index]
-                    other_majors.remove(major_index)
-
-                for building in major_buildings:
-                    if building.status == "Full":
-                        continue
-                    else:
-                        classroom = building.assign_agent(agent)
-                        agent.classes.append(classroom)
-                        agent.class_times.append([class_time, major_index])
-                        break
-
-                class_num += 1
-
-
-def add_class_to_schedule(agent_list):
-    # after all agents have been assigned to classes, add the classes into their schedule attribute
-    for agent in agent_list:
-        # add assigned classes to agent's schedule attribute
-        for classroom in agent.classes:
-            i = agent.classes.index(classroom)
-            class_timeslot = agent.class_times[i][0]  # [day, time] of i-th class
-            class_day = class_timeslot[0]
-            class_time = class_timeslot[1]
-            agent.schedule[class_day][class_time] = classroom
-            agent.schedule[class_day][class_time + 1] = classroom
-
-            if agent.schedule[class_day][class_time - 1] != classroom:  # If previous agent's location is not the classroom that has just been assigned,
-                all_transit_spaces[class_day][class_time].agents.append(agent)  # assign agent to transit space at corresponding [day, time]
-
+    # Next, randomly assign 2 non-division classes
+    for agent in student_list:
+        while agent.num_of_classes < 4:  # select two classes regardless of agent's division
+            class_time = agent.class_times[agent.num_of_classes]
+            # We want to get a building from this division, at the time and day we have been given, and then assign an agent to that space.
+            day = 0 # Day is by default 'A'
+            if class_time[0] == 'B':
+                day = 1
+            other_spaces = academic_buildings[random.randint(0, 2)][day][int((class_time[1] - 2) / 2)]
+            for space in other_spaces:
+                classroom = space.assign_agent(agent)
+                if classroom is not None:
+                    """
+                    if agent.schedule.get(class_time[0])[class_time[1] + 1] == space:
+                        all_transit_spaces[class_time[0]][class_time[1] + 1].agents.remove(agent) # Remove agent from that time
+                    elif agent.schedule.get(class_time[0])[class_time[1] - 1] != space:  # If previous agent's location is not the classroom that has just been assigned,
+                        all_transit_spaces[class_time[0]][class_time[1]].agents.append(agent)  # assign agent to transit space at corresponding [day, time]
+                    """
+                    break
 
 # DINING HALL / GYM / LIBRARY ####################################################################################################################
 def assign_dining_times(agent_list, dining_hall_space):
