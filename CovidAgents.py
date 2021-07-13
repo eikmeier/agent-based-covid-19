@@ -9,7 +9,7 @@ vaccine_percentage = 0.5
 face_mask_comp = 0.5
 screening_comp = 0.5
 type_ratio = [500/2380.0, 380/2380.0]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
-major_ratio = [0.25, 0.25]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
+division_ratio = [0.25, 0.25]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
 initial_infection = 10/2380.0  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
 social_ratio = 0.5  # proportion of students that are social
 
@@ -24,11 +24,10 @@ class Agent:
             ag.face_mask = 0  # face_mask compliance
             ag.screening = 0  # screening test compliance
             ag.type = "On-campus Student"
-            ag.major = "STEM"  # agent subtype/major (either STEM, Humanities, or Arts)
+            ag.division = "STEM"  # agent subtype/division (either STEM, Humanities, or Arts)
             ag.seir = "S"  # agent infection states (either "S", "E", "Ia", "Im", "Ie", "R")
             ag.exposed_space = None # By default, agents do not have a space that exposed them
-            ag.classes = []  # list of subspaces/classrooms
-            ag.class_times = []  # list of [[day, time], major_index]
+            ag.class_times = []  # list of [[day, time], division_index]
             ag.social = False  # default value is that an agent is not social
             ag.schedule = {"A": [None] * 15, "B": [None] * 15, "W": [None] * 15}  # time range is from 8 ~ 22, which is 15 blocks & class times are at index 2, 4, 6, 8
             ag.days_in_state = 0
@@ -64,7 +63,7 @@ class Agent:
             select_type[i].type = "Faculty"
             i += 1
 
-        # MAJOR (STEM/HUMANITIES/ARTS): randomly select and assign a certain proportion of agents as "Humanities" and "Arts"
+        # division (STEM/HUMANITIES/ARTS): randomly select and assign a certain proportion of agents as "Humanities" and "Arts"
         faculty_list = []
         student_list = []
         for ag in agents:
@@ -73,17 +72,17 @@ class Agent:
             else:  # if agent is a student
                 student_list.append(ag)
 
-        select_major_faculty = random.sample(faculty_list, k=int(len(faculty_list) * (major_ratio[0] + major_ratio[1])))
-        select_major_student = random.sample(student_list, k=int(len(student_list) * (major_ratio[0] + major_ratio[1])))
-        select_major = [select_major_faculty, select_major_student]
+        select_division_faculty = random.sample(faculty_list, k=int(len(faculty_list) * (division_ratio[0] + division_ratio[1])))
+        select_division_student = random.sample(student_list, k=int(len(student_list) * (division_ratio[0] + division_ratio[1])))
+        select_division = [select_division_faculty, select_division_student]
 
-        for select in select_major:
+        for select in select_division:
             i = 0
-            while i < (len(select) * (major_ratio[0] / (major_ratio[0] + major_ratio[1]))):
-                select[i].major = "Humanities"
+            while i < (len(select) * (division_ratio[0] / (division_ratio[0] + division_ratio[1]))):
+                select[i].division = "Humanities"
                 i += 1
             while i < len(select):
-                select[i].major = "Arts"
+                select[i].division = "Arts"
                 i += 1
 
         # INITIAL INFECTION: randomly select and assign agents that are initially infected
@@ -102,8 +101,8 @@ class Agent:
 
         # print all agents and their attributes
         # for ag in agents:
-            # print([ag.vaccinated, ag.face_mask, ag.screening, ag.type, ag.major, ag.seir, ag.social, ag.schedule])
-            # print([ag.type, ag.major])
+            # print([ag.vaccinated, ag.face_mask, ag.screening, ag.type, ag.division, ag.seir, ag.social, ag.schedule])
+            # print([ag.type, ag.division])
 
         initialize_leaves(agents)
         return agents
@@ -115,25 +114,25 @@ class Agent:
         self.seir = state
         self.days_in_state = 0
 
-    def get_major_index(self):
+    def get_division_index(self):
         """
-        Returns a number, 0-2, representing the major of an agent.\n
-        0 is returned if an agent is in the STEM major.\n
-        1 is returned if an agent is in the Humanities major.\n
-        2 is returned if an agent is in the Arts major.\n
+        Returns a number, 0-2, representing the division of an agent.\n
+        0 is returned if an agent is in the STEM division.\n
+        1 is returned if an agent is in the Humanities division.\n
+        2 is returned if an agent is in the Arts division.\n
         """
-        if self.major == "STEM":
+        if self.division == "STEM":
             return 0
-        elif self.major == "Humanities":
+        elif self.division == "Humanities":
             return 1
-        else:  # self.major == "Arts"
+        else:  # self.division == "Arts"
             return 2
 
     def __str__(self):
-        return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
+        return 'Agent:' + self.type + '/' + self.division + '/' + self.seir
 
     def __repr__(self):
-        return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
+        return 'Agent:' + self.type + '/' + self.division + '/' + self.seir
 
 
     def get_available_hours(self, start_hour, end_hour, day):
@@ -154,12 +153,12 @@ class Agent:
     def __str__(self):
         """
         Returns a string representation of an agent with their type (On campus student, Off campus student, Faculty),
-         their division/major (STEM, Humanities, Arts), and their seir state (S, E, Ia, Im, Ie, R).\n
+         their division/division (STEM, Humanities, Arts), and their seir state (S, E, Ia, Im, Ie, R).\n
         """
-        return 'Agent: ' + self.type + '/' + self.major + '/' + self.seir
+        return 'Agent: ' + self.type + '/' + self.division + '/' + self.seir
     """
     def __repr__(self):
-        return 'Agent:' + self.type + '/' + self.major + '/' + self.seir
+        return 'Agent:' + self.type + '/' + self.division + '/' + self.seir
     """
 def change_states(agents):
     """
@@ -214,17 +213,18 @@ def initialize_leaves(agents):
             random.shuffle(student_agents)
             for count, student in enumerate(student_agents):
                 student.leaves[space][0] = count % SPACE_SUBSPACE_AMOUNT.get(space)
+            #TODO: Should only give leaves to on-campus students
             random.shuffle(student_agents)
             for count, student in enumerate(student_agents):
                 student.leaves[space][1] = count % SPACE_SUBSPACE_AMOUNT.get(space)
         else:
             if space == "Office":
-                stem_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.major == "STEM"]
-                humanities_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.major == "Humanities"]
-                arts_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.major == "Arts"]
-                for major_faculty in [stem_faculty, humanities_faculty, arts_faculty]:
-                    random.shuffle(major_faculty)
-                    for count, faculty in enumerate(major_faculty):
+                stem_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.division == "STEM"]
+                humanities_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.division == "Humanities"]
+                arts_faculty = [agent for agent in agents if agent.type == "Faculty" and agent.division == "Arts"]
+                for division_faculty in [stem_faculty, humanities_faculty, arts_faculty]:
+                    random.shuffle(division_faculty)
+                    for count, faculty in enumerate(division_faculty):
                         faculty.leaves[space] = count % SPACE_SUBSPACE_AMOUNT.get(space)
             else:  # Gym or Library space
                 random.shuffle(student_agents)
