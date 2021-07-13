@@ -38,6 +38,16 @@ def create_spaces(space, num_hours = 15, division = None):
                 result[i % 3][j % num_hours] = space_class(division, day, j)
     return result
 
+def create_dorms():
+    # Create dorm buildings (25 small, 10 medium, 10 large)
+    dorms = []
+    for i in range(DORM_BUILDINGS.get("Small")):
+        dorms.append(Dorm("Small"))
+    for i in range(DORM_BUILDINGS.get("Medium")):
+        dorms.append(Dorm("Medium"))
+    for i in range(DORM_BUILDINGS.get("Large")):
+        dorms.append(Dorm("Large"))
+    return dorms
 
 def assign_meal(agent, day, start_hour, end_hour, dhArr):
     """
