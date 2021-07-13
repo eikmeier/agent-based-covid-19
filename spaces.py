@@ -163,8 +163,10 @@ class DiningHall(Space):
         self.time = time
         self.cv = SPACE_CAPACITIES.get("Dining Hall")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Dining Hall")
-        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Dining Hall"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Dining Hall"))] * 5
+        self.leaves = []
+        for i in range(5):
+            self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Dining Hall"),
+                                SUBSPACE_RISK_MULTIPLIERS.get("Dining Hall")))
         self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Faculty Dining Leaf"),
                                     SUBSPACE_RISK_MULTIPLIERS.get("Faculty Dining Leaf")))
 
@@ -188,8 +190,10 @@ class Library(Space):
         self.time = time
         self.cv = SPACE_CAPACITIES.get("Library")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Library")
-        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Library"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Library"))] * SPACE_SUBSPACE_AMOUNT.get("Library")
+        self.leaves = []
+        for i in range(SPACE_SUBSPACE_AMOUNT.get("Library")):
+            self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Library"),
+                                SUBSPACE_RISK_MULTIPLIERS.get("Library")))
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Library")].agents.append(agent)
@@ -209,8 +213,10 @@ class Gym(Space):
         """
         self.cv = SPACE_CAPACITIES.get("Gym")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Gym")
-        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Gym"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Gym"))] * SPACE_SUBSPACE_AMOUNT.get("Gym")
+        self.leaves = []
+        for i in range(SPACE_SUBSPACE_AMOUNT.get("Gym")):
+            self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Gym"),
+                                SUBSPACE_RISK_MULTIPLIERS.get("Gym")))
         self.day = day
         self.time = time
 
@@ -242,8 +248,9 @@ class Office(Space):
             self.cv = PASSING_TIME * 6 * 25
             self.subcv = 20
         self.rv = SPACE_RISK_MULTIPLIERS.get("Office")
-        self.leaves = [SubSpace(self, self.subcv, SUBSPACE_RISK_MULTIPLIERS.get("Office"))] * SPACE_SUBSPACE_AMOUNT.get(
-            "Office")
+        self.leaves = []
+        for i in range(SPACE_SUBSPACE_AMOUNT.get("Office")):
+            self.leaves.append(SubSpace(self, self.subcv, SUBSPACE_RISK_MULTIPLIERS.get("Office")))
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Office")].agents.append(agent)
@@ -389,8 +396,10 @@ class SocialSpace(Space):
         The Social Space only has a leaves field, a list of 100 subspaces each initialized with a cv and rv field that is pre-defined in
          global_constants.py. The space itself does not have a cv or rv because the core social space has no actual meaning.\n
         """
-        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Social Space"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Social Space"))] * SPACE_SUBSPACE_AMOUNT.get("Social Space")
+        self.leaves = []
+        for i in range(SPACE_SUBSPACE_AMOUNT.get("Social Space")):
+            self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Social Space"),
+                                SUBSPACE_RISK_MULTIPLIERS.get("Social Space")))
         self.day = day
         self.time = time
         # RV set to 0 so it is impossible to spread infection in the social space core, since the core has no meaning
