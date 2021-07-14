@@ -191,7 +191,7 @@ def assign_faculty_classes(academic_buildings, faculty_list):
                 classroom = building.assign_agent(faculty)  # assign agent to a classroom
                 if faculty.schedule.get(building.day)[building.time + 2] == building: # If the agent is in the same Academic space in 2 hours (after this class finishes)
                     all_transit_spaces[building.day][building.time].agents.remove(faculty) # Remove agent from being in the transit space during this hour
-                elif faculty.schedule.get(building.day)[building.time- 1] != building:  # If the agent is in a different space in the previous hour
+                elif faculty.schedule.get(building.day)[building.time - 1] != building:  # If the agent is in a different space in the previous hour
                     all_transit_spaces[building.day][building.time].agents.append(faculty)  # assign agent to transit space at corresponding [day, time]
                 if classroom == None:
                     remaining_buildings.remove(building)
