@@ -423,40 +423,6 @@ class SocialSpace(Space):
     def __str__(self):
         return 'Social Space'
 
-
-class OffCampus(Space):
-    def __init__(self, day, time):
-        """
-        Initialize an Off Campus Space.\n
-        The Off Campus Space only has a list of agents, as it has no leaves or a defined capacity or risk multiplier.\n
-        """
-        self.agents = []
-        self.day = day
-        self.time = time
-
-    def assign_agent(self, agent):
-        if agent not in self.agents:
-            self.agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Off-Campus Space"
-
-    def get_agents(self, state):
-        """
-        Returns a list of agents in the space with a given state.\n
-        """
-        return [agent for agent in self.agents if agent.seir == state]
-
-    def spread_infection(self):
-        """
-        Upon leaving the off-campus vertex at t= 8, each agent in state S transitions to state E with probability o.
-        For agents returning from off-campus, we choose o=.125 / (no + nf) so that, on average,
-         one off campus agent becomes infected every 8 class days (two weeks).
-        """
-        probability_o = 0.125 / len(self.agents) #TODO: Changed to random.random()
-        for agent in self.get_agents("S"):
-            rand_num = random.random()
-            if rand_num < probability_o:
-                agent.change_state("E")
-
 class SubSpace():
     def __init__(self, space, cv, rv):
         """
