@@ -35,7 +35,6 @@ class Space:
         Spreads infection in the space by changing a variable amount of agent states from "S" to "E".\n
         """
         infection_prob = self.get_infection_prob() / 100.0
-        # print(infection_prob)
         for agent in self.get_agents("S"):
             rand_num = random.random()
             if rand_num < infection_prob:  # Agent is now exposed
@@ -133,6 +132,29 @@ class Dorm(Space):
         if agent not in self.agents:
             self.agents[day_index][time-8].append(agent)
 
+    def get_agents(self, state, day, time):
+        """
+        Returns a list of agents in a Dorm with a given state at a given day and time.\n
+        """
+        return [agent for agent in self.agents[day][time] if agent.seir == state and agent.bedridden == False]
+
+    def get_infection_prob(self, day, time):
+        """
+        Returns the infection probability of a space.\n
+        """
+        return self.rv * ((len(self.get_agents("Ie", day, time)) + len(self.get_agents("Im", day, time)) + 0.5 * len(self.get_agents("Ia", day, time)))
+                          / self.cv) * TUNING_PARAMETER
+
+    def spread_infection_core(self, day, time):
+        """
+        Spreads infection in the space by changing a variable amount of agent states from "S" to "E".\n
+        """
+        infection_prob = self.get_infection_prob(day, time) / 100.0
+        for agent in self.get_agents("S", day, time):
+            rand_num = random.random()
+            if rand_num < infection_prob: # Agent is now exposed
+                agent.change_state("E")
+                agent.exposed_space = self
 
 
 class TransitSpace(Space):
@@ -146,6 +168,12 @@ class TransitSpace(Space):
         self.day = day
         self.time = time
         self.agents = []  # list of agents that were in the transit space at the corresponding [day, time]
+
+    def get_agents(self, state):
+        """
+        Returns a list of agents in the Transit Space with a given state.\n
+        """
+        return [agent for agent in self.agents if agent.seir == state and agent.bedridden == False]
 
     def __str__(self):
         return 'Transit Space'
@@ -163,8 +191,10 @@ class DiningHall(Space):
         self.time = time
         self.cv = SPACE_CAPACITIES.get("Dining Hall")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Dining Hall")
-        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Dining Hall"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Dining Hall"))] * 5
+        self.leaves = []
+        for i in range(5):
+            self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Dining Hall"),
+                                SUBSPACE_RISK_MULTIPLIERS.get("Dining Hall")))
         self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Faculty Dining Leaf"),
                                     SUBSPACE_RISK_MULTIPLIERS.get("Faculty Dining Leaf")))
 
@@ -188,8 +218,10 @@ class Library(Space):
         self.time = time
         self.cv = SPACE_CAPACITIES.get("Library")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Library")
-        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Library"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Library"))] * SPACE_SUBSPACE_AMOUNT.get("Library")
+        self.leaves = []
+        for i in range(SPACE_SUBSPACE_AMOUNT.get("Library")):
+            self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Library"),
+                                SUBSPACE_RISK_MULTIPLIERS.get("Library")))
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Library")].agents.append(agent)
@@ -209,8 +241,10 @@ class Gym(Space):
         """
         self.cv = SPACE_CAPACITIES.get("Gym")
         self.rv = SPACE_RISK_MULTIPLIERS.get("Gym")
-        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Gym"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Gym"))] * SPACE_SUBSPACE_AMOUNT.get("Gym")
+        self.leaves = []
+        for i in range(SPACE_SUBSPACE_AMOUNT.get("Gym")):
+            self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Gym"),
+                                SUBSPACE_RISK_MULTIPLIERS.get("Gym")))
         self.day = day
         self.time = time
 
@@ -242,8 +276,9 @@ class Office(Space):
             self.cv = PASSING_TIME * 6 * 25
             self.subcv = 20
         self.rv = SPACE_RISK_MULTIPLIERS.get("Office")
-        self.leaves = [SubSpace(self, self.subcv, SUBSPACE_RISK_MULTIPLIERS.get("Office"))] * SPACE_SUBSPACE_AMOUNT.get(
-            "Office")
+        self.leaves = []
+        for i in range(SPACE_SUBSPACE_AMOUNT.get("Office")):
+            self.leaves.append(SubSpace(self, self.subcv, SUBSPACE_RISK_MULTIPLIERS.get("Office")))
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Office")].agents.append(agent)
@@ -284,7 +319,7 @@ class LargeGatherings(Space):
         """
         Returns a list of agents in the space with a given state.\n
         """
-        return [agent for agent in self.agents if agent.seir == state]
+        return [agent for agent in self.agents if agent.seir == state and agent.bedridden == False]
 
     def spread_infection(self):
         """
@@ -371,11 +406,11 @@ class Academic(Space):
 
     def assign_faculty(self, agent):
         """
-        Assigns a faculty to a classroom.\n
+        Assigns a faculty to a classroom.\n 
         If a classroom was able to assign the faculty, then the classroom is returned.\n
         Otherwise, None is returned.\n
         """
-        for classroom in self.classrooms:
+        for classroom in self.classrooms: 
             if classroom.faculty is None: # if there is no assigned faculty yet, assign agent to classroom
                 classroom.agents.append(agent)
                 classroom.faculty = agent
@@ -389,8 +424,10 @@ class SocialSpace(Space):
         The Social Space only has a leaves field, a list of 100 subspaces each initialized with a cv and rv field that is pre-defined in
          global_constants.py. The space itself does not have a cv or rv because the core social space has no actual meaning.\n
         """
-        self.leaves = [SubSpace(self, SUBSPACE_CAPACITIES.get("Social Space"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Social Space"))] * SPACE_SUBSPACE_AMOUNT.get("Social Space")
+        self.leaves = []
+        for i in range(SPACE_SUBSPACE_AMOUNT.get("Social Space")):
+            self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Social Space"),
+                                SUBSPACE_RISK_MULTIPLIERS.get("Social Space")))
         self.day = day
         self.time = time
         # RV set to 0 so it is impossible to spread infection in the social space core, since the core has no meaning
@@ -415,40 +452,6 @@ class SocialSpace(Space):
         return 'Social Space'
 
 
-class OffCampus(Space):
-    def __init__(self, day, time):
-        """
-        Initialize an Off Campus Space.\n
-        The Off Campus Space only has a list of agents, as it has no leaves or a defined capacity or risk multiplier.\n
-        """
-        self.agents = []
-        self.day = day
-        self.time = time
-
-    def assign_agent(self, agent):
-        if agent not in self.agents:
-            self.agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Off-Campus Space"
-
-    def get_agents(self, state):
-        """
-        Returns a list of agents in the space with a given state.\n
-        """
-        return [agent for agent in self.agents if agent.seir == state]
-
-    def spread_infection(self):
-        """
-        Upon leaving the off-campus vertex at t= 8, each agent in state S transitions to state E with probability o.
-        For agents returning from off-campus, we choose o=.125 / (no + nf) so that, on average,
-         one off campus agent becomes infected every 8 class days (two weeks).
-        """
-        probability_o = 0.125 / len(self.agents) #TODO: Changed to random.random()
-        for agent in self.get_agents("S"):
-            rand_num = random.random()
-            if rand_num < probability_o:
-                agent.change_state("E")
-
-
 class SubSpace():
     def __init__(self, space, cv, rv):
         """
@@ -459,7 +462,6 @@ class SubSpace():
         self.space = space
         self.cv = cv
         self.rv = rv
-        self.status = "Available"
         self.agents = []
 
     def __str__(self):
@@ -489,21 +491,11 @@ class SubSpace():
         """
         return self.space
 
-    def get_infected(self):
-        """
-        Return the number of infected agents in this subspace
-        """
-        n = 0
-        for agent in self.agents:
-            if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie":
-                n += 1
-        return n
-
     def get_agents(self, state):
         """
         Returns a list of agents in the space with a given state.\n
         """
-        return [agent for agent in self.agents if agent.seir == state]
+        return [agent for agent in self.agents if agent.seir == state and agent.bedridden == False]
 
     def get_infection_prob(self):
         """
@@ -521,7 +513,7 @@ class SubSpace():
             rand_num = random.random()
             if rand_num < infection_prob:  # Agent is now exposed
                 agent.change_state("E")
-                agent.exposed_space = self
+                agent.exposed_space = self.space
 
 
 # ***Below are some notes that need to be addressed, along with some notes for future reference***
