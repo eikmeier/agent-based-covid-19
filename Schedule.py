@@ -24,17 +24,17 @@ def create_spaces(space, num_hours=15, division=None):
     result = [[[] for j in range(num_hours)] for i in range(3)]
     all_methods = globals().copy()
     space_class = all_methods.get(space)
-    for i in range(3):
-        for j in range(num_hours):
+    for day_index in range(len(SCHEDULE_DAYS)):
+        for hour in range(num_hours):
             day = 'W'
-            if i % 3 == 0:
+            if day_index % 3 == 0:
                 day = 'A'
-            elif i % 3 == 1:
+            elif day_index % 3 == 1:
                 day = 'B'
             if division is None:
-                result[i % 3][j % num_hours] = space_class(day, j)
+                result[day_index % 3][hour] = space_class(day, hour)
             else:
-                result[i % 3][j % num_hours] = space_class(division, day, j)
+                result[day_index % 3][hour] = space_class(division, day, hour)
     return result
 
 
@@ -198,7 +198,7 @@ def assign_faculty_classes(academic_buildings, faculty_list):
                 classroom = building.assign_agent(faculty)  # assign agent to a classroom
                 if faculty.schedule.get(building.day)[building.time + 2] == building: # If the agent is in the same Academic space in 2 hours (after this class finishes)
                     all_transit_spaces[building.day][building.time].agents.remove(faculty) # Remove agent from being in the transit space during this hour
-                elif faculty.schedule.get(building.day)[building.time- 1] != building:  # If the agent is in a different space in the previous hour
+                elif faculty.schedule.get(building.day)[building.time - 1] != building:  # If the agent is in a different space in the previous hour
                     all_transit_spaces[building.day][building.time].agents.append(faculty)  # assign agent to transit space at corresponding [day, time]
                 if classroom == None:
                     remaining_buildings.remove(building)

@@ -54,7 +54,7 @@ class Space:
         """
         self.spread_infection_leaves()
         self.spread_infection_core()
-        if self.time != 8 and self.time != 22: # If not beginning/end of day, agent has to both enter and exit the core
+        if self.time != 8 and self.time != 22:  # If not beginning/end of day, agent has to both enter and exit the core
             self.spread_infection_core()
 
 class Dorm(Space):
@@ -416,6 +416,7 @@ class Academic(Space):
                 classroom.faculty = agent
                 return classroom
         return None
+
 
 class SocialSpace(Space):
     def __init__(self, day, time):

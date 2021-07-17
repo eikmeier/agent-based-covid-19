@@ -213,9 +213,9 @@ def initialize_leaves(agents):
             random.shuffle(student_agents)
             for count, student in enumerate(student_agents):
                 student.leaves[space][0] = count % SPACE_SUBSPACE_AMOUNT.get(space)
-            #TODO: Should only give leaves to on-campus students
             random.shuffle(student_agents)
-            for count, student in enumerate(student_agents):
+            # Only on-campus students can access a social space on the weekend
+            for count, student in enumerate([student for student in student_agents if student.type == "On-campus Student"]):
                 student.leaves[space][1] = count % SPACE_SUBSPACE_AMOUNT.get(space)
         else:
             if space == "Office":
