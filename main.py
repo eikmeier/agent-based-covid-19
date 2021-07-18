@@ -7,6 +7,7 @@ from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SIM
 from spaces import Dorm, Academic, LargeGatherings
 from Schedule import all_transit_spaces
 import matplotlib.pyplot as plt
+plt.rcParams.update({'figure.autolayout': True}) # A required line so the bar graph labels stay on the screen
 
 # Initialize agents
 agent_list = CovidAgents.Agent().initialize() 
@@ -48,7 +49,7 @@ def initialize():
 def observe(data):
     # Figure out the spaces where everyone got exposed
     data['space_exposures'] = {"Dining Hall": 0, "Gym": 0, "Library": 0, "Large Gatherings": 0, "Social Space": 0, "Office": 0, 
-                               "Academic": 0, "Dorm": 0, "Transit Space": 0, "Off-Campus": 0, "Other": 0}
+                               "Academic": 0, "Dorm": 0, "Transit Space": 0, "Off-Campus": 0}
     for agent in [agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie" or agent.seir == "R"]:
         if "Dining Hall" in str(agent.exposed_space):
             data['space_exposures']["Dining Hall"] += 1
@@ -70,27 +71,29 @@ def observe(data):
             data['space_exposures']["Transit Space"] += 1
         elif "Off-Campus" in str(agent.exposed_space):
             data['space_exposures']["Off-Campus"] += 1
-        elif agent.exposed_space != None:
-            data['space_exposures']["Other"] += 1
-        
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4)
-    fig.suptitle('Looking at new exposures and total infections over 14 weeks')
-    ax1.set_ylabel("New Exposures")
-    ax2.set_ylabel("Total Infections")
-    ax3.set_ylabel("# of Infections")
-    ax4.set_ylabel("# of Agents")
-    ax1.set_xlabel("Day #")
-    ax2.set_xlabel("Day #")
-    ax3.set_xlabel("Spaces")
-    ax4.set_xlabel("Day #")
-    ax1.plot(range(len(data['new_exposures'])), data['new_exposures'])
-    ax2.plot(range(len(data['total_infections'])), data['total_infections'])
-    ax3.bar(data['space_exposures'].keys(), data['space_exposures'].values(), color=['palegreen', 'olivedrab', 'forestgreen', 
-        'limegreen', 'darkgreen', 'green', 'seagreen', 'springgreen', 'yellowgreen', 'lawngreen', 'turquoise', 'teal', 'olive'])
-    ax4.plot(range(len(data['seir_states']['s'])), data['seir_states']['s'], label = "Susceptible Agents")
-    ax4.plot(range(len(data['seir_states']['e'])), data['seir_states']['e'], label = "Exposed Agents")
-    ax4.plot(range(len(data['seir_states']['i'])), data['seir_states']['i'], label = "Infected Agents")
-    ax4.plot(range(len(data['seir_states']['r'])), data['seir_states']['r'], label = "Recovered Agents")
+    
+    data['space_exposures'] = dict(sorted(data['space_exposures'].items(), key=lambda item: item[1], reverse = True))
+
+    plt.figure(0)
+    plt.plot(range(len(data['new_exposures'])), data['new_exposures'])
+    plt.xlabel("Day #")
+    plt.ylabel("New Exposures")
+    plt.figure(1)
+    plt.plot(range(len(data['total_infections'])), data['total_infections'])
+    plt.xlabel("Day #")
+    plt.ylabel("Total Infections")
+    plt.figure(2)
+    plt.xlabel("Spaces")
+    plt.ylabel("# of Infections")
+    plt.xticks(rotation=45, ha="right")
+    plt.bar(data['space_exposures'].keys(), data['space_exposures'].values())
+    plt.figure(3)
+    plt.plot(range(len(data['seir_states']['s'])), data['seir_states']['s'], label = "Susceptible Agents")
+    plt.plot(range(len(data['seir_states']['e'])), data['seir_states']['e'], label = "Exposed Agents")
+    plt.plot(range(len(data['seir_states']['i'])), data['seir_states']['i'], label = "Infected Agents")
+    plt.plot(range(len(data['seir_states']['r'])), data['seir_states']['r'], label = "Recovered Agents")
+    plt.xlabel("Day #")
+    plt.ylabel("# of Agents")
     plt.legend()
     plt.show()
 
