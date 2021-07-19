@@ -7,6 +7,8 @@ from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SIM
 from spaces import Dorm, Academic, LargeGatherings
 from Schedule import all_transit_spaces
 import matplotlib.pyplot as plt
+import time
+
 plt.rcParams.update({'figure.autolayout': True}) # A required line so the bar graph labels stay on the screen
 
 # Initialize agents
@@ -32,16 +34,6 @@ def initialize():
 
     assign_gym(agent_list, gym_spaces)
     assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, arts_office_spaces, humanities_office_spaces)
-
-    # CODE TO CHECK IF TRANSIT SPACE ASSIGNMENT IS DONE PROPERLY
-    for agent in agent_list:
-        for day in SCHEDULE_DAYS:
-            for i in range(14):
-                day_schedule = agent.schedule.get(day)
-                if day_schedule[i] != day_schedule[i + 1]:
-                    # print("there should be transit space")
-                    if agent not in all_transit_spaces[day][i + 1].agents:  # if agent is not assigned to a transit space that they are supposed to be assigned to
-                        print(agent.type + " ... NOT IN TRANSIT SPACE: " + str(day_schedule[i]) + ", "  + str(day_schedule[i + 1]) + " [" + str(i) + ", " + str(i+1) + "]")
 
     return [dining_hall_spaces, gym_spaces, library_spaces, social_spaces, stem_office_spaces, humanities_office_spaces, arts_office_spaces , \
         academic_buildings[0], academic_buildings[1], academic_buildings[2], dorms] # Return a list containing all the spaces (to be used in update)
@@ -97,77 +89,90 @@ def observe(data):
     plt.legend()
     plt.show()
 
-def update():
+def update(number_of_simulations):
     spaces = initialize()
     current_exposed = 0
     data = {}
     data['new_exposures'] = [0]
     data['total_infections'] = [0]
     data['seir_states'] = {'s': [], 'e': [], 'i': [], 'r': []}
+    for simulation in range(number_of_simulations):
+        for week in range(SIMULATION_LENGTH):
+            for day in ['A', 'B', 'A', 'B', 'W', 'W', 'S']:
+                day_index = 0 # Default day is 'A'
+                if day == 'B':
+                    day_index = 1
+                elif day == 'W':
+                    day_index = 2
+                elif day == 'S':
+                    large_gatherings = [LargeGatherings(), LargeGatherings(), LargeGatherings()]
+                    for large_gathering in large_gatherings:
+                        large_gathering.assign_agents(random.sample([agent for agent in agent_list if agent.social == True], k=random.randrange(20, 60)))
+                        large_gathering.spread_infection()
+                    break
 
-    for week in range(SIMULATION_LENGTH):
-        for day in ['A', 'B', 'A', 'B', 'A', 'W', 'S']:
-            day_index = 0 # Default day is 'A'
-            if day == 'B':
-                day_index = 1
-            elif day == 'W':
-                day_index = 2
-            elif day == 'S':
-                large_gatherings = [LargeGatherings(), LargeGatherings(), LargeGatherings()]
-                for large_gathering in large_gatherings:
-                    large_gathering.assign_agents(random.sample([agent for agent in agent_list if agent.social == True], k=random.randrange(20, 60)))
-                    large_gathering.spread_infection()
-                break
+                for day in all_transit_spaces:
+                    for transit_space in all_transit_spaces.get(day):
+                        transit_space.spread_infection_core()
 
-            for day in all_transit_spaces:
-                for transit_space in all_transit_spaces.get(day):
-                    transit_space.spread_infection_core()
+                # Off-Campus infection spread
+                off_campus_agents = [agent for agent in agent_list if agent.type == "Faculty" or agent.type == "Off-campus Student"]
+                probability_o = 0.125 / len(off_campus_agents)
+                for agent in [agent for agent in off_campus_agents if agent.seir == "S"]:
+                    rand_num = random.random()
+                    if rand_num < probability_o:
+                        agent.change_state("E")
+                        agent.exposed_space = "Off-Campus"
 
-            # Off-Campus infection spread
-            off_campus_agents = [agent for agent in agent_list if agent.type == "Faculty" or agent.type == "Off-campus Student"]
-            probability_o = 0.125 / len(off_campus_agents)
-            for agent in [agent for agent in off_campus_agents if agent.seir == "S"]:
-                rand_num = random.random()
-                if rand_num < probability_o:
-                    agent.change_state("E")
-                    agent.exposed_space = "Off-Campus"
-
-            for space in spaces:
-                if day_index < len(space): # If the space is open on this day, then spread the infection [NOTE: This requires spaces in the array always be separated by A, B, and W in order]
-                    if "Dorm" in str(space):
-                        for dorm in space:
-                            for day_count, dorm_day in enumerate(dorm.agents):
-                                for dorm_time, agents_in_time in enumerate(dorm_day):
-                                    if dorm_time != 8 or dorm_time != 22:
+                for space in spaces:
+                    if day_index < len(space): # If the space is open on this day, then spread the infection [NOTE: This requires spaces in the array always be separated by A, B, and W in order]
+                        if "Dorm" in str(space):
+                            for dorm in space:
+                                for day_count, dorm_day in enumerate(dorm.agents):
+                                    for dorm_time, agents_in_time in enumerate(dorm_day):
+                                        if dorm_time != 8 or dorm_time != 22:
+                                            dorm.spread_infection_core(day_count, dorm_time)
                                         dorm.spread_infection_core(day_count, dorm_time)
-                                    dorm.spread_infection_core(day_count, dorm_time)
 
-                        for double_dorm_day in doubles_dorm_times:
-                            for double_dorms in double_dorm_day:
-                                for double_dorm in double_dorms:
-                                    double_dorm.spread_infection() # Spreads the infection in the dorm room when both agents are inside
-                    else:
-                        for space_in_time in space[day_index]:
-                            if type(space_in_time) is list:
-                                for space in space_in_time:
-                                    space.spread_in_space()
-                            else:
-                                space_in_time.spread_in_space()
+                            for double_dorm_day in doubles_dorm_times:
+                                for double_dorms in double_dorm_day:
+                                    for double_dorm in double_dorms:
+                                        double_dorm.spread_infection() # Spreads the infection in the dorm room when both agents are inside
+                        else:
+                            for space_in_time in space[day_index]:
+                                if type(space_in_time) is list:
+                                    for space in space_in_time:
+                                        space.spread_in_space()
+                                else:
+                                    space_in_time.spread_in_space()
 
-            change_states(agent_list)
-            exposed_agents = [agent for agent in agent_list if agent.seir == "E" or agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie" or agent.seir == "R"]
-            data['new_exposures'].append(len(exposed_agents) - current_exposed)
-            current_exposed = len(exposed_agents)
-            infected_agents = [agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie" or agent.seir == "R"]
-            data['total_infections'].append(len(infected_agents))
-            data['seir_states']['s'].append(len([agent for agent in agent_list if agent.seir == "S"]))
-            data['seir_states']['e'].append(len([agent for agent in agent_list if agent.seir == "E"]))
-            data['seir_states']['i'].append(len([agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie"]))
-            data['seir_states']['r'].append(len([agent for agent in agent_list if agent.seir == "R"]))
-            print("Day " + day + ", Week " + str(week) + ", # of Infected Agents: " + str(len(infected_agents)))
-    observe(data)
+                change_states(agent_list)
+                exposed_agents = [agent for agent in agent_list if agent.seir == "E" or agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie" or agent.seir == "R"]
+                data['new_exposures'].append(len(exposed_agents) - current_exposed)
+                current_exposed = len(exposed_agents)
+                infected_agents = [agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie" or agent.seir == "R"]
+                data['total_infections'].append(len(infected_agents))
+                data['seir_states']['s'].append(len([agent for agent in agent_list if agent.seir == "S"]))
+                data['seir_states']['e'].append(len([agent for agent in agent_list if agent.seir == "E"]))
+                data['seir_states']['i'].append(len([agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie"]))
+                data['seir_states']['r'].append(len([agent for agent in agent_list if agent.seir == "R"]))
+                #print("Day " + day + ", Week " + str(week) + ", # of Infected Agents: " + str(len(infected_agents)))
+        print("Simulation finished.")
+    observe(data) # Output graphs when all the simulations have finished
 
-update()
+user_input = ""
+while True:
+    print("Please type in the letters for the interventions you want (ex. VF): (V)accines, (F)acemasks, or E to exit the program.")
+    user_input = input()
+    if user_input == "E":
+        print("Successfully exited program.")
+        exit(0)
+    else:
+        print("How many simulations would you like to run with these interventions?")
+        number_of_simulations = int(input())
+        start_time = time.time()
+        update(number_of_simulations)
+        #print("The program took " + str(time.time() - start_time) + " seconds to run")
 
 """
 # Count infections in each space
