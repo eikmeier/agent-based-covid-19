@@ -68,7 +68,7 @@ def create_academic_spaces(stem_buildings, humanities_buildings, arts_buildings)
                 division = "STEM"
             elif index == 1:
                 division = "Humanities"
-            else: # index == 2
+            else:  # index == 2
                 division = "Arts"
 
             for j in range(ACADEMIC_BUILDINGS.get(division)[0]):
@@ -97,7 +97,8 @@ def assign_meal(agent, day, start_hour, end_hour, dhArr):
         meal_hour = random.choice(possible_meal_hours)
         dhArr[day_index][meal_hour].assign_agent(agent)
         if agent.schedule[day][meal_hour - 1] != "Dining Hall":  # If previous agent's location is not Dining Hall,
-            all_transit_spaces[day][meal_hour].agents.append(agent)  # assign agent to transit space at corresponding [day, time]
+            all_transit_spaces[day][meal_hour].agents.append(
+                agent)  # assign agent to transit space at corresponding [day, time]
 
 
 doubles_students = []
@@ -136,7 +137,7 @@ def assign_dorms(dorms, agent_list):
             for hour in range(15):
                 if hour == 0 or hour == 1 or 10 <= hour <= 14:  # hour >= 10 and hour <= 14:
                     agent.schedule[day][hour] = "Off-Campus Space"
-                agent.schedule['W'][hour] = "Off-Campus Space" # Off-Campus agents remain off-campus for the entire day
+                agent.schedule['W'][hour] = "Off-Campus Space"  # Off-Campus agents remain off-campus for the entire day
 
 
 # CLASS ASSIGNMENT ------------------------------------------------------------------------------------------------------------------------------------
@@ -180,10 +181,14 @@ def assign_faculty_classes(academic_buildings, faculty_list):
                             select_faculty.append(faculty)
                     for faculty in select_faculty:
                         building.assign_agent(faculty)  # assign agent to a classroom
-                        if faculty.schedule.get(building.day)[building.time + 2] == building: # If the agent is in the same Academic space in 2 hours (after this class finishes)
-                            all_transit_spaces[building.day][building.time].agents.remove(faculty) # Remove agent from being in the transit space during this hour
-                        elif faculty.schedule.get(building.day)[building.time - 1] != building:  # If the agent is in a different space in the previous hour
-                            all_transit_spaces[building.day][building.time].agents.append(faculty)  # assign agent to transit space at corresponding [day, time]
+                        if faculty.schedule.get(building.day)[
+                            building.time + 2] == building:  # If the agent is in the same Academic space in 2 hours (after this class finishes)
+                            all_transit_spaces[building.day][building.time].agents.remove(
+                                faculty)  # Remove agent from being in the transit space during this hour
+                        elif faculty.schedule.get(building.day)[
+                            building.time - 1] != building:  # If the agent is in a different space in the previous hour
+                            all_transit_spaces[building.day][building.time].agents.append(
+                                faculty)  # assign agent to transit space at corresponding [day, time]
                         if faculty.num_of_classes == 2:  # if agent is already assigned to 2 classes, remove them from list
                             division_faculty.remove(faculty)
 
@@ -196,10 +201,14 @@ def assign_faculty_classes(academic_buildings, faculty_list):
         for building in copy.copy(remaining_buildings):
             if faculty.schedule.get(building.day)[building.time] == None:
                 classroom = building.assign_agent(faculty)  # assign agent to a classroom
-                if faculty.schedule.get(building.day)[building.time + 2] == building: # If the agent is in the same Academic space in 2 hours (after this class finishes)
-                    all_transit_spaces[building.day][building.time].agents.remove(faculty) # Remove agent from being in the transit space during this hour
-                elif faculty.schedule.get(building.day)[building.time - 1] != building:  # If the agent is in a different space in the previous hour
-                    all_transit_spaces[building.day][building.time].agents.append(faculty)  # assign agent to transit space at corresponding [day, time]
+                if faculty.schedule.get(building.day)[
+                    building.time + 2] == building:  # If the agent is in the same Academic space in 2 hours (after this class finishes)
+                    all_transit_spaces[building.day][building.time].agents.remove(
+                        faculty)  # Remove agent from being in the transit space during this hour
+                elif faculty.schedule.get(building.day)[
+                    building.time - 1] != building:  # If the agent is in a different space in the previous hour
+                    all_transit_spaces[building.day][building.time].agents.append(
+                        faculty)  # assign agent to transit space at corresponding [day, time]
                 if classroom == None:
                     remaining_buildings.remove(building)
                 else:
@@ -223,15 +232,19 @@ def assign_student_classes(academic_buildings, student_list):
             day = 0
             if class_time[0] == 'B':
                 day = 1
-            
+
             division_spaces = academic_buildings[division_index][day][int((class_time[1] - 2) / 2)]
             for space in copy.copy(division_spaces):
                 classroom = space.assign_agent(agent)
                 if classroom != None:
-                    if agent.schedule.get(class_time[0])[class_time[1] + 2] == space: # If the agent is in the same Academic space in 2 hours (after this class finishes)
-                        all_transit_spaces[class_time[0]][class_time[1]].agents.remove(agent) # Remove agent from being in the transit space during this hour
-                    elif agent.schedule.get(class_time[0])[class_time[1] - 1] != space:  # If the agent is in a different space in the previous hour
-                        all_transit_spaces[class_time[0]][class_time[1]].agents.append(agent)  # assign agent to transit space at corresponding [day, time]
+                    if agent.schedule.get(class_time[0])[class_time[
+                                                             1] + 2] == space:  # If the agent is in the same Academic space in 2 hours (after this class finishes)
+                        all_transit_spaces[class_time[0]][class_time[1]].agents.remove(
+                            agent)  # Remove agent from being in the transit space during this hour
+                    elif agent.schedule.get(class_time[0])[
+                        class_time[1] - 1] != space:  # If the agent is in a different space in the previous hour
+                        all_transit_spaces[class_time[0]][class_time[1]].agents.append(
+                            agent)  # assign agent to transit space at corresponding [day, time]
                     break
 
     # Next, randomly assign 2 non-division classes
@@ -246,10 +259,14 @@ def assign_student_classes(academic_buildings, student_list):
             for space in other_spaces:
                 classroom = space.assign_agent(agent)
                 if classroom is not None:
-                    if agent.schedule.get(class_time[0])[class_time[1] + 2] == space: # If the agent is in the same Academic space in 2 hours (after this class finishes)
-                        all_transit_spaces[class_time[0]][class_time[1]].agents.remove(agent) # Remove agent from being in the transit space during this hour
-                    elif agent.schedule.get(class_time[0])[class_time[1] - 1] != space:  # If the agent is in a different space in the previous hour
-                        all_transit_spaces[class_time[0]][class_time[1]].agents.append(agent)  # assign agent to transit space at corresponding [day, time]
+                    if agent.schedule.get(class_time[0])[class_time[
+                                                             1] + 2] == space:  # If the agent is in the same Academic space in 2 hours (after this class finishes)
+                        all_transit_spaces[class_time[0]][class_time[1]].agents.remove(
+                            agent)  # Remove agent from being in the transit space during this hour
+                    elif agent.schedule.get(class_time[0])[
+                        class_time[1] - 1] != space:  # If the agent is in a different space in the previous hour
+                        all_transit_spaces[class_time[0]][class_time[1]].agents.append(
+                            agent)  # assign agent to transit space at corresponding [day, time]
                     break
 
 
@@ -279,7 +296,7 @@ def assign_gym(agent_list, gym_spaces):
                 rand_prob = random.random()
                 if rand_prob < PROBABILITY_G:
                     available_times = agent.get_available_hours(8, 22, day)
-                    if available_times: # Assign the time as long as the agent has any available times to go to the gym during the day
+                    if available_times:  # Assign the time as long as the agent has any available times to go to the gym during the day
                         gym_hour = random.choice(available_times)
                         gym_spaces[count][gym_hour].assign_agent(agent)
                         all_transit_spaces[day][gym_hour].agents.append(agent)
@@ -331,7 +348,7 @@ def assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office
                         all_transit_spaces[day][10].agents.append(agent)
         else:
             for count, day in enumerate(SCHEDULE_WEEKDAYS):
-                all_transit_spaces[day][10].agents.append(agent) # All faculty must enter the transit vertex at time 10 in order to get back to their off-campus space
+                all_transit_spaces[day][10].agents.append(agent)  # All faculty must enter the transit vertex at time 10 in order to get back to their off-campus space
                 for hour in agent.get_available_hours(8, 22, day):
                     # Put into appropriate Division Office vertex
                     if agent.division == "STEM":

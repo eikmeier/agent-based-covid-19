@@ -1,27 +1,33 @@
-from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A
+from global_constants import TOTAL_AGENTS, INITIAL_INFECTED, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A
 import random
 
 # n = 10  # number of agents
 # n = 2380, on-campus: 1500, off-campus: 500, faculty: 380
 n = TOTAL_AGENTS
 
-vaccine_percentage = 0.5
+vaccine_percentage = 0  # 10/2380
+face_mask_intervention = "off"
 face_mask_comp = 0.5
 screening_comp = 0.5
 type_ratio = [500/2380.0, 380/2380.0]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
 division_ratio = [0.25, 0.25]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
-initial_infection = 10/2380.0  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
+initial_infection = INITIAL_INFECTED/TOTAL_AGENTS  # 10/2380.0  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
 social_ratio = 0.5  # proportion of students that are social
 
-# ------------------------------------------------------------------------
+
 class Agent:
     def initialize(self):
         # global agents
         agents = []
         for i in range(n):
             ag = Agent()
-            #ag.vaccinated = 0  # vaccination status (0 = not vaccinated, 1 = vaccinated)
+            ag.vaccinated = 0  # vaccination status (0 = not vaccinated, 1 = vaccinated)
+            ag.vaccinated_risk_multiplier = 1
             ag.face_mask = 0  # face_mask compliance
+            ag.face_mask_self_risk_multiplier = {"Dorm": 1, "Academic": 1, "DiningHall": 1, "Gym": 1, "Library": 1, "Office": 1,
+                                                 "SocialSpace": 1, "TransitSpace": 1, "LargeGatherings": 1}
+            ag.face_mask_spread_risk_multiplier = {"Dorm": 1, "Academic": 1, "DiningHall": 1, "Gym": 1, "Library": 1, "Office": 1,
+                                                   "SocialSpace": 1, "TransitSpace": 1, "LargeGatherings": 1}
             ag.screening = 0  # screening test compliance
             ag.type = "On-campus Student"
             ag.division = "STEM"  # agent subtype/division (either STEM, Humanities, or Arts)
@@ -39,14 +45,31 @@ class Agent:
             agents.append(ag)
 
         # VACCINATION: randomly select and assign vaccination to certain proportion of agents
-        #select_vaccine = random.sample(agents, k=int(n * vaccine_percentage))
-        #for ag in select_vaccine:
-        #    ag.vaccinated = 1
+        select_vaccine = random.sample(agents, k=int(n * vaccine_percentage))
+        for ag in select_vaccine:
+            ag.vaccinated = 1
+            ag.vaccinated_risk_multiplier = 1/100
 
         # FACE MASK COMPLIANCE: randomly select and assign face mask compliance to certain proportion of agents
         select_face_mask = random.sample(agents, k=int(n * face_mask_comp))
-        for ag in select_face_mask:
-            ag.face_mask = 1
+        # select_full_face_mask = random.sample(select_face_mask, k=int(len(select_face_mask) * full_face_mask_comp))
+
+        # OPTION 1
+        if face_mask_intervention == "on":
+            for ag in agents:
+                if ag in select_face_mask:  # agents that comply with face masks
+                    ag.face_mask = 1
+                    ag.face_mask_self_risk_multiplier = {"Dorm": 1, "Academic": 0.75, "DiningHall": 1, "Gym": 0.75, "Library": 0.75, "Office": 0.75,
+                                                         "SocialSpace": 0.75, "TransitSpace": 0.75, "LargeGatherings": 0.75}
+                    ag.face_mask_spread_risk_multiplier = {"Dorm": 1, "Academic": 0.5, "DiningHall": 1, "Gym": 0.5, "Library": 0.5, "Office": 0.5,
+                                                           "SocialSpace": 0.5, "TransitSpace": 0.5, "LargeGatherings": 0.5}
+
+                else:  # agents don't comply with face masks (don't wear in social space, large gatherings, dorm cores, etc.)
+                    ag.face_mask_self_risk_multiplier = {"Dorm": 1, "Academic": 0.75, "DiningHall": 1, "Gym": 0.75, "Library": 0.75, "Office": 0.75,
+                                                         "SocialSpace": 1, "TransitSpace": 0.75, "LargeGatherings": 1}
+                    ag.face_mask_spread_risk_multiplier = {"Dorm": 1, "Academic": 0.5, "DiningHall": 1, "Gym": 0.5, "Library": 0.5, "Office": 0.5,
+                                                           "SocialSpace": 1, "TransitSpace": 0.5, "LargeGatherings": 1}
+
 
         #  SCREENING TEST COMPLIANCE: randomly select and assign screening test compliance to certain proportion of agents
         select_screening = random.sample(agents, k=int(n * screening_comp))
@@ -86,12 +109,7 @@ class Agent:
                 i += 1
 
         # INITIAL INFECTION: randomly select and assign agents that are initially infected
-        #no_vaccine = []  # list of agents that haven't been vaccinated
-        #for ag in agents:
-        #    if ag.vaccinated == 0:
-        #        no_vaccine.append(ag)
-        select_seir = random.sample(agents, k=int(
-            n * initial_infection))  # randomly select initial number of agents (that haven't been vaccinated)
+        select_seir = random.sample(agents, k=int(n * initial_infection))  # randomly select initial number of agents (that haven't been vaccinated)
         for ag in select_seir:
             ag.seir = random.choice(["Ia", "Im", "Ie"])  # randomly assign one of the infected states to agents
 
