@@ -131,13 +131,23 @@ def assign_dorms(dorms, agent_list):
                             doubles_dorm_times[day][0].append(agent.dorm_room)
                             doubles_dorm_times[day][14].append(agent.dorm_room)
                 break
-
+    # ORIGINAL - follows paper
     for agent in off_campus_agents:  # For off-campus students, A and B days begin and end at their off-campus house at times 8, 9 and 18–22.
         for day in SCHEDULE_WEEKDAYS:
             for hour in range(15):
                 if hour == 0 or hour == 1 or 10 <= hour <= 14:  # hour >= 10 and hour <= 14:
                     agent.schedule[day][hour] = "Off-Campus Space"
                 agent.schedule['W'][hour] = "Off-Campus Space"  # Off-Campus agents remain off-campus for the entire day
+    """
+    # NEW - follows old code
+    for agent in off_campus_agents:  # For off-campus students and faculty, A and B days begin and end at their off-campus house at times 8, 9 and 18–22.
+        for day in SCHEDULE_DAYS:    # off-campus agents can go to either library, social space, or large gatherings on "W" days
+            for hour in range(15):
+                if agent.type == "Faculty" and day == "W":
+                    agent.schedule['W'][hour] = "Off-Campus Space"  # Off-Campus agents remain off-campus for the entire day
+                if hour == 0 or hour == 1 or 10 <= hour <= 14:  # hour >= 10 and hour <= 14:
+                    agent.schedule[day][hour] = "Off-Campus Space"
+    """
 
 
 # CLASS ASSIGNMENT ------------------------------------------------------------------------------------------------------------------------------------
@@ -308,8 +318,8 @@ def assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office
         if agent.type != "Faculty":
             for count, day in enumerate(SCHEDULE_DAYS):
                 for hour in agent.get_available_hours(8, 22, day):
-                    if day == 'W' and agent.type == "Off-campus Student":
-                        break
+                    #if day == 'W' and agent.type == "Off-campus Student":
+                     #   break
                     rand_number = random.random()
                     if rand_number < PROBABILITY_S:  # Assign social space
                         social_spaces[count][hour].assign_agent(agent)
@@ -343,7 +353,7 @@ def assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office
                     if agent.schedule[day][13] != "Dorm":
                         all_transit_spaces[day][14].agents.append(agent)
             else:  # if agent.type == "Off-campus Student"
-                for day in SCHEDULE_WEEKDAYS:
+                for day in SCHEDULE_DAYS:
                     if agent.schedule[day][9] != "Off-Campus Space":
                         all_transit_spaces[day][10].agents.append(agent)
         else:

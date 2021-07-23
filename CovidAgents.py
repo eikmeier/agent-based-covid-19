@@ -1,12 +1,14 @@
-from global_constants import TOTAL_AGENTS, INITIAL_INFECTED, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A
+from global_constants import TOTAL_AGENTS, INITIAL_INFECTED, INTERVENTIONS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A
 import random
 
 # n = 10  # number of agents
 # n = 2380, on-campus: 1500, off-campus: 500, faculty: 380
 n = TOTAL_AGENTS
 
-vaccine_percentage = 0  # 10/2380
-face_mask_intervention = "off"
+vaccine_intervention = INTERVENTIONS.get("Vaccine")  # whether we use vaccine intervention or not ("on" or "off")
+faculty_vaccine_percentage = 0.5
+student_vaccine_percentage = 0.5
+face_mask_intervention = INTERVENTIONS.get("Face mask")  # whether we use face mask intervention or not ("on" or "off")
 face_mask_comp = 0.5
 screening_comp = 0.5
 type_ratio = [500/2380.0, 380/2380.0]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
@@ -44,37 +46,6 @@ class Agent:
 
             agents.append(ag)
 
-        # VACCINATION: randomly select and assign vaccination to certain proportion of agents
-        select_vaccine = random.sample(agents, k=int(n * vaccine_percentage))
-        for ag in select_vaccine:
-            ag.vaccinated = 1
-            ag.vaccinated_risk_multiplier = 1/100
-
-        # FACE MASK COMPLIANCE: randomly select and assign face mask compliance to certain proportion of agents
-        select_face_mask = random.sample(agents, k=int(n * face_mask_comp))
-        # select_full_face_mask = random.sample(select_face_mask, k=int(len(select_face_mask) * full_face_mask_comp))
-
-        # OPTION 1
-        if face_mask_intervention == "on":
-            for ag in agents:
-                if ag in select_face_mask:  # agents that comply with face masks
-                    ag.face_mask = 1
-                    ag.face_mask_self_risk_multiplier = {"Dorm": 1, "Academic": 0.75, "DiningHall": 1, "Gym": 0.75, "Library": 0.75, "Office": 0.75,
-                                                         "SocialSpace": 0.75, "TransitSpace": 0.75, "LargeGatherings": 0.75}
-                    ag.face_mask_spread_risk_multiplier = {"Dorm": 1, "Academic": 0.5, "DiningHall": 1, "Gym": 0.5, "Library": 0.5, "Office": 0.5,
-                                                           "SocialSpace": 0.5, "TransitSpace": 0.5, "LargeGatherings": 0.5}
-
-                else:  # agents don't comply with face masks (don't wear in social space, large gatherings, dorm cores, etc.)
-                    ag.face_mask_self_risk_multiplier = {"Dorm": 1, "Academic": 0.75, "DiningHall": 1, "Gym": 0.75, "Library": 0.75, "Office": 0.75,
-                                                         "SocialSpace": 1, "TransitSpace": 0.75, "LargeGatherings": 1}
-                    ag.face_mask_spread_risk_multiplier = {"Dorm": 1, "Academic": 0.5, "DiningHall": 1, "Gym": 0.5, "Library": 0.5, "Office": 0.5,
-                                                           "SocialSpace": 1, "TransitSpace": 0.5, "LargeGatherings": 1}
-
-
-        #  SCREENING TEST COMPLIANCE: randomly select and assign screening test compliance to certain proportion of agents
-        select_screening = random.sample(agents, k=int(n * screening_comp))
-        for ag in select_screening:
-            ag.screening = 1
 
         # TYPE (ON-CAMPUS/OFF-CAMPUS/FACULTY): randomly select and assign a certain proportion of agents as "Off-campus Student" and "Faculty"
         select_type = random.sample(agents, k=int(n * (type_ratio[0] + type_ratio[1])))
@@ -85,6 +56,45 @@ class Agent:
         while i < len(select_type):
             select_type[i].type = "Faculty"
             i += 1
+
+
+        # VACCINATION: randomly select and assign vaccination to certain proportion of student/faculty agents
+        if vaccine_intervention == "on":
+            student_agents = [agent for agent in agents if agent.type != "Faculty"]
+            faculty_agents = [agent for agent in agents if agent.type == "Faculty"]
+            select_vaccine_student = random.sample(student_agents, k=int(len(student_agents) * student_vaccine_percentage))
+            select_vaccine_faculty = random.sample(faculty_agents, k=int(len(faculty_agents) * faculty_vaccine_percentage))
+            for ag in agents:
+                if ag in select_vaccine_student or ag in select_vaccine_faculty:
+                    ag.vaccinated = 1
+                    ag.vaccinated_risk_multiplier = 0.09
+
+
+        # FACE MASK COMPLIANCE: randomly select and assign face mask compliance to certain proportion of agents
+        if face_mask_intervention == "on":
+            select_face_mask = random.sample(agents, k=int(n * face_mask_comp))
+            for ag in agents:
+                if ag in select_face_mask:  # agents that comply with face masks
+                    ag.face_mask = 1
+                    # ag.face_mask_spread_risk_multiplier["TransitSpace"] = 0.5
+                    ag.face_mask_self_risk_multiplier = {"Dorm": 0.75, "Academic": 0.75, "DiningHall": 0.75, "Gym": 0.75, "Library": 0.75, "Office": 0.75,
+                                                         "SocialSpace": 0.75, "TransitSpace": 0.75, "LargeGatherings": 0.75}
+                    ag.face_mask_spread_risk_multiplier = {"Dorm": 0.5, "Academic": 0.5, "DiningHall": 0.5, "Gym": 0.5, "Library": 0.5, "Office": 0.5,
+                                                           "SocialSpace": 0.5, "TransitSpace": 0.5, "LargeGatherings": 0.5}
+
+                else:  # agents that don't comply with face masks (don't wear in social space, large gatherings, dorm cores, etc.)
+                    ag.face_mask_self_risk_multiplier = {"Dorm": 1, "Academic": 0.75, "DiningHall": 0.75, "Gym": 0.75, "Library": 0.75, "Office": 0.75,
+                                                         "SocialSpace": 1, "TransitSpace": 0.75, "LargeGatherings": 1}
+                    ag.face_mask_spread_risk_multiplier = {"Dorm": 1, "Academic": 0.5, "DiningHall": 0.5, "Gym": 0.5, "Library": 0.5, "Office": 0.5,
+                                                           "SocialSpace": 1, "TransitSpace": 0.5, "LargeGatherings": 1}
+
+
+        #  SCREENING TEST COMPLIANCE: randomly select and assign screening test compliance to certain proportion of agents
+        select_screening = random.sample(agents, k=int(n * screening_comp))
+        for ag in select_screening:
+            ag.screening = 1
+
+
 
         # division (STEM/HUMANITIES/ARTS): randomly select and assign a certain proportion of agents as "Humanities" and "Arts"
         faculty_list = []
@@ -109,7 +119,7 @@ class Agent:
                 i += 1
 
         # INITIAL INFECTION: randomly select and assign agents that are initially infected
-        select_seir = random.sample(agents, k=int(n * initial_infection))  # randomly select initial number of agents (that haven't been vaccinated)
+        select_seir = random.sample([agent for agent in agents if agent.vaccinated == 0], k=int(n * initial_infection))  # randomly select initial number of agents (that haven't been vaccinated)
         for ag in select_seir:
             ag.seir = random.choice(["Ia", "Im", "Ie"])  # randomly assign one of the infected states to agents
 

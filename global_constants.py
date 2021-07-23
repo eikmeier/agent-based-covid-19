@@ -33,5 +33,5 @@ PROBABILITY_A = 0.15
 
 TUNING_PARAMETER = 1.25
 
-
+INTERVENTIONS = {"Vaccine": "on", "Face mask": "off", "Screening": "off"}
 
