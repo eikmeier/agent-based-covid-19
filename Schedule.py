@@ -6,21 +6,49 @@ from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace, Office
 from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, PROBABILITY_G, PROBABILITY_S, PROBABILITY_L, \
     SCHEDULE_DAYS, SCHEDULE_WEEKDAYS, CLASS_TIMES, CLASSROOMS
 
-all_transit_spaces = {"A": [], "B": [], "W": []}  # time range is from 8 ~ 22, which is 15 blocks & class times are at index 2, 4, 6, 8
+all_transit_spaces = {"A": [], "B": [],
+                      "W": []}  # time range is from 8 ~ 22, which is 15 blocks & class times are at index 2, 4, 6, 8
 for day in SCHEDULE_DAYS:
     for time in range(15):
         all_transit_spaces[day].append(spaces.TransitSpace(day, time))
 
 
+def create_spaces(space, start_time=8, end_time=22, break_times=None, open_days=SCHEDULE_DAYS, division=None):
+    result = [[[] for j in range(15)] for i in range(3)]
+    all_methods = globals().copy()
+    space_class = all_methods.get(space)
+
+    open_times = list(range(start_time, end_time + 1))
+
+    if break_times is not None:
+        for break_time in break_times:
+            open_times.remove(break_time)
+
+    for open_day in open_days:
+        for hour in open_times:
+            if open_day == 'A':
+                day_index = 0
+            elif open_day == 'B':
+                day_index = 1
+            elif open_day == 'W':
+                day_index = 2
+            if division is None:
+                result[day_index][hour - 8] = space_class(open_day, hour)
+            else:
+                result[day_index][hour - 8] = space_class(division, open_day, hour)
+    return result
+
+
+"""
 def create_spaces(space, num_hours=15, division=None):
-    """
+
     Creates spaces from spaces.py with a given space, num_hours, and division.\n
     By default, num_hours = 15 to represent a full day (8 AM - 10 PM) and division is None
      as most spaces do not have a division.\n
     A list of spaces, separated by days and then separated by hours is returned.
      Ex: [[DiningHall()], [DiningHall()], [DiningHall()], [DiningHall()], [DiningHall()], [DiningHall()]]
      if num_hours = 2.\n
-    """
+
     result = [[[] for j in range(num_hours)] for i in range(3)]
     all_methods = globals().copy()
     space_class = all_methods.get(space)
@@ -36,6 +64,7 @@ def create_spaces(space, num_hours=15, division=None):
             else:
                 result[day_index % 3][hour] = space_class(division, day, hour)
     return result
+"""
 
 
 def create_dorms():
@@ -50,14 +79,18 @@ def create_dorms():
     return dorms
 
 
-def create_academic_spaces(stem_buildings, humanities_buildings, arts_buildings):
+def create_academic_spaces():
     # create academic buildings (STEM, Humanities, Arts) for class times ([10AM, 12PM, 14PM, 16PM] - index [2, 4, 6, 8])
     # one list of all the classrooms at specific day(A or B) and time (2, 4, 6, 8)
 
     # create all buildings at all day and times -> First list is split up by Day A and then Day B. Then list is split up by times (10, 12, 14, 16). Then,
     # finally, each entry at a specific day and time contains all academic buildings.
+    stem_buildings = [[[] for i in range(15)] for i in range(3)]
+    humanities_buildings = [[[] for i in range(15)] for i in range(3)]
+    arts_buildings = [[[] for i in range(15)] for i in range(3)]
     academic_buildings = [stem_buildings, humanities_buildings, arts_buildings]
-    for i in range(8):
+
+    for i in range(2, 10):
         for index, building_list in enumerate(academic_buildings):
             if i // 4 == 0:
                 day_type = 'A'
@@ -71,12 +104,16 @@ def create_academic_spaces(stem_buildings, humanities_buildings, arts_buildings)
             else:  # index == 2
                 division = "Arts"
 
+            time_index = CLASS_TIMES[(i - 2) % 4]
             for j in range(ACADEMIC_BUILDINGS.get(division)[0]):
-                building_list[i // 4][i % 4].append(Academic("Small", day_type, 2 + 2 * (i % 4)))
+                building_list[i // 6][time_index - 8].append(Academic("Small", day_type, time_index))
+                building_list[i // 6][time_index - 7].append(Academic("Small", day_type, time_index + 1))
             for k in range(ACADEMIC_BUILDINGS.get(division)[1]):
-                building_list[i // 4][i % 4].append(Academic("Medium", day_type, 2 + 2 * (i % 4)))
+                building_list[i // 6][time - index - 8].append(Academic("Medium", day_type, time_index))
+                building_list[i // 6][time_index - 7].append(Academic("Medium", day_type, time_index + 1))
             for l in range(ACADEMIC_BUILDINGS.get(division)[2]):
-                building_list[i // 4][i % 4].append(Academic("Large", day_type, 2 + 2 * (i % 4)))
+                building_list[i // 6][time_index - 8].append(Academic("Large", day_type, time_index))
+                building_list[i // 6][time_index - 7].append(Academic("Large", day_type, time_index + 1))
     return academic_buildings
 
 
@@ -117,7 +154,7 @@ def assign_dorms(dorms, agent_list):
         random.shuffle(dorms)
         for dorm_building in dorms:
             agent.dorm_room = dorm_building.assign_agent(agent)
-            if agent.dorm_room != False:
+            if agent.dorm_room is not False:
                 if agent.dorm_room in dorm_building.doubles:
                     doubles_students.append(agent)
                     # Put in all double rooms with two agents living in the dorm to doubles_dorm_times at both 8 and 22, since we know
@@ -131,7 +168,8 @@ def assign_dorms(dorms, agent_list):
                             doubles_dorm_times[day][0].append(agent.dorm_room)
                             doubles_dorm_times[day][14].append(agent.dorm_room)
                 break
-    # ORIGINAL - follows paper
+    """
+    # ORIGINAL - follows paper (on W days, off-campus students stay off-campus all day)
     for agent in off_campus_agents:  # For off-campus students, A and B days begin and end at their off-campus house at times 8, 9 and 18–22.
         for day in SCHEDULE_WEEKDAYS:
             for hour in range(15):
@@ -139,15 +177,15 @@ def assign_dorms(dorms, agent_list):
                     agent.schedule[day][hour] = "Off-Campus Space"
                 agent.schedule['W'][hour] = "Off-Campus Space"  # Off-Campus agents remain off-campus for the entire day
     """
-    # NEW - follows old code
+    # NEW - follows old code (on W days off-campus students either stay off-campus or can go to the library/social space/large gatherings)
     for agent in off_campus_agents:  # For off-campus students and faculty, A and B days begin and end at their off-campus house at times 8, 9 and 18–22.
-        for day in SCHEDULE_DAYS:    # off-campus agents can go to either library, social space, or large gatherings on "W" days
+        for day in SCHEDULE_DAYS:  # off-campus agents can go to either library, social space, or large gatherings on "W" days
             for hour in range(15):
                 if agent.type == "Faculty" and day == "W":
-                    agent.schedule['W'][hour] = "Off-Campus Space"  # Off-Campus agents remain off-campus for the entire day
-                if hour == 0 or hour == 1 or 10 <= hour <= 14:  # hour >= 10 and hour <= 14:
+                    agent.schedule['W'][
+                        hour] = "Off-Campus Space"  # Off-Campus agents remain off-campus for the entire day
+                if 0 <= hour <= 1 or 10 <= hour <= 14:  # hour >= 10 and hour <= 14:
                     agent.schedule[day][hour] = "Off-Campus Space"
-    """
 
 
 # CLASS ASSIGNMENT ------------------------------------------------------------------------------------------------------------------------------------
@@ -313,13 +351,14 @@ def assign_gym(agent_list, gym_spaces):
 
 
 # Remaining slots for social spaces, library leaf, or dorm room
-def assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, humanities_office_spaces, arts_office_spaces):
+def assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, humanities_office_spaces,
+                          arts_office_spaces):
     for agent in agent_list:
         if agent.type != "Faculty":
             for count, day in enumerate(SCHEDULE_DAYS):
                 for hour in agent.get_available_hours(8, 22, day):
-                    #if day == 'W' and agent.type == "Off-campus Student":
-                     #   break
+                    # if day == 'W' and agent.type == "Off-campus Student":
+                    #   break
                     rand_number = random.random()
                     if rand_number < PROBABILITY_S:  # Assign social space
                         social_spaces[count][hour].assign_agent(agent)
@@ -358,7 +397,8 @@ def assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office
                         all_transit_spaces[day][10].agents.append(agent)
         else:
             for count, day in enumerate(SCHEDULE_WEEKDAYS):
-                all_transit_spaces[day][10].agents.append(agent)  # All faculty must enter the transit vertex at time 10 in order to get back to their off-campus space
+                all_transit_spaces[day][10].agents.append(
+                    agent)  # All faculty must enter the transit vertex at time 10 in order to get back to their off-campus space
                 for hour in agent.get_available_hours(8, 22, day):
                     # Put into appropriate Division Office vertex
                     if agent.division == "STEM":

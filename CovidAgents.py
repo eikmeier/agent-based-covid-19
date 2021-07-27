@@ -6,8 +6,8 @@ import random
 n = TOTAL_AGENTS
 
 vaccine_intervention = INTERVENTIONS.get("Vaccine")  # whether we use vaccine intervention or not ("on" or "off")
-faculty_vaccine_percentage = 0.5
-student_vaccine_percentage = 0.5
+faculty_vaccine_percentage = 0.7
+student_vaccine_percentage = 0.7
 face_mask_intervention = INTERVENTIONS.get("Face mask")  # whether we use face mask intervention or not ("on" or "off")
 face_mask_comp = 0.5
 screening_comp = 0.5
@@ -96,7 +96,7 @@ class Agent:
 
 
 
-        # division (STEM/HUMANITIES/ARTS): randomly select and assign a certain proportion of agents as "Humanities" and "Arts"
+        # DIVISION (STEM/HUMANITIES/ARTS): randomly select and assign a certain proportion of agents as "Humanities" and "Arts"
         faculty_list = []
         student_list = []
         for ag in agents:
@@ -123,6 +123,7 @@ class Agent:
         for ag in select_seir:
             ag.seir = random.choice(["Ia", "Im", "Ie"])  # randomly assign one of the infected states to agents
 
+        # SOCIAL: randomly select and assign student agents as social, which allows them to go to large gatherings
         select_social = random.sample(student_list, k=int(n * social_ratio))  # list of all social agents
         for ag in select_social:
             ag.social = True

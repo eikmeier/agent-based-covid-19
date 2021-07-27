@@ -19,7 +19,7 @@ DORM_BUILDINGS = {"Small": 25, "Medium": 10, "Large": 10}  # number of dorm buil
 
 ACADEMIC_BUILDINGS = {"STEM": [2, 2, 3], "Humanities": [1, 2, 1], "Arts": [2, 1, 1]}  # number of [small, medium, large] buildings for each academic building
 CLASSROOMS = {"Small": [3, 0, 0], "Medium": [2, 3, 0], "Large": [5, 3, 3]}  # number of [small, medium, large] classrooms for each building size(small/medium/large)
-CLASS_TIMES = [10, 12, 14, 16] # All classes must be at either 10 AM, 12 PM, 2 PM, or 4 PM
+CLASS_TIMES = [10, 12, 14, 16]  # All classes must be at either 10 AM, 12 PM, 2 PM, or 4 PM
 
 PROBABILITY_G = 0.15
 PROBABILITY_S = 0.15
@@ -33,5 +33,5 @@ PROBABILITY_A = 0.15
 
 TUNING_PARAMETER = 1.25
 
-INTERVENTIONS = {"Vaccine": "on", "Face mask": "off", "Screening": "off"}
+INTERVENTIONS = {"Vaccine": "off", "Face mask": "off", "Screening": "off"}
 

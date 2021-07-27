@@ -31,7 +31,6 @@ class Space:
         im_agents = [agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Im")]
         ia_agents = [agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Ia")]
 
-
         return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
         # return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia"))) / self.cv) * TUNING_PARAMETER
 
@@ -194,6 +193,7 @@ class TransitSpace(Space):
     def __str__(self):
         return 'Transit Space'
 
+
 class DiningHall(Space):
     def __init__(self, day, time):
         """
@@ -216,7 +216,7 @@ class DiningHall(Space):
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Dining Hall")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Dining Hall"
+        agent.schedule.get(self.day)[self.time - 8] = "Dining Hall"
 
     def __str__(self):
         return 'Dining Hall'
@@ -240,7 +240,7 @@ class Library(Space):
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Library")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Library"
+        agent.schedule.get(self.day)[self.time - 8] = "Library"
 
     def __str__(self):
         return 'Library'
@@ -264,7 +264,7 @@ class Gym(Space):
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Gym")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Gym"
+        agent.schedule.get(self.day)[self.time - 8] = "Gym"
 
     def __str__(self):
         return 'Gym'
@@ -296,7 +296,7 @@ class Office(Space):
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Office")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Office"
+        agent.schedule.get(self.day)[self.time - 8] = "Office"
 
     def __str__(self):
         return self.division + ' Office'
@@ -400,8 +400,8 @@ class Academic(Space):
             classroom = self.assign_student(agent)
         if classroom != None:
             agent.num_of_classes += 1
-            agent.schedule.get(self.day)[self.time] = classroom.space
-            agent.schedule.get(self.day)[self.time + 1] = classroom.space
+            agent.schedule.get(self.day)[self.time - 8] = classroom.space
+            agent.schedule.get(self.day)[(self.time - 8) + 1] = classroom.space
         return classroom
 
     def assign_student(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
@@ -412,7 +412,7 @@ class Academic(Space):
         """
         random.shuffle(self.classrooms)
         for classroom in self.classrooms:
-            if len(classroom.agents) <= classroom.seats and agent.schedule.get(self.day)[self.time] == None:
+            if len(classroom.agents) <= classroom.seats and agent.schedule.get(self.day)[self.time - 8] is None:
                 classroom.agents.append(agent)
                 return classroom
         return None
@@ -457,10 +457,10 @@ class SocialSpace(Space):
         """
         if self.day == 2:
             self.leaves[agent.leaves.get("Social Space")[1]].agents.append(agent)
-            agent.schedule.get(self.day)[self.time] = "Social Space"
+            agent.schedule.get(self.day)[self.time - 8] = "Social Space"
         else:
             self.leaves[agent.leaves.get("Social Space")[0]].agents.append(agent)
-            agent.schedule.get(self.day)[self.time] = "Social Space"
+            agent.schedule.get(self.day)[self.time - 8] = "Social Space"
 
     def __str__(self):
         return 'Social Space'
@@ -532,15 +532,7 @@ class SubSpace():
         if str(self.space.__class__.__name__) == "Dorm" or str(self.space.__class__.__name__) == "DiningHall":
 
             infection_prob = (self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia"))) / self.cv) * TUNING_PARAMETER) / 100.0
-            """
-            print(self.space)
-            print("num of agents in leaf: " + str(len(self.agents)))
-            print("Ie: " + str(len(self.get_agents("Ie"))))
-            print("Im: " + str(len(self.get_agents("Im"))))
-            print("Ia: " + str(len(self.get_agents("Ia"))))
-            print("total infected: " + str(len(self.get_agents("Ie")) + len(self.get_agents("Im")) + len(self.get_agents("Ia"))))
-            #print(infection_prob)
-            """
+
         else:
             infection_prob = self.get_infection_prob() / 100.0
 
