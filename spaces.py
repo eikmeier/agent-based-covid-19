@@ -70,7 +70,7 @@ class Dorm(Space):
         """
         self.size = size
         self.rv = SPACE_RISK_MULTIPLIERS.get("Dorm")
-        self.agents = [[[] for j in range(15)] for i in range(3)]
+        self.agents = [[[] for j in range(15)] for i in range(4)]
         if self.size == "Small":
             self.cv = PASSING_TIME * 15
             self.singles = [None] * 5
@@ -83,7 +83,7 @@ class Dorm(Space):
             self.cv = PASSING_TIME * 75
             self.singles = [None] * 25
             self.doubles = [None] * 25
-
+        
         for i in range(len(self.singles)):
             self.singles[i] = SubSpace(self, 1, SUBSPACE_RISK_MULTIPLIERS.get("Dorm"))
             self.singles[i].agent = None
@@ -111,6 +111,8 @@ class Dorm(Space):
         if self.occupiedSingles < len(self.singles):
             self.singles[self.occupiedSingles].agent = agent
             self.occupiedSingles += 1
+            for dorm_s_hours in range(len(self.agents[3])): # Agent is in their dorm room every hour on S
+                self.agents[3][dorm_s_hours].append(agent)
             return self.singles[self.occupiedSingles - 1]
         elif self.occupiedDoubles < len(self.doubles):
             if self.doubles[self.occupiedDoubles].agents[0] is None:
@@ -118,6 +120,8 @@ class Dorm(Space):
             else:
                 self.doubles[self.occupiedDoubles].agents[1] = agent
                 self.occupiedDoubles += 1
+            for dorm_s_hours in range(len(self.agents[3])): # Agent is in their dorm room every hour on S
+                self.agents[3][dorm_s_hours].append(agent)
             return self.doubles[self.occupiedDoubles - 1]
         else:  # Return False if there are no rooms available
             return False
@@ -199,7 +203,7 @@ class DiningHall(Space):
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Dining Hall")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Dining Hall"
+        agent.schedule.get(self.day)[self.time-8] = "Dining Hall"
 
     def __str__(self):
         return 'Dining Hall'
@@ -224,7 +228,7 @@ class Library(Space):
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Library")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Library"
+        agent.schedule.get(self.day)[self.time-8] = "Library"
 
     def __str__(self):
         return 'Library'
@@ -249,7 +253,7 @@ class Gym(Space):
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Gym")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Gym"
+        agent.schedule.get(self.day)[self.time-8] = "Gym"
 
     def __str__(self):
         return 'Gym'
@@ -281,7 +285,7 @@ class Office(Space):
 
     def assign_agent(self, agent):
         self.leaves[agent.leaves.get("Office")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time] = "Office"
+        agent.schedule.get(self.day)[self.time-8] = "Office"
 
     def __str__(self):
         return self.division + ' Office'
@@ -442,10 +446,10 @@ class SocialSpace(Space):
         """
         if self.day == 2:
             self.leaves[agent.leaves.get("Social Space")[1]].agents.append(agent)
-            agent.schedule.get(self.day)[self.time] = "Social Space"
+            agent.schedule.get(self.day)[self.time-8] = "Social Space"
         else:
             self.leaves[agent.leaves.get("Social Space")[0]].agents.append(agent)
-            agent.schedule.get(self.day)[self.time] = "Social Space"
+            agent.schedule.get(self.day)[self.time-8] = "Social Space"
 
     def __str__(self):
         return 'Social Space'
@@ -493,7 +497,7 @@ class SubSpace():
         """
         Returns a list of agents in the space with a given state.\n
         """
-        return [agent for agent in self.agents if agent.seir == state and agent.bedridden == False]
+        return [agent for agent in self.agents if agent is not None and agent.seir == state and agent.bedridden == False]
 
     def get_infection_prob(self):
         """
