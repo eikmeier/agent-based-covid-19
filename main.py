@@ -168,6 +168,7 @@ def update():
 
 update()
 
+
 """
 # Count infections in each space
 dhI, gI, lI, lgI, ssI, oI, aI, dI, tsI, ocI, other, nonI = (0,)*12

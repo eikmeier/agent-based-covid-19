@@ -147,7 +147,6 @@ def assign_agents_to_classes(academic_buildings, agent_list):
     assign_faculty_classes(academic_buildings, faculty)
     assign_student_classes(academic_buildings, students)
 
-
 def assign_faculty_classes(academic_buildings, faculty_list):
     # list of faculty by division
     stem_faculty = [faculty for faculty in faculty_list if faculty.division == "STEM"]
