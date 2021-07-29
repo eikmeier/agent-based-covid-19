@@ -1,4 +1,4 @@
-from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A
+from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A, INITIALLY_INEFCTED
 import random
 
 # n = 10  # number of agents
@@ -10,7 +10,7 @@ face_mask_comp = 0.5
 screening_comp = 0.5
 type_ratio = [500/2380.0, 380/2380.0]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
 division_ratio = [0.25, 0.25]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
-initial_infection = 10/2380.0  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
+initial_infection = INITIALLY_INEFCTED/2380.0  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
 social_ratio = 0.5  # proportion of students that are social
 
 # ------------------------------------------------------------------------
