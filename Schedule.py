@@ -11,7 +11,7 @@ for day in SCHEDULE_DAYS:
     for time in range(15):
         all_transit_spaces[day].append(spaces.TransitSpace(day, time))
 
-def create_spaces(space, num_hours = 15, division = None):
+def create_spaces(space, start_hour=8, end_hour=22, break_times=None, open_days=SCHEDULE_DAYS, division = None):
     """
     Creates spaces from spaces.py with a given space, num_hours, and division.\n
     By default, num_hours = 15 to represent a full day (8 AM - 10 PM) and division is None
@@ -20,25 +20,33 @@ def create_spaces(space, num_hours = 15, division = None):
      Ex: [[DiningHall()], [DiningHall()], [DiningHall()], [DiningHall()], [DiningHall()], [DiningHall()]]
      if num_hours = 2.\n
     """
-    result = [[[] for j in range(num_hours)] for i in range(3)]
+    result = [[[] for j in range(15)] for i in range(3)]
     all_methods = globals().copy()
     space_class = all_methods.get(space)
-    for day_index in range(len(SCHEDULE_DAYS)):
-        for hour in range(num_hours):
-            day = 'W'
-            if day_index % 3 == 0:
-                day = 'A'
-            elif day_index % 3 == 1:
-                day = 'B'
+
+    open_times = list(range(start_hour, end_hour + 1))
+
+    if break_times is not None:
+        for break_time in break_times:
+            open_times.remove(break_time)
+
+    for open_day in open_days:
+        for hour in open_times:
+            if open_day == 'A':
+                day_index = 0
+            elif open_day == 'B':
+                day_index = 1
+            elif open_day == 'W':
+                day_index = 2
             if division is None:
-                result[day_index % 3][hour] = space_class(day, hour)
+                result[day_index][hour - 8] = space_class(open_day, hour)
             else:
-                result[day_index % 3][hour] = space_class(division, day, hour)
+                result[day_index][hour - 8] = space_class(division, open_day, hour)
     return result
 
 def create_dorms():
-    # Create dorm buildings (25 small, 10 medium, 10 large)
     dorms = []
+    # Create dorm buildings (25 small, 10 medium, 10 large)
     for i in range(DORM_BUILDINGS.get("Small")):
         dorms.append(Dorm("Small"))
     for i in range(DORM_BUILDINGS.get("Medium")):
@@ -109,8 +117,8 @@ def assign_dorms(dorms, agent_list):
             agent.schedule[day][14] = "Dorm"
         random.shuffle(dorms)
         for dorm_building in dorms:
-            agent.dorm_room = dorm_building.assign_agent(agent)
-            if agent.dorm_room != False:
+            agent.dorm_room = dorm_building.assign_agent(agent) # PROBLEM LINE
+            if agent.dorm_room is not False:
                 if agent.dorm_room in dorm_building.doubles:
                     doubles_students.append(agent)
                     # Put in all double rooms with two agents living in the dorm to doubles_dorm_times at both 8 and 22, since we know
