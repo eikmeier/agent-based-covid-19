@@ -39,7 +39,8 @@ def initialize():
     assign_dining_times(dining_hall_spaces, agent_list)
 
     assign_gym(agent_list, gym_spaces)
-    assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, arts_office_spaces, humanities_office_spaces)
+    assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, arts_office_spaces,
+                          humanities_office_spaces)
 
     return [dining_hall_spaces, gym_spaces, library_spaces, social_spaces, stem_office_spaces, humanities_office_spaces, arts_office_spaces , \
         academic_buildings[0], academic_buildings[1], academic_buildings[2], dorms] # Return a list containing all the spaces (to be used in update)
@@ -154,6 +155,7 @@ def update(data, simulation_number):
         if "Dorm" in str(space):
             update_dorms = space
 
+    # Infection spread in chronological order
     for week in range(SIMULATION_LENGTH):
         for day in ['A', 'B', 'A', 'B', 'W', 'W', 'S']:
             day_index = 0 # Default day is 'A'
@@ -165,6 +167,7 @@ def update(data, simulation_number):
             # Off-Campus infection spread, happens every day for all off-campus agents
             for off_campus_agent in [agent for agent in off_campus_agents if agent.seir == "S"]:
                 rand_num = random.random()
+                probability_o *= off_campus_agent.vaccinated_risk_multiplier
                 if rand_num < probability_o:
                     off_campus_agent.change_state("E")
                     off_campus_agent.exposed_space = "Off-Campus"
@@ -226,7 +229,6 @@ def input_stuff():
     print("How many simulations would you like to run with these interventions?")
     number_of_simulations = int(input())
     return number_of_simulations
-
 
 if __name__ == "__main__":
     start_time = time.time()
