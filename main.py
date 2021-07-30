@@ -1,16 +1,15 @@
 import random
-import CovidAgents
-from CovidAgents import initialize_leaves, change_states
-from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
-    assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
-from global_constants import CLASS_TIMES, DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, SCHEDULE_DAYS, \
-    INITIALLY_INEFCTED, TOTAL_AGENTS
-from spaces import Dorm, Academic, LargeGatherings
-from Schedule import all_transit_spaces
 import matplotlib.pyplot as plt
 import time
 from statistics import stdev
 from multiprocessing import Pool, Manager
+import pickle
+from global_constants import CLASS_TIMES, DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, SCHEDULE_DAYS, \
+    INITIALLY_INEFCTED, TOTAL_AGENTS, VACCINE_PERCENTAGE, INTERVENTIONS
+from CovidAgents import change_states, Agent
+from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
+    assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times, all_transit_spaces
+from spaces import Dorm, Academic, LargeGatherings
 
 plt.rcParams.update({'figure.autolayout': True}) # A required line so the bar graph labels stay on the screen
 
@@ -19,7 +18,7 @@ agent_list = [] # list of all agents
 def initialize():
     # Initialize agents
     global agent_list
-    agent_list = CovidAgents.Agent().initialize()
+    agent_list = Agent().initialize()
 
     # Create spaces
     dorms = create_dorms()
@@ -152,7 +151,7 @@ def update(data, simulation_number):
     off_campus_agents = [agent for agent in agent_list if agent.type == "Faculty" or agent.type == "Off-campus Student"]
     probability_o = 0.125 / len(off_campus_agents)
     sim_data['new_exposures'].append(0)
-    sim_data['total_infections'].append(0)
+    sim_data['total_infections'].append(INITIALLY_INEFCTED)
 
     for space in spaces:
         if "Dorm" in str(space):
@@ -229,8 +228,24 @@ def update(data, simulation_number):
     print("Simulation finished.")
 
 def input_stuff():
+    print("Do you want to add vaccinated agents to the model? (Y/N)")
+    vaccines = input()
+    if vaccines == 'Y':
+        INTERVENTIONS["Vaccine"] = True
+        print("What percentage of students should be vaccinated? (0 to 100)")
+        students_vax = input()
+        VACCINE_PERCENTAGE["Student"] = int(students_vax) / 100.0
+        print("What percentage of faculty should be vaccinated? (0 to 100)")
+        faculty_vax = input()
+        VACCINE_PERCENTAGE["Faculty"] = int(faculty_vax) / 100.0
+    print("Do you want to add the facemask intervention to the model? (Y/N)")
+    facemasks = input()
+    if facemasks == 'Y':
+        INTERVENTIONS["Face mask"] = True
     print("How many simulations would you like to run with these interventions?")
     number_of_simulations = int(input())
+    pickle.dump(INTERVENTIONS, open('pickle_files/interventions.p', 'wb'))
+    pickle.dump(VACCINE_PERCENTAGE, open('pickle_files/vaccine_percentage.p', 'wb'))
     return number_of_simulations
 
 if __name__ == "__main__":

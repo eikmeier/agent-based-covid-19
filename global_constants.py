@@ -35,5 +35,6 @@ PROBABILITY_A = 0.15
 TUNING_PARAMETER = 1.25
 
 INITIALLY_INEFCTED = 10
-INTERVENTIONS = {"Vaccine": "off", "Face mask": "on", "Screening": "off"}
+INTERVENTIONS = {"Vaccine": False, "Face mask": False, "Screening": False}
+VACCINE_PERCENTAGE = {"Faculty": 0, "Student": 0}
 

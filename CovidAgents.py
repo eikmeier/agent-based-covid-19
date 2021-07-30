@@ -1,14 +1,8 @@
-from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A, INITIALLY_INEFCTED, INTERVENTIONS
+from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A, INITIALLY_INEFCTED
 import random
+import pickle
 
-# n = 10  # number of agents
-# n = 2380, on-campus: 1500, off-campus: 500, faculty: 380
-n = TOTAL_AGENTS
 
-vaccine_intervention = INTERVENTIONS.get("Vaccine")  # whether we use vaccine intervention or not ("on" or "off")
-faculty_vaccine_percentage = 0.7
-student_vaccine_percentage = 0.7
-face_mask_intervention = INTERVENTIONS.get("Face mask")  # whether we use face mask intervention or not ("on" or "off")
 face_mask_comp = 0.5
 screening_comp = 0.5
 type_ratio = [500.0/TOTAL_AGENTS, 380.0/TOTAL_AGENTS]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
@@ -18,6 +12,12 @@ social_ratio = 0.5  # proportion of students that are social
 
 class Agent:
     def initialize(self):
+        caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
+        caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
+        vaccine_intervention = caI.get("Vaccine")  # whether we use vaccine intervention or not ("on" or "off")
+        faculty_vaccine_percentage = caVP.get("Faculty")
+        student_vaccine_percentage = caVP.get("Faculty")
+        face_mask_intervention = caI.get("Face mask")  # whether we use face mask intervention or not ("on" or "off")
         # global agents
         agents = []
         for i in range(TOTAL_AGENTS):
@@ -58,7 +58,7 @@ class Agent:
 
 
         # VACCINATION: randomly select and assign vaccination to certain proportion of student/faculty agents
-        if vaccine_intervention == "on":
+        if vaccine_intervention == True:
             student_agents = [agent for agent in agents if agent.type != "Faculty"]
             faculty_agents = [agent for agent in agents if agent.type == "Faculty"]
             select_vaccine_student = random.sample(student_agents, k=int(len(student_agents) * student_vaccine_percentage))
@@ -70,7 +70,7 @@ class Agent:
 
 
         # FACE MASK COMPLIANCE: randomly select and assign face mask compliance to certain proportion of agents
-        if face_mask_intervention == "on":
+        if face_mask_intervention == True:
             select_face_mask = random.sample(agents, k=int(TOTAL_AGENTS * face_mask_comp))
             for ag in agents:
                 if ag in select_face_mask:  # agents that comply with face masks
