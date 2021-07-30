@@ -112,12 +112,14 @@ def observe(data):
 
     plt.xlabel("Day #")
     plt.ylabel("New Exposures")
+    plt.savefig('images/new_exposures.png')
     plt.figure(1)
     for day in range(len(data[0]['total_infections'])):
         plt.errorbar(day, data[number_of_simulations]['total_infections'][day], yerr=ti_stdev[day], fmt='r^')
     plt.plot(range(len(data[0]['total_infections'])), data[number_of_simulations]['total_infections'])
     plt.xlabel("Day #")
     plt.ylabel("Total Infections")
+    plt.savefig('images/total_infections.png')
     plt.figure(2)
     for seir_sim_num in range(number_of_simulations):
         plt.plot(range(len(data[seir_sim_num]['seir_states']['s'])), data[seir_sim_num]['seir_states']['s'], color='b')
@@ -132,6 +134,7 @@ def observe(data):
     plt.xlabel("Day #")
     plt.ylabel("# of Agents")
     plt.legend()
+    plt.savefig('images/seir_states.png')
     # Spaces Bar Graph
     """
     plt.figure(3)
@@ -231,8 +234,8 @@ def input_stuff():
     return number_of_simulations
 
 if __name__ == "__main__":
-    start_time = time.time()
     number_of_simulations = input_stuff()
+    start_time = time.time()
     manager = Manager()
     data = manager.dict()
     data.update({sim_num: {} for sim_num in range(number_of_simulations + 1)})

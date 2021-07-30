@@ -11,7 +11,7 @@ student_vaccine_percentage = 0.7
 face_mask_intervention = INTERVENTIONS.get("Face mask")  # whether we use face mask intervention or not ("on" or "off")
 face_mask_comp = 0.5
 screening_comp = 0.5
-type_ratio = [500/2380.0, 380/2380.0]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
+type_ratio = [500.0/TOTAL_AGENTS, 380.0/TOTAL_AGENTS]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
 division_ratio = [0.25, 0.25]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
 initial_infection = INITIALLY_INEFCTED/TOTAL_AGENTS  # 10/2380.0  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
 social_ratio = 0.5  # proportion of students that are social
@@ -20,7 +20,7 @@ class Agent:
     def initialize(self):
         # global agents
         agents = []
-        for i in range(n):
+        for i in range(TOTAL_AGENTS):
             ag = Agent()
             ag.vaccinated = 0  # vaccination status (0 = not vaccinated, 1 = vaccinated)
             ag.vaccinated_risk_multiplier = 1
@@ -47,7 +47,7 @@ class Agent:
 
 
         # TYPE (ON-CAMPUS/OFF-CAMPUS/FACULTY): randomly select and assign a certain proportion of agents as "Off-campus Student" and "Faculty"
-        select_type = random.sample(agents, k=int(n * (type_ratio[0] + type_ratio[1])))
+        select_type = random.sample(agents, k=int(TOTAL_AGENTS * (type_ratio[0] + type_ratio[1])))
         i = 0
         while i < (len(select_type) * (type_ratio[0] / (type_ratio[0] + type_ratio[1]))):
             select_type[i].type = "Off-campus Student"
@@ -71,7 +71,7 @@ class Agent:
 
         # FACE MASK COMPLIANCE: randomly select and assign face mask compliance to certain proportion of agents
         if face_mask_intervention == "on":
-            select_face_mask = random.sample(agents, k=int(n * face_mask_comp))
+            select_face_mask = random.sample(agents, k=int(TOTAL_AGENTS * face_mask_comp))
             for ag in agents:
                 if ag in select_face_mask:  # agents that comply with face masks
                     ag.face_mask = 1
@@ -87,13 +87,10 @@ class Agent:
                     ag.face_mask_spread_risk_multiplier = {"Dorm": 1, "Academic": 0.5, "DiningHall": 0.5, "Gym": 0.5, "Library": 0.5, "Office": 0.5,
                                                            "SocialSpace": 1, "TransitSpace": 0.5, "LargeGatherings": 1}
 
-
         #  SCREENING TEST COMPLIANCE: randomly select and assign screening test compliance to certain proportion of agents
-        select_screening = random.sample(agents, k=int(n * screening_comp))
+        select_screening = random.sample(agents, k=int(TOTAL_AGENTS * screening_comp))
         for ag in select_screening:
             ag.screening = 1
-
-
 
         # DIVISION (STEM/HUMANITIES/ARTS): randomly select and assign a certain proportion of agents as "Humanities" and "Arts"
         faculty_list = []
@@ -118,12 +115,12 @@ class Agent:
                 i += 1
 
         # INITIAL INFECTION: randomly select and assign agents that are initially infected
-        select_seir = random.sample([agent for agent in agents if agent.vaccinated == 0], k=int(n * initial_infection))  # randomly select initial number of agents (that haven't been vaccinated)
+        select_seir = random.sample([agent for agent in agents if agent.vaccinated == 0], k=int(TOTAL_AGENTS * initial_infection))  # randomly select initial number of agents (that haven't been vaccinated)
         for ag in select_seir:
             ag.seir = random.choice(["Ia", "Im", "Ie"])  # randomly assign one of the infected states to agents
 
         # SOCIAL: randomly select and assign student agents as social, which allows them to go to large gatherings
-        select_social = random.sample(student_list, k=int(n * social_ratio))  # list of all social agents
+        select_social = random.sample(student_list, k=int(TOTAL_AGENTS * social_ratio))  # list of all social agents
         for ag in select_social:
             ag.social = True
 
@@ -162,7 +159,6 @@ class Agent:
     def __repr__(self):
         return 'Agent:' + self.type + '/' + self.division + '/' + self.seir
 
-
     def get_available_hours(self, start_hour, end_hour, day):
         """
         Returns a list of times that an agent does not have scheduled yet.\n
@@ -177,17 +173,13 @@ class Agent:
                 available_times.append(i-8)
         return available_times
 
-
     def __str__(self):
         """
         Returns a string representation of an agent with their type (On campus student, Off campus student, Faculty),
          their division/division (STEM, Humanities, Arts), and their seir state (S, E, Ia, Im, Ie, R).\n
         """
         return 'Agent: ' + self.type + '/' + self.division + '/' + self.seir
-    """
-    def __repr__(self):
-        return 'Agent:' + self.type + '/' + self.division + '/' + self.seir
-    """
+
 def change_states(agents):
     """
     Automatically changes the states of all agents based on the agent's days_in_state field.\n
