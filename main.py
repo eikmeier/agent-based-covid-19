@@ -73,6 +73,12 @@ def observe(data):
     print(data[0])
     data[0]['space_exposures'] = dict(sorted(data[0]['space_exposures'].items(), key=lambda item: item[1], reverse = True)) # TODO: Put back!
     """
+    caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
+    caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
+    faculty_vaccine_percentage = caVP.get("Faculty") * 100
+    student_vaccine_percentage = caVP.get("Student") * 100
+    face_mask_intervention = caI.get("Face mask")  
+
     number_of_simulations = len(data) - 1
     averaged_data = data[number_of_simulations]
 
@@ -108,7 +114,9 @@ def observe(data):
     for day in range(len(data[0]['new_exposures'])):
         plt.errorbar(day, data[number_of_simulations]['new_exposures'][day], yerr=ne_stdev[day], fmt='r^')
     plt.plot(range(len(data[0]['new_exposures'])), data[number_of_simulations]['new_exposures'])
-
+    plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
+    str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: " 
+    + str(number_of_simulations))
     plt.xlabel("Day #")
     plt.ylabel("New Exposures")
     plt.savefig('images/new_exposures.png')
@@ -116,6 +124,9 @@ def observe(data):
     for day in range(len(data[0]['total_infections'])):
         plt.errorbar(day, data[number_of_simulations]['total_infections'][day], yerr=ti_stdev[day], fmt='r^')
     plt.plot(range(len(data[0]['total_infections'])), data[number_of_simulations]['total_infections'])
+    plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
+    str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: " 
+    + str(number_of_simulations))
     plt.xlabel("Day #")
     plt.ylabel("Total Infections")
     plt.savefig('images/total_infections.png')
@@ -130,6 +141,9 @@ def observe(data):
     plt.plot([], [], label = "Exposed Agents", color='tab:orange')
     plt.plot([], [], label = "Infected Agents", color='r')
     plt.plot([], [], label = "Recovered Agents", color='m')
+    plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
+    str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: " 
+    + str(number_of_simulations))
     plt.xlabel("Day #")
     plt.ylabel("# of Agents")
     plt.legend()

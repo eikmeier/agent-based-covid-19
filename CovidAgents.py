@@ -16,7 +16,7 @@ class Agent:
         caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
         vaccine_intervention = caI.get("Vaccine")  # whether we use vaccine intervention or not ("on" or "off")
         faculty_vaccine_percentage = caVP.get("Faculty")
-        student_vaccine_percentage = caVP.get("Faculty")
+        student_vaccine_percentage = caVP.get("Student")
         face_mask_intervention = caI.get("Face mask")  # whether we use face mask intervention or not ("on" or "off")
         # global agents
         agents = []
