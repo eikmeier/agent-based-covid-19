@@ -1,6 +1,6 @@
 PASSING_TIME = 10  # Common passing time between classes, in minutes (302-307)
 TOTAL_AGENTS = 2380  # 2380 # 1500 on-campus students, 500 off-campus students, and 380 faculties (217-218)
-SIMULATION_LENGTH = 15 # Number of weeks the simulation should go for
+SIMULATION_LENGTH = 15  # Number of weeks the simulation should go for
 SPACE_CAPACITIES = {"Transit Space": 100 * TOTAL_AGENTS, "Dining Hall": 650, "Library": 300 * PASSING_TIME,
                     "Gym": 60 * PASSING_TIME}
 SPACE_RISK_MULTIPLIERS = {"Transit Space": 1, "Dining Hall": 1, "Library": 1, "Gym": 3,
@@ -18,7 +18,7 @@ DORM_BUILDINGS = {"Small": 25, "Medium": 10, "Large": 10}  # number of dorm buil
 
 ACADEMIC_BUILDINGS = {"STEM": [2, 2, 3], "Humanities": [1, 2, 1], "Arts": [2, 1, 1]}  # number of [small, medium, large] buildings for each academic building
 CLASSROOMS = {"Small": [3, 0, 0], "Medium": [2, 3, 0], "Large": [5, 3, 3]}  # number of [small, medium, large] classrooms for each building size(small/medium/large)
-CLASS_TIMES = [10, 12, 14, 16] # All classes must be at either 10 AM, 12 PM, 2 PM, or 4 PM
+CLASS_TIMES = [10, 12, 14, 16]  # All classes must be at either 10 AM, 12 PM, 2 PM, or 4 PM
 
 PROBABILITY_G = 0.15
 PROBABILITY_S = 0.15
@@ -26,8 +26,15 @@ PROBABILITY_L = 0.15
 
 SCHEDULE_DAYS = ['A', 'B', 'W']
 SCHEDULE_WEEKDAYS = ['A', 'B']
+SCHEDULE_HOURS = list(range(8, 23))
 
 PROBABILITY_E = 0.5
 PROBABILITY_A = 0.15
 
 TUNING_PARAMETER = 1.25
+
+INITIALLY_INFECTED = 10  # Number of agents that are initially infected (before running the simulation)
+INTERVENTIONS = {"Vaccine": "off", "Face mask": "off", "Screening": "off"}
+VACCINE_SELF_EFFECTIVENESS = 0.7
+VACCINE_SPREAD_EFFECTIVENESS = 0.7
+EXPOSED_SPACES = {"Dorm": 0, "Academic": 0, "DiningHall": 0, "Gym": 0, "Library": 0, "Office": 0, "SocialSpace": 0, "TransitSpace": 0, "LargeGatherings": 0, "Off-Campus": 0, "Other": 0}
