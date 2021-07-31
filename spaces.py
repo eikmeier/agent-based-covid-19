@@ -4,6 +4,7 @@ from global_constants import PASSING_TIME, SPACE_CAPACITIES, SPACE_RISK_MULTIPLI
 import math
 import random
 
+
 class Space:
     def close_space(self):
         """

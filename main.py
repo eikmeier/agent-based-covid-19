@@ -4,13 +4,14 @@ from CovidAgents import initialize_leaves, change_states
 from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
     assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
 from global_constants import CLASS_TIMES, DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, SCHEDULE_DAYS, \
-    INITIALLY_INFECTED, TOTAL_AGENTS
+    INITIALLY_INFECTED, TOTAL_AGENTS, INTERVENTIONS, VACCINE_PERCENTAGE
 from spaces import Dorm, Academic, LargeGatherings
 from Schedule import all_transit_spaces
 import matplotlib.pyplot as plt
 import time
 from statistics import stdev
 from multiprocessing import Pool, Manager
+import pickle
 
 plt.rcParams.update({'figure.autolayout': True}) # A required line so the bar graph labels stay on the screen
 
@@ -75,6 +76,12 @@ def observe(data):
     print(data[0])
     data[0]['space_exposures'] = dict(sorted(data[0]['space_exposures'].items(), key=lambda item: item[1], reverse = True)) # TODO: Put back!
     """
+    caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
+    caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
+    faculty_vaccine_percentage = caVP.get("Faculty") * 100
+    student_vaccine_percentage = caVP.get("Student") * 100
+    face_mask_intervention = caI.get("Face mask")
+
     number_of_simulations = len(data) - 1
     averaged_data = data[number_of_simulations]
 
@@ -110,15 +117,22 @@ def observe(data):
     for day in range(len(data[0]['new_exposures'])):
         plt.errorbar(day, data[number_of_simulations]['new_exposures'][day], yerr=ne_stdev[day], fmt='r^')
     plt.plot(range(len(data[0]['new_exposures'])), data[number_of_simulations]['new_exposures'])
-
+    plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
+    str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: "
+    + str(number_of_simulations))
     plt.xlabel("Day #")
     plt.ylabel("New Exposures")
+    plt.savefig('images/new_exposures.png')
     plt.figure(1)
     for day in range(len(data[0]['total_infections'])):
         plt.errorbar(day, data[number_of_simulations]['total_infections'][day], yerr=ti_stdev[day], fmt='r^')
     plt.plot(range(len(data[0]['total_infections'])), data[number_of_simulations]['total_infections'])
+    plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
+    str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: "
+    + str(number_of_simulations))
     plt.xlabel("Day #")
     plt.ylabel("Total Infections")
+    plt.savefig('images/total_infections.png')
     plt.figure(2)
     for seir_sim_num in range(number_of_simulations):
         plt.plot(range(len(data[seir_sim_num]['seir_states']['s'])), data[seir_sim_num]['seir_states']['s'], color='b')
@@ -130,9 +144,13 @@ def observe(data):
     plt.plot([], [], label = "Exposed Agents", color='tab:orange')
     plt.plot([], [], label = "Infected Agents", color='r')
     plt.plot([], [], label = "Recovered Agents", color='m')
+    plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
+    str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: "
+    + str(number_of_simulations))
     plt.xlabel("Day #")
     plt.ylabel("# of Agents")
     plt.legend()
+    plt.savefig('images/seir_states.png')
     # Spaces Bar Graph
     """
     plt.figure(3)
@@ -151,7 +169,7 @@ def update(data, simulation_number):
     off_campus_agents = [agent for agent in agent_list if agent.type == "Faculty" or agent.type == "Off-campus Student"]
     probability_o = 0.125 / len(off_campus_agents)
     sim_data['new_exposures'].append(0)
-    sim_data['total_infections'].append(0)
+    sim_data['total_infections'].append(INITIALLY_INFECTED)
 
     for space in spaces:
         if "Dorm" in str(space):
@@ -228,13 +246,29 @@ def update(data, simulation_number):
     print("Simulation finished.")
 
 def input_stuff():
+    print("Do you want to add vaccinated agents to the model? (Y/N)")
+    vaccines = input()
+    if vaccines == 'Y':
+        INTERVENTIONS["Vaccine"] = True
+        print("What percentage of students should be vaccinated? (0 to 100)")
+        students_vax = input()
+        VACCINE_PERCENTAGE["Student"] = int(students_vax) / 100.0
+        print("What percentage of faculty should be vaccinated? (0 to 100)")
+        faculty_vax = input()
+        VACCINE_PERCENTAGE["Faculty"] = int(faculty_vax) / 100.0
+    print("Do you want to add the facemask intervention to the model? (Y/N)")
+    facemasks = input()
+    if facemasks == 'Y':
+        INTERVENTIONS["Face mask"] = True
     print("How many simulations would you like to run with these interventions?")
     number_of_simulations = int(input())
+    pickle.dump(INTERVENTIONS, open('pickle_files/interventions.p', 'wb'))
+    pickle.dump(VACCINE_PERCENTAGE, open('pickle_files/vaccine_percentage.p', 'wb'))
     return number_of_simulations
 
 if __name__ == "__main__":
-    start_time = time.time()
     number_of_simulations = input_stuff()
+    start_time = time.time()
     manager = Manager()
     data = manager.dict()
     data.update({sim_num: {} for sim_num in range(number_of_simulations + 1)})

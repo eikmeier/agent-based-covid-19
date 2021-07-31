@@ -34,7 +34,8 @@ PROBABILITY_A = 0.15
 TUNING_PARAMETER = 1.25
 
 INITIALLY_INFECTED = 10  # Number of agents that are initially infected (before running the simulation)
-INTERVENTIONS = {"Vaccine": "off", "Face mask": "off", "Screening": "off"}
+INTERVENTIONS = {"Vaccine": False, "Face mask": False, "Screening": False}
+VACCINE_PERCENTAGE = {"Faculty": 0, "Student": 0}
 VACCINE_SELF_EFFECTIVENESS = 0.7
 VACCINE_SPREAD_EFFECTIVENESS = 0.7
 EXPOSED_SPACES = {"Dorm": 0, "Academic": 0, "DiningHall": 0, "Gym": 0, "Library": 0, "Office": 0, "SocialSpace": 0, "TransitSpace": 0, "LargeGatherings": 0, "Off-Campus": 0, "Other": 0}
