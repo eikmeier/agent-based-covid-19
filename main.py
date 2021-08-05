@@ -6,6 +6,8 @@ from multiprocessing import Pool, Manager
 import pickle
 import scipy.stats as st
 import numpy as np
+import os
+import csv
 from CovidAgents import initialize_leaves, change_states, Agent
 from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
     assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
@@ -127,8 +129,6 @@ def observe(data):
             space_exposures.append(data[sim_2]['exposed_spaces'][space_str])
         se_intervals[space_str].append((median_data['exposed_spaces'][space_str] - np.quantile(space_exposures, .25), 
             np.quantile(space_exposures, .75) - median_data['exposed_spaces'][space_str]))
-
-    print(ne_intervals)
     
     data[number_of_simulations] = median_data
     plt.figure(0)
@@ -192,6 +192,36 @@ def observe(data):
     plt.bar(data[number_of_simulations]['exposed_spaces'].keys(), data[number_of_simulations]['exposed_spaces'].values(), zorder=3)
     xmin, xmax, ymin, ymax = plt.axis()
     plt.ylim(bottom = 0, top = ymax + (ymax - ymin) / (len(plt.yticks()[0]) - 1))
+    plt.savefig('images/space_exposures.png')
+
+    # Save median data (except for seir states which have no median calculated) to data file
+    with open('data/new_exposures.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage), 
+         ("Face Mask Intervention?", face_mask_intervention)])
+        writer.writerow(data[number_of_simulations]['new_exposures'])
+        
+    with open('data/total_infections.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage), 
+         ("Face Mask Intervention?", face_mask_intervention)])
+        writer.writerow(data[number_of_simulations]['total_infections'])
+
+    with open('data/seir_states.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage), 
+         ("Face Mask Intervention?", face_mask_intervention)])
+        for sim_number in range(number_of_simulations):
+            for seir_state in data[number_of_simulations]['seir_states']:
+                    writer.writerow(data[sim_number]['seir_states'][seir_state])
+
+    with open('data/space_exposures.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow([("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage), 
+         ("Face Mask Intervention?", face_mask_intervention)])
+        for space_tuple in list(data[number_of_simulations]['exposed_spaces'].items()):
+            writer.writerow(space_tuple)
+
     plt.show()
 
 def update(data, simulation_number):
@@ -302,7 +332,21 @@ def input_stuff():
     pickle.dump(VACCINE_PERCENTAGE, open('pickle_files/vaccine_percentage.p', 'wb'))
     return number_of_simulations
 
+def create_directories():
+    current_dir = os.getcwd()
+    images_dir = current_dir + ('\images')
+    pickle_dir = current_dir + ('\pickle_files')
+    data_dir = current_dir + ('\data')
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
+    if not os.path.exists(pickle_dir):
+        os.makedirs(pickle_dir)
+    if not os.path.exists(data_dir):
+        print("MAKING DATA!")
+        os.makedirs(data_dir)
+
 if __name__ == "__main__":
+    create_directories()
     number_of_simulations = input_stuff()
     start_time = time.time()
     manager = Manager()
