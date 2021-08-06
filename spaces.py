@@ -3,7 +3,6 @@ from global_constants import PASSING_TIME, SPACE_CAPACITIES, SPACE_RISK_MULTIPLI
 import math
 import random
 
-
 class Space:
     def close_space(self):
         """
@@ -32,7 +31,6 @@ class Space:
 
         return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
 
-
     def spread_infection_core(self):
         """
         Spreads infection in the space by changing a variable amount of agent states from "S" to "E".\n
@@ -44,15 +42,12 @@ class Space:
                 agent.change_state("E")
                 agent.exposed_space = self
 
-
-
     def spread_infection_leaves(self):
         """
         Spreads infection in the leaves of the space by changing a variable amount of agent states from "S" to "E".\n
         """
         for leaf in self.leaves:  # First, spread infection in all the leaves
             leaf.spread_infection()
-
 
     def spread_in_space(self):
         """
@@ -62,8 +57,6 @@ class Space:
         self.spread_infection_core()
         if self.time != 8 and self.time != 22:  # If not beginning/end of day, agent has to both enter and exit the core
             self.spread_infection_core()
-
-
 
 class Dorm(Space):
     def __init__(self, size):
@@ -91,7 +84,6 @@ class Dorm(Space):
             self.cv = PASSING_TIME * 75
             self.singles = [None] * 25
             self.doubles = [None] * 25
-        
         for i in range(len(self.singles)):
             self.singles[i] = SubSpace(self, 1, SUBSPACE_RISK_MULTIPLIERS.get("Dorm"))
             self.singles[i].agent = None
@@ -157,9 +149,7 @@ class Dorm(Space):
         ie_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Ie", day, time)]
         im_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Im", day, time)]
         ia_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Ia", day, time)]
-
         return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
-
 
     def spread_infection_core(self, day, time):
         """
@@ -171,7 +161,6 @@ class Dorm(Space):
             if rand_num < (infection_prob * agent.vaccinated_self_risk_multiplier * agent.face_mask_self_risk_multiplier.get("Dorm")):  # Agent is now exposed
                 agent.change_state("E")
                 agent.exposed_space = self
-
 
 class TransitSpace(Space):
     def __init__(self, day, time):
@@ -193,7 +182,6 @@ class TransitSpace(Space):
 
     def __str__(self):
         return 'Transit Space'
-
 
 class DiningHall(Space):
     def __init__(self, day, time):
@@ -222,7 +210,6 @@ class DiningHall(Space):
     def __str__(self):
         return 'Dining Hall'
 
-
 class Library(Space):
     def __init__(self, day, time):
         """
@@ -245,7 +232,6 @@ class Library(Space):
 
     def __str__(self):
         return 'Library'
-
 
 class Gym(Space):
     def __init__(self, day, time):
@@ -270,7 +256,6 @@ class Gym(Space):
     def __str__(self):
         return 'Gym'
 
-
 class Office(Space):
     def __init__(self, division, day, time):
         """
@@ -287,7 +272,7 @@ class Office(Space):
         if self.division == "STEM":
             self.cv = PASSING_TIME * 6 * 50
             self.subcv = 50
-        elif self.division in {"Humanities", "Arts"}:
+        else: #self.division == "Humanities" or self.division == "Arts"
             self.cv = PASSING_TIME * 6 * 25
             self.subcv = 20
         self.rv = SPACE_RISK_MULTIPLIERS.get("Office")
@@ -301,7 +286,6 @@ class Office(Space):
 
     def __str__(self):
         return 'Office'
-
 
 class LargeGatherings(Space):
     def __init__(self):
@@ -360,7 +344,6 @@ class Academic(Space):
          A large Academic space will have 5 small classrooms, 3 medium classrooms, and 3 large classrooms.\n
         Each of these elements of the classrooms field has a cv field and rv field which is pre-defined in global_constants.py\n
         """
-
         self.size = size
         self.day = day
         self.time = time
@@ -370,8 +353,7 @@ class Academic(Space):
         self.leaves = self.classrooms
 
         for i in range(CLASSROOMS.get(self.size)[0]):  # Insert small classrooms
-            self.classrooms.append(
-                SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
+            self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Small"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
             self.classrooms[i].seats = ACADEMIC_SUBSPACE_SEATS.get("Small")
             self.classrooms[i].faculty = None
 
@@ -382,8 +364,8 @@ class Academic(Space):
 
         for k in range(CLASSROOMS.get(self.size)[2]):  # Insert large classrooms
             self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Large"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
-            self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].seats = ACADEMIC_SUBSPACE_SEATS.get("Large")
-            self.classrooms[k + CLASSROOMS.get(self.size)[0] + + CLASSROOMS.get(self.size)[1]].faculty = None
+            self.classrooms[k + CLASSROOMS.get(self.size)[0] + CLASSROOMS.get(self.size)[1]].seats = ACADEMIC_SUBSPACE_SEATS.get("Large")
+            self.classrooms[k + CLASSROOMS.get(self.size)[0] + CLASSROOMS.get(self.size)[1]].faculty = None
 
     def __str__(self):
         return "Academic"
@@ -395,10 +377,10 @@ class Academic(Space):
         Otherwise, None is returned.\n
         """
         # Put the class (for two hours) into the agent's schedule
-        if agent.type == "Faculty":
-            classroom = self.assign_faculty(agent)
-        else:
+        if agent.student:
             classroom = self.assign_student(agent)
+        else:
+            classroom = self.assign_faculty(agent)
         if classroom != None:
             agent.num_of_classes += 1
             agent.schedule.get(self.day)[self.time] = classroom.space
@@ -431,7 +413,6 @@ class Academic(Space):
                 return classroom
         return None
 
-
 class SocialSpace(Space):
     def __init__(self, day, time):
         """
@@ -441,8 +422,7 @@ class SocialSpace(Space):
         """
         self.leaves = []
         for i in range(SPACE_SUBSPACE_AMOUNT.get("Social Space")):
-            self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Social Space"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Social Space")))
+            self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Social Space"), SUBSPACE_RISK_MULTIPLIERS.get("Social Space")))
         self.day = day
         self.time = time
         # RV set to 0 so it is impossible to spread infection in the social space core, since the core has no meaning
@@ -465,7 +445,6 @@ class SocialSpace(Space):
 
     def __str__(self):
         return 'Social Space'
-
 
 class SubSpace():
     def __init__(self, space, cv, rv):
@@ -516,29 +495,21 @@ class SubSpace():
         """
         Returns the infection probability of a space.\n
         """
-
         ie_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.space.__class__.__name__)) for agent in self.get_agents("Ie")]
         im_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.space.__class__.__name__)) for agent in self.get_agents("Im")]
         ia_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.space.__class__.__name__)) for agent in self.get_agents("Ia")]
-
         return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
-
-
 
     def spread_infection(self):
         """
         Spreads infection at a given space by changing a variable amount of agent states from "S" to "E".\n
         """
         if str(self.space.__class__.__name__) == "Dorm" or str(self.space.__class__.__name__) == "DiningHall":
-
             infection_prob = (self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia"))) / self.cv) * TUNING_PARAMETER) / 100.0
-
         else:
             infection_prob = self.get_infection_prob() / 100.0
-
         for agent in self.get_agents("S"):
             rand_num = random.random()
-
             if rand_num < (infection_prob * agent.vaccinated_self_risk_multiplier * agent.face_mask_self_risk_multiplier.get(str(self.space.__class__.__name__))):  # Agent is now exposed
                 agent.change_state("E")
                 agent.exposed_space = self.space

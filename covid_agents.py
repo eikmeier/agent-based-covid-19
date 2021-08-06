@@ -141,7 +141,7 @@ class Agent:
         Returns a string representation of an agent with their type (On campus student, Off campus student, Faculty),
          their division/division (STEM, Humanities, Arts), and their seir state (S, E, Ia, Im, Ie, R).\n
         """
-        return 'Agent: Student:' + str(self.student) + ' / On-Campus:'+ str(not self.off_campus) + ' /' + self.division + ' /' + self.seir #TODO: Fix
+        return 'Agent: Student:' + str(self.student) + ' / On-Campus:'+ str(not self.off_campus) + ' /' + self.division + ' /' + self.seir
 
 def change_states(agents):
     """

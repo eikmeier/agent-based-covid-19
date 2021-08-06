@@ -6,8 +6,8 @@ import pickle
 import numpy as np
 import os
 import csv
-from CovidAgents import change_states, Agent
-from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
+from covid_agents import change_states, Agent
+from schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
     assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
 from global_constants import SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, VACCINE_PERCENTAGE
 from spaces import LargeGatherings
@@ -21,8 +21,7 @@ def initialize():
 
     # Create spaces
     dorms = create_dorms()
-    academic_buildings = create_academic_spaces([[[] for i in range(4)] for i in range(2)], [[[] for i in range(4)] for i in range(2)], \
-        [[[] for i in range(4)] for i in range(2)]) # Create a list for each day/hour combination for each division (STEM, Humanities, Arts)
+    academic_buildings = create_academic_spaces() # Create a list for each day/hour combination for each division (STEM, Humanities, Arts)
     dining_hall_spaces = create_spaces("DiningHall", 9, 20, [16])
     gym_spaces = create_spaces("Gym")
     library_spaces = create_spaces("Library")
@@ -35,10 +34,8 @@ def initialize():
     assign_dorms(dorms, agent_list)
     assign_agents_to_classes(academic_buildings, agent_list)
     assign_dining_times(dining_hall_spaces, agent_list)
-
     assign_gym(agent_list, gym_spaces)
-    assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, arts_office_spaces,
-                          humanities_office_spaces)
+    assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, arts_office_spaces, humanities_office_spaces)
 
     return [dining_hall_spaces, gym_spaces, library_spaces, social_spaces, stem_office_spaces, humanities_office_spaces, arts_office_spaces , \
         academic_buildings[0], academic_buildings[1], academic_buildings[2], dorms] # Return a list containing all the spaces (to be used in update)
@@ -180,7 +177,7 @@ def update(data, simulation_number):
     update_dorms = []
     sim_data = data[simulation_number]
     spaces = initialize()
-    off_campus_agents = [agent for agent in agent_list if agent.type == "Faculty" or agent.type == "Off-campus Student"]
+    off_campus_agents = [agent for agent in agent_list if agent.off_campus]
     probability_o = 0.125 / len(off_campus_agents)
     sim_data['new_exposures'].append(0)
     sim_data['total_infections'].append(INITIALLY_INFECTED)
@@ -260,7 +257,6 @@ def update(data, simulation_number):
                     sim_data['exposed_spaces'][str(agent.exposed_space)] += 1
             change_states(agent_list)
             data[simulation_number] = sim_data
-            #print("Day " + day + ", Week " + str(week) + ", # of Infected Agents: " + str(len(infected_agents)))
     print("Simulation finished.")
 
 def input_stuff():
