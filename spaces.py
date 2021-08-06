@@ -31,7 +31,6 @@ class Space:
         ia_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Ia")]
 
         return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
-        # return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia"))) / self.cv) * TUNING_PARAMETER
 
 
     def spread_infection_core(self):
@@ -161,8 +160,6 @@ class Dorm(Space):
 
         return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
 
-        # return self.rv * ((len(self.get_agents("Ie", day, time)) + len(self.get_agents("Im", day, time)) + 0.5 * len(self.get_agents("Ia", day, time)))
-                          # / self.cv) * TUNING_PARAMETER
 
     def spread_infection_core(self, day, time):
         """
@@ -525,7 +522,6 @@ class SubSpace():
         ia_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.space.__class__.__name__)) for agent in self.get_agents("Ia")]
 
         return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
-        # return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia"))) / self.cv) * TUNING_PARAMETER
 
 
 
@@ -546,21 +542,3 @@ class SubSpace():
             if rand_num < (infection_prob * agent.vaccinated_self_risk_multiplier * agent.face_mask_self_risk_multiplier.get(str(self.space.__class__.__name__))):  # Agent is now exposed
                 agent.change_state("E")
                 agent.exposed_space = self.space
-
-
-# ***Below are some notes that need to be addressed, along with some notes for future reference***
-
-"""
-** Problems (or so-called problems, more like a running list of stuff for Erik to reference) with the code to fix:
- 1. Consider adding in closing spaces (gym/library/dining hall/large gatherings) based on h? Or to have this elsewhere
-"""
-
-# We close the gym, library, and dining hall with h = 0.50 and h = 1
-# h = 0.50, close gym and library
-# h = 0.75, close gym, library, dining hall, and large gatherings
-# h = 1, close gym, library, dining hall, office, and large gatherings
-
-# If L/DH are closed, time spent at space is replaced with student's dorm or off-campus
-# When facing a building closure, faculties spend that time in their
-#  office instead
-# When O are closed, we assume faculty only spend time in the classes they teach

@@ -47,33 +47,6 @@ def initialize():
 
 def observe(data):
     # Figure out the spaces where everyone got exposed
-    """
-    data[0]['space_exposures'] = {"Dining Hall": 0, "Gym": 0, "Library": 0, "Large Gatherings": 0, "Social Space": 0, "Office": 0, 
-                               "Academic": 0, "Dorm": 0, "Transit Space": 0, "Off-Campus": 0}
-    for agent in [agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie" or agent.seir == "R"]:
-        if "Dining Hall" in str(agent.exposed_space):
-            data[0]['space_exposures']["Dining Hall"] += 1
-        elif "Gym" in str(agent.exposed_space):
-            data[0]['space_exposures']["Gym"] += 1
-        elif "Library" in str(agent.exposed_space):
-            data[0]['space_exposures']["Library"] += 1
-        elif "Large Gatherings" in str(agent.exposed_space):
-            data[0]['space_exposures']["Large Gatherings"] += 1
-        elif "Social Space" in str(agent.exposed_space):
-            data[0]['space_exposures']["Social Space"] += 1
-        elif "Office" in str(agent.exposed_space):
-            data[0]['space_exposures']["Office"] += 1
-        elif "Academic" in str(agent.exposed_space):
-            data[0]['space_exposures']["Academic"] += 1
-        elif "Dorm" in str(agent.exposed_space):
-            data[0]['space_exposures']["Dorm"] += 1
-        elif "Transit Space" in str(agent.exposed_space):
-            data[0]['space_exposures']["Transit Space"] += 1
-        elif "Off-Campus" in str(agent.exposed_space):
-            data[0]['space_exposures']["Off-Campus"] += 1 # TODO: Put back as well!
-    print(data[0])
-    data[0]['space_exposures'] = dict(sorted(data[0]['space_exposures'].items(), key=lambda item: item[1], reverse = True)) # TODO: Put back!
-    """
     caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
     caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
     faculty_vaccine_percentage = caVP.get("Faculty") * 100
