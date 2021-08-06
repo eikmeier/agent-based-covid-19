@@ -342,7 +342,6 @@ def create_directories():
     if not os.path.exists(pickle_dir):
         os.makedirs(pickle_dir)
     if not os.path.exists(data_dir):
-        print("MAKING DATA!")
         os.makedirs(data_dir)
 
 if __name__ == "__main__":
