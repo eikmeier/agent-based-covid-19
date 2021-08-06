@@ -163,32 +163,22 @@ def observe(data):
     plt.savefig('images/space_exposures.png')
 
     # Save median data (except for seir states which have no median calculated) to data file
-    with open('data/new_exposures.csv', 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage), 
-         ("Face Mask Intervention?", face_mask_intervention)])
-        writer.writerow(data[number_of_simulations]['new_exposures'])
-        
-    with open('data/total_infections.csv', 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage), 
-         ("Face Mask Intervention?", face_mask_intervention)])
-        writer.writerow(data[number_of_simulations]['total_infections'])
-
-    with open('data/seir_states.csv', 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage), 
-         ("Face Mask Intervention?", face_mask_intervention)])
-        for sim_number in range(number_of_simulations):
-            for seir_state in data[number_of_simulations]['seir_states']:
-                    writer.writerow(data[sim_number]['seir_states'][seir_state])
-
-    with open('data/space_exposures.csv', 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow([("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage), 
-         ("Face Mask Intervention?", face_mask_intervention)])
-        for space_tuple in list(data[number_of_simulations]['exposed_spaces'].items()):
-            writer.writerow(space_tuple)
+    parameter_tuples = [("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage), 
+     ("Face Mask Intervention?", face_mask_intervention), ("Number of Simulations", number_of_simulations)]
+    
+    for data_section in data[0].keys():
+        with open('data/' + str(data_section) + '.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(parameter_tuples)
+            if data_section == 'seir_states':
+                for sim_number in range(number_of_simulations):
+                    for seir_state in data[number_of_simulations][data_section]:
+                            writer.writerow(data[sim_number][data_section][seir_state])
+            elif data_section == 'exposed_spaces':
+                for space_tuple in list(data[number_of_simulations][data_section].items()):
+                    writer.writerow(space_tuple)
+            else:
+                writer.writerow(data[number_of_simulations][data_section])
 
     plt.show()
 
