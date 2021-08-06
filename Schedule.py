@@ -6,6 +6,7 @@ from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace, Office
 from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, PROBABILITY_G, PROBABILITY_S, PROBABILITY_L, \
     SCHEDULE_DAYS, SCHEDULE_WEEKDAYS, CLASS_TIMES, CLASSROOMS
 
+
 all_transit_spaces = {"A": [], "B": [], "W": []}  # time range is from 8 ~ 22, which is 15 blocks & class times are at index 2, 4, 6, 8
 for day in SCHEDULE_DAYS:
     for time in range(15):

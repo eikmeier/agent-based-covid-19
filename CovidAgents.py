@@ -1,25 +1,21 @@
-from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A, INITIALLY_INFECTED, INTERVENTIONS, VACCINE_SELF_EFFECTIVENESS, VACCINE_SPREAD_EFFECTIVENESS
+from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A,\
+    FACE_MASK_LEVEL, FALSE_POSITIVE_RATE, FALSE_NEGATIVE_RATE, FACE_MASK_COMPLIANCE, TYPE_RATIO, DIVISION_RATIO, \
+    INITIAL_INFECTION_PROPORTION, SOCIAL_RATIO
 import random
 import pickle
 
-# n = 10  # number of agents
-# n = 2380, on-campus: 1500, off-campus: 500, faculty: 380
-n = TOTAL_AGENTS
+n = TOTAL_AGENTS  # n = 2380, on-campus: 1500, off-campus: 500, faculty: 380
 
-vaccine_intervention = INTERVENTIONS.get("Vaccine")  # whether we use vaccine intervention or not ("on" or "off")
-faculty_vaccine_percentage = 0.7
-student_vaccine_percentage = 0.7
-face_mask_intervention = INTERVENTIONS.get("Face mask")  # whether we use face mask intervention or not ("on" or "off")
-face_mask_comp = 0.5
-screening_comp = 0.5
-type_ratio = [500.0/TOTAL_AGENTS, 380.0/TOTAL_AGENTS]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
-division_ratio = [0.25, 0.25]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
-initial_infection = INITIALLY_INFECTED/TOTAL_AGENTS  # 10/2380.0  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
-social_ratio = 0.5  # proportion of students that are social
 
 
 class Agent:
     def initialize(self):
+        caCV = pickle.load(open('pickle_files/covid_variants.p', 'rb'))
+        covid_variant = [key for key in caCV[0].keys() if caCV[0].get(key) is True][0]
+        vaccine_self = caCV[1][0].get(covid_variant)
+        vaccine_spread = caCV[1][1].get(covid_variant)
+        face_mask_self = caCV[2][0].get(covid_variant)
+        face_mask_spread = caCV[2][1].get(covid_variant)
         caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
         caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
         vaccine_intervention = caI.get("Vaccine")  # whether we use vaccine intervention or not ("on" or "off")
@@ -30,16 +26,17 @@ class Agent:
         agents = []
         for i in range(TOTAL_AGENTS):
             ag = Agent()
-            ag.vaccinated = 0  # vaccination status (0 = not vaccinated, 1 = vaccinated)
-            # ag.vaccinated_risk_multiplier = 1
+            ag.vaccinated = False  # vaccination status (0 = not vaccinated, 1 = vaccinated)
             ag.vaccinated_self_risk_multiplier = 1
             ag.vaccinated_spread_risk_multiplier = 1
-            ag.face_mask = 0  # face_mask compliance
+            ag.face_mask = False  # face_mask compliance
             ag.face_mask_self_risk_multiplier = {"Dorm": 1, "Academic": 1, "DiningHall": 1, "Gym": 1, "Library": 1, "Office": 1,
                                                  "SocialSpace": 1, "TransitSpace": 1, "LargeGatherings": 1}
             ag.face_mask_spread_risk_multiplier = {"Dorm": 1, "Academic": 1, "DiningHall": 1, "Gym": 1, "Library": 1, "Office": 1,
                                                    "SocialSpace": 1, "TransitSpace": 1, "LargeGatherings": 1}
-            ag.screening = 0  # screening test compliance
+            # ag.screening = False  # screening test compliance
+            ag.screening_result = []  # result of screening test - whether agent is infected or not
+
             ag.type = "On-campus Student"
             ag.division = "STEM"  # agent subtype/division (either STEM, Humanities, or Arts)
             ag.seir = "S"  # agent infection states (either "S", "E", "Ia", "Im", "Ie", "R")
@@ -49,6 +46,7 @@ class Agent:
             ag.schedule = {"A": [None] * 15, "B": [None] * 15, "W": [None] * 15}  # time range is from 8 ~ 22, which is 15 blocks & class times are at index 2, 4, 6, 8
             ag.days_in_state = 0
             ag.bedridden = False
+            ag.bedridden_days = False  # by default, agents are not quarantined
             ag.num_of_classes = 0
             # Initialize leaves - the first social space leaf is for A & B days and the second is for W days
             ag.leaves = {"Dining Hall": -1, "Library": -1, "Gym": -1, "Social Space": [-1, -1], "Office": -1}
@@ -57,9 +55,9 @@ class Agent:
 
 
         # TYPE (ON-CAMPUS/OFF-CAMPUS/FACULTY): randomly select and assign a certain proportion of agents as "Off-campus Student" and "Faculty"
-        select_type = random.sample(agents, k=int(TOTAL_AGENTS * (type_ratio[0] + type_ratio[1])))
+        select_type = random.sample(agents, k=int(TOTAL_AGENTS * (TYPE_RATIO[0] + TYPE_RATIO[1])))
         i = 0
-        while i < (len(select_type) * (type_ratio[0] / (type_ratio[0] + type_ratio[1]))):
+        while i < (len(select_type) * (TYPE_RATIO[0] / (TYPE_RATIO[0] + TYPE_RATIO[1]))):
             select_type[i].type = "Off-campus Student"
             i += 1
         while i < len(select_type):
@@ -68,41 +66,54 @@ class Agent:
 
 
         # VACCINATION: randomly select and assign vaccination to certain proportion of student/faculty agents
-        if vaccine_intervention == True:
+        if vaccine_intervention is True:
             student_agents = [agent for agent in agents if agent.type != "Faculty"]
             faculty_agents = [agent for agent in agents if agent.type == "Faculty"]
             select_vaccine_student = random.sample(student_agents, k=int(len(student_agents) * student_vaccine_percentage))
             select_vaccine_faculty = random.sample(faculty_agents, k=int(len(faculty_agents) * faculty_vaccine_percentage))
             for ag in agents:
                 if ag in select_vaccine_student or ag in select_vaccine_faculty:
-                    ag.vaccinated = 1
-                    # ag.vaccinated_risk_multiplier = 0.09
-                    ag.vaccinated_self_risk_multiplier = (1 - VACCINE_SELF_EFFECTIVENESS)  # 0.09
-                    ag.vaccinated_spread_risk_multiplier = (1 - VACCINE_SPREAD_EFFECTIVENESS)
+                    ag.vaccinated = True
+                    ag.vaccinated_self_risk_multiplier = (1 - vaccine_self)
+                    ag.vaccinated_spread_risk_multiplier = (1 - vaccine_spread)
+
+
 
         # FACE MASK COMPLIANCE: randomly select and assign face mask compliance to certain proportion of agents
-        if face_mask_intervention == True:
-            select_face_mask = random.sample(agents, k=int(TOTAL_AGENTS * face_mask_comp))
+        if face_mask_intervention is True:
+
+            select_face_mask = random.sample(agents, k=int(TOTAL_AGENTS * FACE_MASK_COMPLIANCE))
+
+            for ag in select_face_mask:
+                ag.face_mask = True
+                for key in ag.face_mask_self_risk_multiplier.keys():
+                    ag.face_mask_self_risk_multiplier[key] = 1 - face_mask_self
+                    ag.face_mask_spread_risk_multiplier[key] = 1 - face_mask_spread
+
+
+
+            """ # ORIGINAL FACEMASK INTERVENTION (following paper)
+            if FACE_MASK_LEVEL == "only unvaccinated":
+                unvaccinated = [ag for ag in agents if ag.vaccinated is False]
+                select_face_mask = random.sample(unvaccinated, k=int(len(unvaccinated) * FACE_MASK_COMPLIANCE))
+            else:  # if FACE_MASK_LEVEL == "all":
+                select_face_mask = random.sample(agents, k=int(TOTAL_AGENTS * FACE_MASK_COMPLIANCE))
+
             for ag in agents:
                 if ag in select_face_mask:  # agents that comply with face masks
-                    ag.face_mask = 1
-                    # ag.face_mask_spread_risk_multiplier["TransitSpace"] = 0.5
-                    ag.face_mask_self_risk_multiplier = {"Dorm": 0.75, "Academic": 0.75, "DiningHall": 0.75, "Gym": 0.75, "Library": 0.75, "Office": 0.75,
-                                                         "SocialSpace": 0.75, "TransitSpace": 0.75, "LargeGatherings": 0.75}
-                    ag.face_mask_spread_risk_multiplier = {"Dorm": 0.5, "Academic": 0.5, "DiningHall": 0.5, "Gym": 0.5, "Library": 0.5, "Office": 0.5,
-                                                           "SocialSpace": 0.5, "TransitSpace": 0.5, "LargeGatherings": 0.5}
+                    ag.face_mask = True
+                    for key in ag.face_mask_self_risk_multiplier.keys():
+                        ag.face_mask_self_risk_multiplier[key] = (1 - face_mask_self)
+                        ag.face_mask_spread_risk_multiplier[key] = (1 - face_mask_spread)
 
                 else:  # agents that don't comply with face masks (don't wear in social space, large gatherings, dorm cores, etc.)
-                    ag.face_mask_self_risk_multiplier = {"Dorm": 1, "Academic": 0.75, "DiningHall": 0.75, "Gym": 0.75, "Library": 0.75, "Office": 0.75,
-                                                         "SocialSpace": 1, "TransitSpace": 0.75, "LargeGatherings": 1}
-                    ag.face_mask_spread_risk_multiplier = {"Dorm": 1, "Academic": 0.5, "DiningHall": 0.5, "Gym": 0.5, "Library": 0.5, "Office": 0.5,
-                                                           "SocialSpace": 1, "TransitSpace": 0.5, "LargeGatherings": 1}
+                    for key in ag.face_mask_self_risk_multiplier.keys():
+                        if key in ["Academic", "DiningHall", "Gym", "Library", "Office", "TransitSpace"]:
+                            ag.face_mask_self_risk_multiplier[key] = (1 - face_mask_self)
+                            ag.face_mask_spread_risk_multiplier[key] = (1 - face_mask_spread)
+            """
 
 
-        #  SCREENING TEST COMPLIANCE: randomly select and assign screening test compliance to certain proportion of agents
-        select_screening = random.sample(agents, k=int(TOTAL_AGENTS * screening_comp))
-        for ag in select_screening:
-            ag.screening = 1
 
 
 
@@ -115,13 +126,13 @@ class Agent:
             else:  # if agent is a student
                 student_list.append(ag)
 
-        select_division_faculty = random.sample(faculty_list, k=int(len(faculty_list) * (division_ratio[0] + division_ratio[1])))
-        select_division_student = random.sample(student_list, k=int(len(student_list) * (division_ratio[0] + division_ratio[1])))
+        select_division_faculty = random.sample(faculty_list, k=int(len(faculty_list) * (DIVISION_RATIO[0] + DIVISION_RATIO[1])))
+        select_division_student = random.sample(student_list, k=int(len(student_list) * (DIVISION_RATIO[0] + DIVISION_RATIO[1])))
         select_division = [select_division_faculty, select_division_student]
 
         for select in select_division:
             i = 0
-            while i < (len(select) * (division_ratio[0] / (division_ratio[0] + division_ratio[1]))):
+            while i < (len(select) * (DIVISION_RATIO[0] / (DIVISION_RATIO[0] + DIVISION_RATIO[1]))):
                 select[i].division = "Humanities"
                 i += 1
             while i < len(select):
@@ -129,19 +140,15 @@ class Agent:
                 i += 1
 
         # INITIAL INFECTION: randomly select and assign agents that are initially infected
-        select_seir = random.sample([agent for agent in agents if agent.vaccinated == 0], k=int(TOTAL_AGENTS * initial_infection))  # randomly select initial number of agents (that haven't been vaccinated)
+        select_seir = random.sample([agent for agent in agents if agent.vaccinated is False], k=int(TOTAL_AGENTS * INITIAL_INFECTION_PROPORTION))  # randomly select initial number of agents (that haven't been vaccinated)
         for ag in select_seir:
             ag.seir = random.choice(["Ia", "Im", "Ie"])  # randomly assign one of the infected states to agents
 
         # SOCIAL: randomly select and assign student agents as social, which allows them to go to large gatherings
-        select_social = random.sample(student_list, k=int(TOTAL_AGENTS * social_ratio))  # list of all social agents
+        select_social = random.sample(student_list, k=int(TOTAL_AGENTS * SOCIAL_RATIO))  # list of all social agents
         for ag in select_social:
             ag.social = True
 
-        # print all agents and their attributes
-        # for ag in agents:
-            # print([ag.vaccinated, ag.face_mask, ag.screening, ag.type, ag.division, ag.seir, ag.social, ag.schedule])
-            # print([ag.type, ag.division])
 
         initialize_leaves(agents)
         return agents
@@ -152,6 +159,7 @@ class Agent:
         """
         self.seir = state
         self.days_in_state = 0
+
 
     def get_division_index(self):
         """
@@ -167,9 +175,6 @@ class Agent:
         else:  # self.division == "Arts"
             return 2
 
-    def __str__(self):
-        return 'Agent:' + self.type + '/' + self.division + '/' + self.seir
-
     def __repr__(self):
         return 'Agent:' + self.type + '/' + self.division + '/' + self.seir
 
@@ -184,7 +189,7 @@ class Agent:
         """
         available_times = []
         for i in range(start_hour, end_hour + 1):
-            if self.schedule.get(day)[i-8] == None:
+            if self.schedule.get(day)[i-8] is None:
                 available_times.append(i-8)
         return available_times
 
@@ -195,6 +200,7 @@ class Agent:
          their division/division (STEM, Humanities, Arts), and their seir state (S, E, Ia, Im, Ie, R).\n
         """
         return 'Agent: ' + self.type + '/' + self.division + '/' + self.seir
+
 
 def change_states(agents):
     """
@@ -208,7 +214,15 @@ def change_states(agents):
     At the end of the loop, each agent has their days_in_state field increased by one to signify that
      the current day has ended.\n
     """
+
     for agent in agents:
+        if agent.bedridden_days is not False:  # if agent is in quarantine
+            if agent.bedridden_days == 14:  # after 14 days, agent get out of quarantine
+                agent.bedridden = False  # in whatever state the agent was, after 14 days the agent will be either susceptible or recovered, so we don't need to change their state
+                agent.bedridden_days = False
+            elif agent.bedridden_days < 14:
+                agent.bedridden_days += 1
+
         if agent.days_in_state == 2:
             if agent.seir == "Ia":
                 rand_num = random.random()
@@ -216,16 +230,18 @@ def change_states(agents):
                     agent.change_state("Ie")
                 elif rand_num < PROBABILITY_E + PROBABILITY_A:
                     agent.change_state("Ia")
-                else: # An agent transitions from Ia -> Im with a probability 1 - (a + e)
+                else:  # An agent transitions from Ia -> Im with a probability 1 - (a + e)
                     agent.change_state("Im")
             elif agent.seir == "E":
                 agent.change_state("Ia")
         elif agent.days_in_state == 10 and "I" in agent.seir:
             agent.change_state("R")
             agent.bedridden = False
-        elif agent.days_in_state == 5 and agent.seir == "Ie": # After 5 days, agents in state Ie is bed-ridden and does not leave their room
+        elif agent.days_in_state == 5 and agent.seir == "Ie":  # After 5 days, agents in state Ie is bed-ridden and does not leave their room
             agent.bedridden = True
+
         agent.days_in_state += 1
+
 
 def initialize_leaves(agents):
     """
@@ -266,3 +282,25 @@ def initialize_leaves(agents):
                 random.shuffle(student_agents)
                 for count, student in enumerate(student_agents):
                     student.leaves[space] = count % SPACE_SUBSPACE_AMOUNT.get(space)
+
+
+def screening_test(agents):
+    for agent in agents:
+        rand_num = random.random()
+        if agent.seir in ["S", "E", "R"]:
+            if rand_num < FALSE_POSITIVE_RATE:
+                agent.screening_result.append("Positive")
+            else:
+                agent.screening_result.append("Negative")
+        elif agent.seir in ["Ia", "Im", "Ie"]:
+            if rand_num < FALSE_NEGATIVE_RATE:
+                agent.screening_result.append("Negative")
+            else:
+                agent.screening_result.append("Positive")
+
+
+def return_screening_result(agents):
+    for agent in agents:
+        if agent.screening_result == "Positive":
+            agent.bedridden = True
+            agent.bedridden_days = 0
