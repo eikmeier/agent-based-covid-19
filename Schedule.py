@@ -13,7 +13,6 @@ for day in SCHEDULE_DAYS:
         all_transit_spaces[day].append(spaces.TransitSpace(day, time))
 
 
-
 def create_spaces(space, start_hour=8, end_hour=22, break_times=None, open_days=SCHEDULE_DAYS, division = None):
     """
     Creates spaces from spaces.py with a given space, num_hours, and division.\n

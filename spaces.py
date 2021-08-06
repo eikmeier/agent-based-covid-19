@@ -543,6 +543,7 @@ class SubSpace():
                 agent.exposed_space = self.space
 
 
+
 # ***Below are some notes that need to be addressed, along with some notes for future reference***
 
 """

@@ -1,9 +1,8 @@
 import random
 import CovidAgents
 from CovidAgents import change_states, screening_test, return_screening_result
-from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, \
-    assign_dining_times, assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
-from global_constants import SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, VACCINE_PERCENTAGE, WEEK_SCHEDULE,\
+from global_constants import CLASS_TIMES, DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, SCHEDULE_DAYS, \
+    INITIALLY_INFECTED, TOTAL_AGENTS, INTERVENTIONS, VACCINE_PERCENTAGE, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, VACCINE_PERCENTAGE, WEEK_SCHEDULE,\
     SCREENING_PERCENTAGE, SCREENING_COMPLIANCE, LATENCY_PERIOD, TESTING_DAY_INDEX, COVID_VARIANTS, VACCINE_SELF, VACCINE_SPREAD, FACE_MASK_SELF, FACE_MASK_SPREAD
 from spaces import Dorm, Academic, LargeGatherings
 import matplotlib.pyplot as plt
@@ -12,6 +11,15 @@ from statistics import stdev
 from multiprocessing import Pool, Manager
 import pickle
 import copy
+import scipy.stats as st
+import numpy as np
+import os
+import csv
+from CovidAgents import initialize_leaves, change_states, Agent
+from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
+    assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
+from spaces import Dorm, Academic, LargeGatherings
+from Schedule import all_transit_spaces
 
 plt.rcParams.update({'figure.autolayout': True})  # A required line so the bar graph labels stay on the screen
 
@@ -78,7 +86,7 @@ def observe(data):
         elif "Off-Campus" in str(agent.exposed_space):
             data[0]['space_exposures']["Off-Campus"] += 1 # TODO: Put back as well!
     print(data[0])
-    data[0]['space_exposures'] = dict(sorted(data[0]['space_exposures'].items(), key=lambda item: item[1], reverse=True)) # TODO: Put back!
+    data[0]['space_exposures'] = dict(sorted(data[0]['space_exposures'].items(), key=lambda item: item[1], reverse = True)) # TODO: Put back!
     """
     caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
     caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
@@ -87,57 +95,86 @@ def observe(data):
     face_mask_intervention = caI.get("Face mask")
 
     number_of_simulations = len(data) - 1
-    averaged_data = data[number_of_simulations]
+    median_data = data[number_of_simulations]
 
     for day in range(len(data[0]['new_exposures'])):  # Set all days to 0 as default
-        averaged_data['new_exposures'].append(0)
-        averaged_data['total_infections'].append(0)
+        median_data['new_exposures'].append(0)
+        median_data['total_infections'].append(0)
+
+    for space_str in median_data['exposed_spaces'].keys():
+        median_data['exposed_spaces'][space_str] = 0
 
     for day in range(len(data[0]['new_exposures'])):  # NOTE: Requires simulation to have been run at least once
-        for simulation_num in range(number_of_simulations):
-            averaged_data['new_exposures'][day] += data[simulation_num]['new_exposures'][day]
-            averaged_data['total_infections'][day] += data[simulation_num]['total_infections'][day]
+        median_data['new_exposures'][day] = np.median(
+            np.array([data[simulation_num]['new_exposures'][day] for simulation_num in range(number_of_simulations)]))
+        median_data['total_infections'][day] = np.median(np.array(
+            [data[simulation_num]['total_infections'][day] for simulation_num in range(number_of_simulations)]))
 
-    # Divide each element of the list by # of simulations to really take thee average
-    averaged_data['new_exposures'] = [day / number_of_simulations for day in averaged_data['new_exposures']]
-    averaged_data['total_infections'] = [day / number_of_simulations for day in averaged_data['total_infections']]
+    # Get median for exposures in spaces
+    for space_str in data[0]['exposed_spaces'].keys():
+        median_data['exposed_spaces'][space_str] = np.median(
+            np.array([data[es_sim_num]['exposed_spaces'][space_str] for es_sim_num in range(number_of_simulations)]))
 
-    ne_stdev = []  # new exposures
-    ti_stdev = []  # total infections
-    # Calculate STDEV for each day
+    median_data['exposed_spaces'] = dict(
+        sorted(median_data['exposed_spaces'].items(), key=lambda item: item[1], reverse=True))
+
+    ne_intervals = []  # new exposures
+    ti_intervals = []  # total infections
+    se_intervals = {}
+    for space_str in data[0]['exposed_spaces'].keys():
+        se_intervals.update({space_str: []})
+
+    # Calculate Quartiles for each day
     for day in range(len(data[0]['new_exposures'])):
         day_list_ne = []
         day_list_ti = []
         for sim_1 in range(number_of_simulations):
             day_list_ne.append(data[sim_1]['new_exposures'][day])
             day_list_ti.append(data[sim_1]['total_infections'][day])
-        std_ne = stdev(day_list_ne)
-        std_ti = stdev(day_list_ti)
-        ne_stdev.append(std_ne)
-        ti_stdev.append(std_ti)
+        ne_intervals.append((median_data['new_exposures'][day] - np.quantile(day_list_ne, .25),
+                             np.quantile(day_list_ne, .75) - median_data['new_exposures'][day]))
+        ti_intervals.append((median_data['total_infections'][day] - np.quantile(day_list_ti, .25),
+                             np.quantile(day_list_ti, .75) - median_data['total_infections'][day]))
 
-    data[number_of_simulations] = averaged_data
+    for space_str in se_intervals.keys():
+        space_exposures = []
+        for sim_2 in range(number_of_simulations):
+            space_exposures.append(data[sim_2]['exposed_spaces'][space_str])
+        se_intervals[space_str].append((median_data['exposed_spaces'][space_str] - np.quantile(space_exposures, .25),
+                                        np.quantile(space_exposures, .75) - median_data['exposed_spaces'][space_str]))
+
+    data[number_of_simulations] = median_data
     plt.figure(0)
-    for day in range(len(data[0]['new_exposures'])):
-        plt.errorbar(day, data[number_of_simulations]['new_exposures'][day], yerr=ne_stdev[day], fmt='r^')
-    plt.plot(range(len(data[0]['new_exposures'])), data[number_of_simulations]['new_exposures'])
+    plt.plot(range(len(data[0]['new_exposures'])), data[number_of_simulations]['new_exposures'], marker='*',
+             color='red')
+    plt.errorbar(range(len(data[number_of_simulations]['new_exposures'])), data[number_of_simulations]['new_exposures'],
+                 yerr=np.array(ne_intervals).T,
+                 alpha=0.5, fmt='k', capsize=2)
     plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
               str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(
         face_mask_intervention) + "\n# of Simulations: "
               + str(number_of_simulations))
     plt.xlabel("Day #")
     plt.ylabel("New Exposures")
+    plt.grid(axis='y')
+    xmin, xmax, ymin, ymax = plt.axis()
+    plt.ylim(bottom=0, top=ymax + (ymax - ymin) / (len(plt.yticks()[0]) - 1))
     plt.savefig('images/new_exposures.png')
     plt.figure(1)
-    for day in range(len(data[0]['total_infections'])):
-        plt.errorbar(day, data[number_of_simulations]['total_infections'][day], yerr=ti_stdev[day], fmt='r^')
-    plt.plot(range(len(data[0]['total_infections'])), data[number_of_simulations]['total_infections'])
+    plt.errorbar(range(len(data[number_of_simulations]['total_infections'])),
+                 data[number_of_simulations]['total_infections'], yerr=np.array(ti_intervals).T,
+                 alpha=0.5, fmt='k', capsize=2)
+    plt.plot(range(len(data[0]['total_infections'])), data[number_of_simulations]['total_infections'], marker='*',
+             color='red')
     plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
               str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(
         face_mask_intervention) + "\n# of Simulations: "
               + str(number_of_simulations))
     plt.xlabel("Day #")
     plt.ylabel("Total Infections")
+    plt.grid(axis='y')
+    xmin, xmax, ymin, ymax = plt.axis()
+    plt.ylim(bottom=0, top=ymax + (ymax - ymin) / (len(plt.yticks()[0]) - 1))
     plt.savefig('images/total_infections.png')
     plt.figure(2)
     for seir_sim_num in range(number_of_simulations):
@@ -157,16 +194,62 @@ def observe(data):
               + str(number_of_simulations))
     plt.xlabel("Day #")
     plt.ylabel("# of Agents")
+    plt.grid(axis='y')
+    xmin, xmax, ymin, ymax = plt.axis()
+    plt.ylim(bottom=0, top=ymax + (ymax - ymin) / (len(plt.yticks()[0]) - 1))
     plt.legend()
     plt.savefig('images/seir_states.png')
-    # Spaces Bar Graph
-    """
     plt.figure(3)
     plt.xlabel("Spaces")
     plt.ylabel("# of Infections")
+    plt.grid(axis='y', zorder=0)
     plt.xticks(rotation=45, ha="right")
-    plt.bar(data[0]['space_exposures'].keys(), data[0]['space_exposures'].values())
-    """
+    for space_str in se_intervals.keys():
+        plt.errorbar(list(data[number_of_simulations]['exposed_spaces'].keys()).index(space_str),
+                     data[number_of_simulations]['exposed_spaces'][space_str],
+                     yerr=np.array(se_intervals[space_str]).T, alpha=0.5, ecolor='black', capsize=4, zorder=4)
+    plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
+              str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(
+        face_mask_intervention) + "\n# of Simulations: "
+              + str(number_of_simulations))
+    plt.bar(data[number_of_simulations]['exposed_spaces'].keys(),
+            data[number_of_simulations]['exposed_spaces'].values(), zorder=3)
+    xmin, xmax, ymin, ymax = plt.axis()
+    plt.ylim(bottom=0, top=ymax + (ymax - ymin) / (len(plt.yticks()[0]) - 1))
+    plt.savefig('images/space_exposures.png')
+
+    # Save median data (except for seir states which have no median calculated) to data file
+    with open('data/new_exposures.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(
+            [("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage),
+             ("Face Mask Intervention?", face_mask_intervention)])
+        writer.writerow(data[number_of_simulations]['new_exposures'])
+
+    with open('data/total_infections.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(
+            [("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage),
+             ("Face Mask Intervention?", face_mask_intervention)])
+        writer.writerow(data[number_of_simulations]['total_infections'])
+
+    with open('data/seir_states.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(
+            [("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage),
+             ("Face Mask Intervention?", face_mask_intervention)])
+        for sim_number in range(number_of_simulations):
+            for seir_state in data[number_of_simulations]['seir_states']:
+                writer.writerow(data[sim_number]['seir_states'][seir_state])
+
+    with open('data/space_exposures.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(
+            [("Faculty Vaccine %", faculty_vaccine_percentage), ("Student Vaccine %", student_vaccine_percentage),
+             ("Face Mask Intervention?", face_mask_intervention)])
+        for space_tuple in list(data[number_of_simulations]['exposed_spaces'].items()):
+            writer.writerow(space_tuple)
+
     plt.show()
 
 
@@ -283,21 +366,25 @@ def update(data, simulation_number):
                     large_gathering.assign_agents(random.sample([agent for agent in agent_list if agent.social is True], k=random.randrange(20, 60)))
                     large_gathering.spread_infection()
 
-            sim_data['new_exposures'].append(len([agent for agent in agent_list if agent.seir == "E" and agent.days_in_state == 0]))
-            infected_agents = [agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie" or agent.seir == "R"]
-            #infected_oncampus = [agent for agent in infected_agents if agent.type == "On-campus Student"]
-            #infected_offcampus = [agent for agent in infected_agents if agent.type == "Off-campus Student"]
-            #infected_faculty = [agent for agent in infected_agents if agent.type == "Faculty"]
 
+            # infected_oncampus = [agent for agent in infected_agents if agent.type == "On-campus Student"]
+            # infected_offcampus = [agent for agent in infected_agents if agent.type == "Off-campus Student"]
+            # infected_faculty = [agent for agent in infected_agents if agent.type == "Faculty"]
+            new_exposed_agents = [agent for agent in agent_list if agent.seir == "E" and agent.days_in_state == 0]
+            sim_data['new_exposures'].append(len(new_exposed_agents))
+            infected_agents = [agent for agent in agent_list if
+                               agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie" or agent.seir == "R"]
             sim_data['total_infections'].append(len(infected_agents))
             sim_data['seir_states']['s'].append(len([agent for agent in agent_list if agent.seir == "S"]))
             sim_data['seir_states']['e'].append(len([agent for agent in agent_list if agent.seir == "E"]))
             sim_data['seir_states']['i'].append(
                 len([agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie"]))
             sim_data['seir_states']['r'].append(len([agent for agent in agent_list if agent.seir == "R"]))
+            for agent in new_exposed_agents:
+                if str(agent.exposed_space) in sim_data['exposed_spaces']:
+                    sim_data['exposed_spaces'][str(agent.exposed_space)] += 1
             change_states(agent_list)
             data[simulation_number] = sim_data
-
             print("Day " + day + ", Week " + str(week) + ", # of Infected Agents: " + str(len(infected_agents)))
 
     vaccinated_agents = [agent for agent in agent_list if agent.vaccinated is True]
@@ -439,7 +526,22 @@ def input_stuff():
     return num_of_simulations
 
 
+def create_directories():
+    current_dir = os.getcwd()
+    images_dir = current_dir + ('\images')
+    pickle_dir = current_dir + ('\pickle_files')
+    data_dir = current_dir + ('\data')
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
+    if not os.path.exists(pickle_dir):
+        os.makedirs(pickle_dir)
+    if not os.path.exists(data_dir):
+        print("MAKING DATA!")
+        os.makedirs(data_dir)
+
+
 if __name__ == "__main__":
+    create_directories()
     number_of_simulations = int(input_stuff())
     start_time = time.time()
     manager = Manager()
@@ -450,11 +552,13 @@ if __name__ == "__main__":
         sim['new_exposures'] = []
         sim['total_infections'] = []
         sim['seir_states'] = {'s': [], 'e': [], 'i': [], 'r': []}
+        sim['exposed_spaces'] = {'Dorm': 0, 'Office': 0, 'Transit Space': 0, 'Dining Hall': 0, 'Library': 0, 'Gym': 0, 'Large Gatherings': 0,
+         'Academic': 0, 'Social Space': 0, 'Off-Campus': 0}
         data[i] = sim
-    pool = Pool()  # creates an amount of processes from # of CPUs user has
+    pool = Pool() # creates an amount of processes from # of CPUs user has
     for sim_num in range(number_of_simulations):
         pool.apply_async(update, args=(data, sim_num))
     pool.close()
     pool.join()
     print("The program took " + str(time.time() - start_time) + " seconds to run")
-    # observe(data)
+    observe(data)
