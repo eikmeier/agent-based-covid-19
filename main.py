@@ -295,12 +295,10 @@ def create_directories():
     images_dir = current_dir + ('\images')
     pickle_dir = current_dir + ('\pickle_files')
     data_dir = current_dir + ('\data')
-    if not os.path.exists(images_dir):
-        os.makedirs(images_dir)
-    if not os.path.exists(pickle_dir):
-        os.makedirs(pickle_dir)
-    if not os.path.exists(data_dir):
-        os.makedirs(data_dir)
+    directories = [images_dir, pickle_dir, data_dir]
+    for dir in directories:
+        if not os.path.exists(dir):
+            os.makedirs(dir)
 
 if __name__ == "__main__":
     create_directories()
