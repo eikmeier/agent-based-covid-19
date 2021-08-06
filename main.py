@@ -9,7 +9,6 @@ import csv
 from CovidAgents import change_states, Agent
 from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
     assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
-plt.rcParams.update({'figure.autolayout': True}) # A required line so the bar graph labels stay on the screen
 from global_constants import SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, VACCINE_PERCENTAGE
 from spaces import LargeGatherings
 
@@ -44,33 +43,28 @@ def initialize():
     return [dining_hall_spaces, gym_spaces, library_spaces, social_spaces, stem_office_spaces, humanities_office_spaces, arts_office_spaces , \
         academic_buildings[0], academic_buildings[1], academic_buildings[2], dorms] # Return a list containing all the spaces (to be used in update)
 
-
 def observe(data):
     # Figure out the spaces where everyone got exposed
+    plt.rcParams.update({'figure.autolayout': True}) # A required line so the bar graph labels stay on the screen
     caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
     caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
     faculty_vaccine_percentage = caVP.get("Faculty") * 100
     student_vaccine_percentage = caVP.get("Student") * 100
     face_mask_intervention = caI.get("Face mask")
-
     number_of_simulations = len(data) - 1
-    median_data = data[number_of_simulations]
 
+    # Calculate medians
+    median_data = data[number_of_simulations]
     for day in range(len(data[0]['new_exposures'])): # Set all days to 0 as default
         median_data['new_exposures'].append(0)
         median_data['total_infections'].append(0)
-
-    for space_str in median_data['exposed_spaces'].keys():
+    for space_str in median_data['exposed_spaces'].keys(): # Set all spaces to 0 as default
         median_data['exposed_spaces'][space_str] = 0
-
-    for day in range(len(data[0]['new_exposures'])): #NOTE: Requires simulation to have been run at least once
+    for day in range(len(data[0]['new_exposures'])):  # Calculate real median values for each day
         median_data['new_exposures'][day] = np.median(np.array([data[simulation_num]['new_exposures'][day] for simulation_num in range(number_of_simulations)]))
         median_data['total_infections'][day] = np.median(np.array([data[simulation_num]['total_infections'][day] for simulation_num in range(number_of_simulations)]))
-
-    # Get median for exposures in spaces
-    for space_str in data[0]['exposed_spaces'].keys():
+    for space_str in data[0]['exposed_spaces'].keys(): # Calculate real median values for each space
         median_data['exposed_spaces'][space_str] = np.median(np.array([data[es_sim_num]['exposed_spaces'][space_str] for es_sim_num in range(number_of_simulations)]))
-
     median_data['exposed_spaces'] = dict(sorted(median_data['exposed_spaces'].items(), key=lambda item: item[1], reverse = True))
 
     ne_intervals = []  # new exposures
@@ -99,7 +93,8 @@ def observe(data):
             np.quantile(space_exposures, .75) - median_data['exposed_spaces'][space_str]))
     
     data[number_of_simulations] = median_data
-    plt.figure(0)
+
+    plt.figure(0) # Graph New Exposures
     plt.plot(range(len(data[0]['new_exposures'])), data[number_of_simulations]['new_exposures'], marker = '*', color = 'red')
     plt.errorbar(range(len(data[number_of_simulations]['new_exposures'])), data[number_of_simulations]['new_exposures'], yerr=np.array(ne_intervals).T,
      alpha=0.5, fmt='k', capsize=2)
@@ -109,10 +104,10 @@ def observe(data):
     plt.xlabel("Day #")
     plt.ylabel("New Exposures")
     plt.grid(axis='y')
-    xmin, xmax, ymin, ymax = plt.axis()
-    plt.ylim(bottom = 0, top = ymax + (ymax - ymin) / (len(plt.yticks()[0]) - 1))
+    plt.yticks(list(plt.yticks()[0])[1:] + [(plt.yticks()[0][1] - plt.yticks()[0][0]) + plt.yticks()[0][len(plt.yticks()[0]) - 1]])
     plt.savefig('images/new_exposures.png')
-    plt.figure(1)
+
+    plt.figure(1) # Graph Total Exposures
     plt.errorbar(range(len(data[number_of_simulations]['total_infections'])), data[number_of_simulations]['total_infections'], yerr=np.array(ti_intervals).T,
      alpha=0.5, fmt='k', capsize=2)
     plt.plot(range(len(data[0]['total_infections'])), data[number_of_simulations]['total_infections'], marker = '*', color = 'red')
@@ -122,10 +117,10 @@ def observe(data):
     plt.xlabel("Day #")
     plt.ylabel("Total Infections")
     plt.grid(axis='y')
-    xmin, xmax, ymin, ymax = plt.axis()
-    plt.ylim(bottom = 0, top = ymax + (ymax - ymin) / (len(plt.yticks()[0]) - 1))
+    plt.yticks(list(plt.yticks()[0])[1:] + [(plt.yticks()[0][1] - plt.yticks()[0][0]) + plt.yticks()[0][len(plt.yticks()[0]) - 1]])
     plt.savefig('images/total_infections.png')
-    plt.figure(2)
+
+    plt.figure(2) # Graph SEIR States
     for seir_sim_num in range(number_of_simulations):
         plt.plot(range(len(data[seir_sim_num]['seir_states']['s'])), data[seir_sim_num]['seir_states']['s'], color='b')
         plt.plot(range(len(data[seir_sim_num]['seir_states']['e'])), data[seir_sim_num]['seir_states']['e'], color='tab:orange')
@@ -142,11 +137,11 @@ def observe(data):
     plt.xlabel("Day #")
     plt.ylabel("# of Agents")
     plt.grid(axis='y')
-    xmin, xmax, ymin, ymax = plt.axis()
-    plt.ylim(bottom = 0, top = ymax + (ymax - ymin) / (len(plt.yticks()[0]) - 1))
+    plt.yticks(list(plt.yticks()[0])[1:] + [(plt.yticks()[0][1] - plt.yticks()[0][0]) + plt.yticks()[0][len(plt.yticks()[0]) - 1]])
     plt.legend()
     plt.savefig('images/seir_states.png')
-    plt.figure(3)
+
+    plt.figure(3) # Graph exposures per space
     plt.xlabel("Spaces")
     plt.ylabel("# of Infections")
     plt.grid(axis='y', zorder=0)
@@ -158,8 +153,7 @@ def observe(data):
     str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: "
     + str(number_of_simulations))
     plt.bar(data[number_of_simulations]['exposed_spaces'].keys(), data[number_of_simulations]['exposed_spaces'].values(), zorder=3)
-    xmin, xmax, ymin, ymax = plt.axis()
-    plt.ylim(bottom = 0, top = ymax + (ymax - ymin) / (len(plt.yticks()[0]) - 1))
+    plt.yticks(list(plt.yticks()[0])[1:] + [(plt.yticks()[0][1] - plt.yticks()[0][0]) + plt.yticks()[0][len(plt.yticks()[0]) - 1]])
     plt.savefig('images/space_exposures.png')
 
     # Save median data (except for seir states which have no median calculated) to data file
