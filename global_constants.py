@@ -34,8 +34,15 @@ PROBABILITY_A = 0.15
 TUNING_PARAMETER = 1.25
 
 INITIALLY_INFECTED = 10  # Number of agents that are initially infected (before running the simulation)
+OFF_CAMPUS_STUDENT_PROPORTION = 500.0/TOTAL_AGENTS
+FACULTY_PROPORTION = 380.0/TOTAL_AGENTS
+HUMANITIES_PROPORTION = 0.25 # Proportion of agents in the Humanities division
+ARTS_PROPORTION = 0.25 # Proportion of agents in the Arts division
+SOCIAL_RATIO = 0.5 # Proportion of students that are social
+
 INTERVENTIONS = {"Vaccine": False, "Face mask": False, "Screening": False}
 VACCINE_PERCENTAGE = {"Faculty": 0, "Student": 0}
 VACCINE_SELF_EFFECTIVENESS = 0.7
 VACCINE_SPREAD_EFFECTIVENESS = 0.7
-EXPOSED_SPACES = {"Dorm": 0, "Academic": 0, "DiningHall": 0, "Gym": 0, "Library": 0, "Office": 0, "SocialSpace": 0, "TransitSpace": 0, "LargeGatherings": 0, "Off-Campus": 0, "Other": 0}
+FACE_MASK_COMPLIANCE = 0.5
+SCREENING_COMPLIANCE = 0.5

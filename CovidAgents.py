@@ -1,22 +1,8 @@
-from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A, INITIALLY_INFECTED, INTERVENTIONS, VACCINE_SELF_EFFECTIVENESS, VACCINE_SPREAD_EFFECTIVENESS
+from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A, INITIALLY_INFECTED, VACCINE_SELF_EFFECTIVENESS, \
+ VACCINE_SPREAD_EFFECTIVENESS, FACE_MASK_COMPLIANCE, SCREENING_COMPLIANCE, OFF_CAMPUS_STUDENT_PROPORTION, FACULTY_PROPORTION, HUMANITIES_PROPORTION, \
+ ARTS_PROPORTION, SOCIAL_RATIO
 import random
 import pickle
-
-# n = 10  # number of agents
-# n = 2380, on-campus: 1500, off-campus: 500, faculty: 380
-n = TOTAL_AGENTS
-
-vaccine_intervention = INTERVENTIONS.get("Vaccine")  # whether we use vaccine intervention or not ("on" or "off")
-faculty_vaccine_percentage = 0.7
-student_vaccine_percentage = 0.7
-face_mask_intervention = INTERVENTIONS.get("Face mask")  # whether we use face mask intervention or not ("on" or "off")
-face_mask_comp = 0.5
-screening_comp = 0.5
-type_ratio = [500.0/TOTAL_AGENTS, 380.0/TOTAL_AGENTS]  # proportion of ["Off-campus Students", "Faculty"] - default value is "On-campus Student"
-division_ratio = [0.25, 0.25]  # proportion of ["Humanities", "Arts"] - default value is "STEM"
-initial_infection = INITIALLY_INFECTED/TOTAL_AGENTS  # 10/2380.0  # proportion of students initially in the exposed state - should we make it number of students or a proportion?
-social_ratio = 0.5  # proportion of students that are social
-
 
 class Agent:
     def initialize(self):

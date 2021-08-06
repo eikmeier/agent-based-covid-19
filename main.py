@@ -1,22 +1,17 @@
 import random
 import matplotlib.pyplot as plt
 import time
-from statistics import stdev
 from multiprocessing import Pool, Manager
 import pickle
-import scipy.stats as st
 import numpy as np
 import os
 import csv
-from CovidAgents import initialize_leaves, change_states, Agent
+from CovidAgents import change_states, Agent
 from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
     assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
-from global_constants import CLASS_TIMES, DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, SCHEDULE_DAYS, \
-    INITIALLY_INFECTED, TOTAL_AGENTS, INTERVENTIONS, VACCINE_PERCENTAGE
-from spaces import Dorm, Academic, LargeGatherings
-from Schedule import all_transit_spaces
-
 plt.rcParams.update({'figure.autolayout': True}) # A required line so the bar graph labels stay on the screen
+from global_constants import SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, VACCINE_PERCENTAGE
+from spaces import LargeGatherings
 
 agent_list = [] # list of all agents
 
