@@ -80,6 +80,7 @@ def observe(data):
     print(data[0])
     data[0]['space_exposures'] = dict(sorted(data[0]['space_exposures'].items(), key=lambda item: item[1], reverse=True)) # TODO: Put back!
     """
+
     caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
     caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
     faculty_vaccine_percentage = caVP.get("Faculty") * 100

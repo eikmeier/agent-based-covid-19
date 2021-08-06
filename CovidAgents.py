@@ -7,7 +7,6 @@ import pickle
 n = TOTAL_AGENTS  # n = 2380, on-campus: 1500, off-campus: 500, faculty: 380
 
 
-
 class Agent:
     def initialize(self):
         caCV = pickle.load(open('pickle_files/covid_variants.p', 'rb'))

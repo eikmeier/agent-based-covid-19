@@ -5,7 +5,6 @@ import math
 import random
 
 
-
 class Space:
     def close_space(self):
         """
