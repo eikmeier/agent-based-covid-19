@@ -8,7 +8,7 @@ To run this code: Run **main.py** and follow the prompts given in the console to
 Constants that are used in all other files in the code are stored in <b> global_constants.py </b> <br>
 Attributes and methods solely relating to agents are stored in <b> covid_agents.py </b> <br>
 Attributes and methods solely relating to spaces and subspaces are stored in <b> spaces.py </b> <br>
-Details and information about the scheduling process of agents to spaces are stored in <b> schedule.py </b> <br>
+Details and information about the scheduling process of agents to spaces are stored in <b> schedule.py </b> <br> </br>
 
 *This code was largely written by Erik Nelson [nelsoner] and Jiyoung Chang [changjiy] under the guidance of Professor Eikmeier during a 2021 Summer MAP Research Project*
 ##### This README.md was last updated on 08/06/2021
