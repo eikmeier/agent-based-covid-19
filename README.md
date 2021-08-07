@@ -5,10 +5,10 @@ To run this code: Run **main.py** and follow the prompts given in the console to
 <li> Lastly, data for the four plots will be stored in the data folder in the current directory.</li>
 <li> The time to run one simulation varies widely based on computer, but it has been seen to vary anywhere between 6 seconds to a minute, so be forewarned before running the program.</li>
 <ol> <li> When a simulation finishes, "Simulation finished.", will be printed in the console. </li> </ol> </li> </ol> <br> </br>
-Constants that are used in all other files in the code are stored in **global_constants.py**
-Attributes and methods solely relating to agents are stored in **covid_agents.py**
-Attributes and methods solely relating to spaces and subspaces are stored in **spaces.py**
-Details and information about the scheduling process of agents to spaces are stored in **schedule.py**
+Constants that are used in all other files in the code are stored in <b> global_constants.py </b> </br>
+Attributes and methods solely relating to agents are stored in <b> **covid_agents.py** </b> </br>
+Attributes and methods solely relating to spaces and subspaces are stored in <b> **spaces.py** </b> </br>
+Details and information about the scheduling process of agents to spaces are stored in <b> **schedule.py** </b> </br>
 
 *This code was largely written by Erik Nelson [nelsoner] and Jiyoung Chang [changjiy] under the guidance of Professor Eikmeier during a 2021 Summer MAP Research Project*
 ##### This README.md was last updated on 08/06/2021
