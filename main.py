@@ -49,6 +49,8 @@ def observe(data):
     student_vaccine_percentage = caVP.get("Student") * 100
     face_mask_intervention = caI.get("Face mask")
     number_of_simulations = len(data) - 1
+    plot_parameters_str = "% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " + str(faculty_vaccine_percentage) +\
+    "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: " + str(number_of_simulations)
 
     # Calculate medians
     median_data = data[number_of_simulations]
@@ -95,9 +97,7 @@ def observe(data):
     plt.plot(range(len(data[0]['new_exposures'])), data[number_of_simulations]['new_exposures'], marker = '*', color = 'red')
     plt.errorbar(range(len(data[number_of_simulations]['new_exposures'])), data[number_of_simulations]['new_exposures'], yerr=np.array(ne_intervals).T,
      alpha=0.5, fmt='k', capsize=2)
-    plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
-    str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: "
-    + str(number_of_simulations))
+    plt.title(plot_parameters_str)
     plt.xlabel("Day #")
     plt.ylabel("New Exposures")
     plt.grid(axis='y')
@@ -108,9 +108,7 @@ def observe(data):
     plt.errorbar(range(len(data[number_of_simulations]['total_infections'])), data[number_of_simulations]['total_infections'], yerr=np.array(ti_intervals).T,
      alpha=0.5, fmt='k', capsize=2)
     plt.plot(range(len(data[0]['total_infections'])), data[number_of_simulations]['total_infections'], marker = '*', color = 'red')
-    plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
-    str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: "
-    + str(number_of_simulations))
+    plt.title(plot_parameters_str)
     plt.xlabel("Day #")
     plt.ylabel("Total Infections")
     plt.grid(axis='y')
@@ -128,9 +126,7 @@ def observe(data):
     plt.plot([], [], label = "Exposed Agents", color='tab:orange')
     plt.plot([], [], label = "Infected Agents", color='r')
     plt.plot([], [], label = "Recovered Agents", color='m')
-    plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
-    str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: "
-    + str(number_of_simulations))
+    plt.title(plot_parameters_str)
     plt.xlabel("Day #")
     plt.ylabel("# of Agents")
     plt.grid(axis='y')
@@ -146,9 +142,7 @@ def observe(data):
     for space_str in se_intervals.keys():
         plt.errorbar(list(data[number_of_simulations]['exposed_spaces'].keys()).index(space_str), data[number_of_simulations]['exposed_spaces'][space_str], 
         yerr=np.array(se_intervals[space_str]).T, alpha=0.5, ecolor='black', capsize=4, zorder=4)
-    plt.title("% of Students Vaccinated: " + str(student_vaccine_percentage) + "\n% of Faculty Vaccinated: " +
-    str(faculty_vaccine_percentage) + "\nFacemasks Required?: " + str(face_mask_intervention) + "\n# of Simulations: "
-    + str(number_of_simulations))
+    plt.title(plot_parameters_str)
     plt.bar(data[number_of_simulations]['exposed_spaces'].keys(), data[number_of_simulations]['exposed_spaces'].values(), zorder=3)
     plt.yticks(list(plt.yticks()[0])[1:] + [(plt.yticks()[0][1] - plt.yticks()[0][0]) + plt.yticks()[0][len(plt.yticks()[0]) - 1]])
     plt.savefig('images/space_exposures.png')

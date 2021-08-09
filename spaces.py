@@ -461,10 +461,6 @@ class SubSpace():
     def __str__(self):
         return 'Subspace of cv:' + str(self.cv) + " of " + self.space.__str__()
 
-
-    def __repr__(self):
-        return 'Subspace of cv:' + str(self.cv) + " of " + self.space.__str__()
-
     def close_subspace(self):
         """
         Close a subspace, setting CV, RV, and number_assigned to 0.

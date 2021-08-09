@@ -312,14 +312,14 @@ def assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office
                                 all_transit_spaces[day][hour].agents.append(agent)
 
             # Show that an agent has to go into the transit vertex to go back to their place of residence for the rest of the day
-            if not agent.off_campus:
-                for day in SCHEDULE_DAYS:
-                    if agent.schedule[day][13] != "Dorm":
-                        all_transit_spaces[day][14].agents.append(agent)
-            else:  # if agent is an off-campus student
+            if agent.off_campus:
                 for day in SCHEDULE_DAYS:
                     if agent.schedule[day][9] != "Off-Campus Space":
                         all_transit_spaces[day][10].agents.append(agent)
+            else:  # if agent is an on-campus student
+                for day in SCHEDULE_DAYS:
+                    if agent.schedule[day][13] != "Dorm":
+                        all_transit_spaces[day][14].agents.append(agent)
         else:
             for count, day in enumerate(SCHEDULE_WEEKDAYS):
                 all_transit_spaces[day][10].agents.append(agent)  # All faculty must enter the transit vertex at time 10 in order to get back to their off-campus space
