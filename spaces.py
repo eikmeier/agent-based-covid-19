@@ -127,7 +127,10 @@ class Dorm(Space):
             return False
 
     def assign_agent_during_day(self, agent, day, time):
-        # Assigns an agent to the Dorm space between 8-22
+        """
+        Takes in an agent, a day ('A', 'B', or 'W') and a time (between 8 and 22).\n
+        Assigns an agent to a Dorm space sometime during the day.\n
+        """
         day_index = 0
         if day == 'B':
             day_index = 1
@@ -204,6 +207,9 @@ class DiningHall(Space):
                                     SUBSPACE_RISK_MULTIPLIERS.get("Faculty Dining Leaf")))
 
     def assign_agent(self, agent):
+        """
+        Takes in an agent and assigns them to the Dining Hall space, putting them in their assigned subspace.\n
+        """
         self.leaves[agent.leaves.get("Dining Hall")].agents.append(agent)
         agent.schedule.get(self.day)[self.time-8] = "Dining Hall"
 
@@ -227,6 +233,9 @@ class Library(Space):
             self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Library"), SUBSPACE_RISK_MULTIPLIERS.get("Library")))
 
     def assign_agent(self, agent):
+        """
+        Takes in an agent and assigns them to the Library space, putting them in their assigned subspace.\n
+        """
         self.leaves[agent.leaves.get("Library")].agents.append(agent)
         agent.schedule.get(self.day)[self.time-8] = "Library"
 
@@ -250,6 +259,9 @@ class Gym(Space):
         self.time = time
 
     def assign_agent(self, agent):
+        """
+        Takes in an agent and assigns them to the Gym space, putting them in their assigned subspace.\n
+        """
         self.leaves[agent.leaves.get("Gym")].agents.append(agent)
         agent.schedule.get(self.day)[self.time-8] = "Gym"
 
@@ -281,6 +293,9 @@ class Office(Space):
             self.leaves.append(SubSpace(self, self.subcv, SUBSPACE_RISK_MULTIPLIERS.get("Office")))
 
     def assign_agent(self, agent):
+        """
+        Takes in an agent and assigns them to the Office space, putting them in their assigned subspace.\n
+        """
         self.leaves[agent.leaves.get("Office")].agents.append(agent)
         agent.schedule.get(self.day)[self.time-8] = "Office"
 

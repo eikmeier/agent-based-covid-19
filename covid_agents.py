@@ -6,6 +6,10 @@ import pickle
 
 class Agent:
     def __init__(self):
+        """
+        Initializes a specific agent with many default attributes.\n
+        To be used at the very beginning of initialize() and nowhere else.\n
+        """
         self.vaccinated = False 
         self.vaccinated_self_risk_multiplier = 1
         self.vaccinated_spread_risk_multiplier = 1
@@ -30,6 +34,10 @@ class Agent:
         self.leaves = {"Dining Hall": -1, "Library": -1, "Gym": -1, "Social Space": [-1, -1], "Office": -1}
 
     def initialize(self):
+        """
+        Initializes a list of agents with several different attributes.\n
+        Returns a list of agents with length = TOTAL_AGENTS (from global_constants.py).\n
+        """
         caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
         caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
         vaccine_intervention = caI.get("Vaccine")  # whether we use vaccine intervention or not ("on" or "off")
@@ -39,7 +47,7 @@ class Agent:
 
         agents = [Agent() for agent in range(TOTAL_AGENTS)]
 
-        # TYPE (ON-CAMPUS/OFF-CAMPUS/FACULTY): randomly select and assign a certain proportion of agents as "Off-campus Student" and "Faculty"
+        # Randomly select and assign a certain proportion of agents as "Off-campus Student" and "Faculty"
         random.shuffle(agents)
         for agent_num, agent in enumerate(agents): # By default, agents are on-campus students
             if agent_num < int(TOTAL_AGENTS * FACULTY_PROPORTION):
@@ -51,7 +59,7 @@ class Agent:
         student_agents = [agent for agent in agents if agent.student]
         faculty_agents = list(set(agents) - set(student_agents))
 
-        # VACCINATION: randomly select and assign vaccination to certain proportion of student/faculty agents
+        # Randomly select and assign vaccination to certain proportion of student/faculty agents
         if vaccine_intervention:
             select_vaccine_student = random.sample(student_agents, k=int(len(student_agents) * student_vaccine_percentage))
             select_vaccine_faculty = random.sample(faculty_agents, k=int(len(faculty_agents) * faculty_vaccine_percentage))
@@ -60,7 +68,7 @@ class Agent:
                 vaccine_agent.vaccinated_self_risk_multiplier = (1 - VACCINE_SELF_EFFECTIVENESS)
                 vaccine_agent.vaccinated_spread_risk_multiplier = (1 - VACCINE_SPREAD_EFFECTIVENESS)
 
-        # FACE MASK COMPLIANCE: randomly select and assign face mask compliance to certain proportion of agents
+        # Randomly select and assign face mask compliance to certain proportion of agents
         if face_mask_intervention:
             select_face_mask_compliant = random.sample(agents, k=int(TOTAL_AGENTS * FACE_MASK_COMPLIANCE))
             for agent in agents:
@@ -77,11 +85,11 @@ class Agent:
                     agent.face_mask_spread_risk_multiplier = {"Dorm": 1, "Academic": 0.5, "DiningHall": 0.5, "Gym": 0.5, "Library": 0.5, "Office": 0.5,
                                                            "SocialSpace": 1, "TransitSpace": 0.5, "LargeGatherings": 1}
 
-        #  SCREENING TEST COMPLIANCE: randomly select and assign screening test compliance to certain proportion of agents
+        # Randomly select and assign screening test compliance to certain proportion of agents
         for agent in random.sample(agents, k=int(TOTAL_AGENTS * SCREENING_COMPLIANCE)):
             agent.screening = True
 
-        # DIVISION (STEM/HUMANITIES/ARTS): randomly select and assign a certain proportion of agents as "Humanities" and "Arts"
+        # Randomly select and assign a certain proportion of agents as "Humanities" and "Arts"
         for agent_group in [faculty_agents, student_agents]:
             random.shuffle(agent_group)
             for agent_num, agent in enumerate(agent_group):
@@ -90,15 +98,15 @@ class Agent:
                 elif agent_num < (len(agent_group) * (ARTS_PROPORTION + HUMANITIES_PROPORTION)):
                     agent.division = "Humanities"
 
-        # INITIAL INFECTION: randomly select and assign agents that are initially infected
+        # Randomly select and assign agents that are initially infected
         for ag in random.sample([agent for agent in agents if agent.vaccinated == False], k=int(INITIALLY_INFECTED)):
             ag.seir = random.choice(["Ia", "Im", "Ie"])  # randomly assign one of the infected states to agents
 
-        # SOCIAL: randomly select and assign student agents as social, which allows them to go to large gatherings
+        # Randomly select and assign student agents as social, which allows them to go to large gatherings
         for ag in random.sample(student_agents, k=int(TOTAL_AGENTS * SOCIAL_RATIO)):
             ag.social = True
 
-        initialize_leaves(agents)
+        initialize_leaves(agents) # Initialize the leaves of each space so agents stay in the same subspaces in the model
         return agents
 
     def change_state(self, state):

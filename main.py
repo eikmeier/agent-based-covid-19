@@ -12,9 +12,13 @@ from schedule import create_spaces, create_dorms, create_academic_spaces, assign
 from global_constants import SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, VACCINE_PERCENTAGE
 from spaces import LargeGatherings
 
-agent_list = [] # list of all agents
+agent_list = []
 
 def initialize():
+    """
+    Initializes the list of agents, creates the spaces, and assigns agents to all of the spaces so all agents have a complete schedule.\n
+    Returns a list that contains all the spaces.\n
+    """
     # Initialize agents
     global agent_list
     agent_list = Agent().initialize()
@@ -34,14 +38,21 @@ def initialize():
     assign_dorms(dorms, agent_list)
     assign_agents_to_classes(academic_buildings, agent_list)
     assign_dining_times(dining_hall_spaces, agent_list)
-    assign_gym(agent_list, gym_spaces)
-    assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, arts_office_spaces, humanities_office_spaces)
+    assign_gym(gym_spaces, agent_list)
+    assign_remaining_time(library_spaces, social_spaces, stem_office_spaces, arts_office_spaces, humanities_office_spaces, agent_list)
 
     return [dining_hall_spaces, gym_spaces, library_spaces, social_spaces, stem_office_spaces, humanities_office_spaces, arts_office_spaces , \
         academic_buildings[0], academic_buildings[1], academic_buildings[2], dorms] # Return a list containing all the spaces (to be used in update)
 
 def observe(data):
-    # Figure out the spaces where everyone got exposed
+    """
+    Takes in a dictionary of the data of all simulation runs, should not be called anywhere other than the final line of main.py to avoid
+     multiprocessing errors and/or incomplete data.\n
+    Creates four plots (new exposures per day, total infections per day, and SEIR states per day, and total infections per space) by
+     plotting the median values of all of the simulation runs and creating an error bar based on the first and third quartile of the data.\n
+    Stores data used to create the plots in subsequent CSV files in the data folder.\n
+    Displays the plots and also stores the images of the plots in the images folder.\n
+    """
     plt.rcParams.update({'figure.autolayout': True}) # A required line so the bar graph labels stay on the screen
     caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
     caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
@@ -168,6 +179,15 @@ def observe(data):
     plt.show()
 
 def update(data, simulation_number):
+    """
+    Takes in a dictionary and a simulation number and then runs a simulation.\n
+    The simulation number must be an entry in data and data[simulation_number] must have the entries of
+     'new_exposures', 'total_infections', 'seir_states', and 'exposed_spaces'.\n
+    Additionally, data[simulation_number]['seir_states'] must have the entries 's', 'e', 'i', and 'r'.\n
+    Finally, data[simulation_number]['exposed_spaces'] must have a list of entries that is equivalent to all of
+     the string representations of spaces of the model.\n
+    Prints out "Simulation finished." when the simulation ends.\n
+    """
     update_dorms = []
     sim_data = data[simulation_number]
     spaces = initialize()
@@ -254,6 +274,11 @@ def update(data, simulation_number):
     print("Simulation finished.")
 
 def input_stuff():
+    """
+    Prints out to the console and requests user input to decide intervention details and then stores them in pickle files, which
+     are stored in the pickle_files folder.\n
+    Returns a number representing the number of simulations the model should be run for.\n
+    """
     print("Do you want to add vaccinated agents to the model? (Y/N)")
     vaccines = input()
     if vaccines == 'Y':
@@ -275,6 +300,11 @@ def input_stuff():
     return number_of_simulations
 
 def create_directories():
+    """
+    Creates the directories required for the program in the current directory if they do not already exist.\n
+    The directories created are "images", which store the images of the plots, "pickle_files", which store the pickle
+     files used in the program, and "data", which stores CSV files that represent the data shown in the plots.\n
+    """
     current_dir = os.getcwd()
     images_dir = current_dir + ('\images')
     pickle_dir = current_dir + ('\pickle_files')
@@ -300,9 +330,11 @@ if __name__ == "__main__":
          'Academic': 0, 'Social Space': 0, 'Off-Campus': 0}
         data[i] = sim
     pool = Pool() # creates an amount of processes from # of CPUs user has
+    # Use multiprocessing!
     for sim_num in range(number_of_simulations):
         pool.apply_async(update, args=(data, sim_num))
     pool.close()
     pool.join()
+    # Finish the multiprocessing
     print("The program took " + str(time.time() - start_time) + " seconds to run")
     observe(data)
