@@ -1,9 +1,10 @@
 import random
 import CovidAgents
-from CovidAgents import change_states, screening_test, return_screening_result
+from CovidAgents import change_states, screening_test, return_screening_result, walk_in_test
 from global_constants import CLASS_TIMES, DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, SCHEDULE_DAYS, \
-    INITIALLY_INFECTED, TOTAL_AGENTS, INTERVENTIONS, VACCINE_PERCENTAGE, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, VACCINE_PERCENTAGE, WEEK_SCHEDULE,\
-    SCREENING_PERCENTAGE, SCREENING_COMPLIANCE, LATENCY_PERIOD, TESTING_DAY_INDEX, COVID_VARIANTS, VACCINE_SELF, VACCINE_SPREAD, FACE_MASK_SELF, FACE_MASK_SPREAD
+    INITIALLY_INFECTED, TOTAL_AGENTS, INTERVENTIONS, VACCINE_PERCENTAGE, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, \
+    VACCINE_PERCENTAGE, WEEK_SCHEDULE, SCREENING_PERCENTAGE, SCREENING_COMPLIANCE, LATENCY_PERIOD, TESTING_DAY_INDEX, COVID_VARIANTS, VACCINE_SELF, VACCINE_SPREAD, \
+    FACE_MASK_SELF, FACE_MASK_SPREAD, VARIANT_RISK_MULTIPLIER
 from spaces import Dorm, Academic, LargeGatherings
 import matplotlib.pyplot as plt
 import time
@@ -19,7 +20,6 @@ from CovidAgents import initialize_leaves, change_states, Agent
 from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
     assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
 from spaces import Dorm, Academic, LargeGatherings
-from Schedule import all_transit_spaces
 
 plt.rcParams.update({'figure.autolayout': True})  # A required line so the bar graph labels stay on the screen
 
@@ -288,6 +288,8 @@ def update(data, simulation_number):
                     off_campus_agent.change_state("E")
                     off_campus_agent.exposed_space = "Off-Campus"
 
+            walk_in_agents = copy.copy(agent_list)
+
             if day != 'S':
                 for hour in SCHEDULE_HOURS:
                     # WEEKLY SCREENING TEST EVERY MONDAY MORNING
@@ -296,6 +298,7 @@ def update(data, simulation_number):
                         # SCREENING TEST ON FIRST DAY OF SIMULATION
                         if week == 0:  # on the first day of the simulation, screening test all agents(including both student and faculty)
                             screening_test(agent_list)
+                            walk_in_agents = []
 
                         else:  # week != 0:  # for each Monday, test a certain proportion of student agents
                             if week == 1:  # all agents got tested on the first week, so on the first week we need to select who will be screened from the list of all the student agents
@@ -318,16 +321,17 @@ def update(data, simulation_number):
 
                             screening_test(weekly_testing_agents)  # selected and compliant agents do the screening test
 
-                            for agent in student_list:  # for agents that weren't selected for screening tests, add "Not tested" to their result
-                                if agent not in weekly_testing_agents:
-                                    agent.screening_result.append("Not tested")
+                            not_weekly_testing_agents = [agent for agent in student_list if agent not in weekly_testing_agents]
+                            for agent in not_weekly_testing_agents:
+                                agent.screening_result.append("Not tested")
+                            walk_in_agents = not_weekly_testing_agents
+
 
                     if day_of_week_index == TESTING_DAY_INDEX + LATENCY_PERIOD and hour == 8 and screening_intervention is True:
                         return_screening_result(agent_list)
 
-
-
                     all_transit_spaces.get(day)[hour - 8].spread_infection_core()
+
                     for space in spaces:
                         if "Dorm" in str(space):
                             for dorm in space:
@@ -366,6 +370,7 @@ def update(data, simulation_number):
                     large_gathering.assign_agents(random.sample([agent for agent in agent_list if agent.social is True], k=random.randrange(20, 60)))
                     large_gathering.spread_infection()
 
+            walk_in_test(walk_in_agents)
 
             # infected_oncampus = [agent for agent in infected_agents if agent.type == "On-campus Student"]
             # infected_offcampus = [agent for agent in infected_agents if agent.type == "Off-campus Student"]
@@ -387,9 +392,10 @@ def update(data, simulation_number):
             data[simulation_number] = sim_data
             print("Day " + day + ", Week " + str(week) + ", # of Infected Agents: " + str(len(infected_agents)))
 
+
     vaccinated_agents = [agent for agent in agent_list if agent.vaccinated is True]
     # print(len(vaccinated_agents))
-    #print([len(infected_oncampus), len(infected_offcampus), len(infected_faculty)])
+    # print([len(infected_oncampus), len(infected_offcampus), len(infected_faculty)])
 
 
     # Count infections in each space
@@ -452,22 +458,33 @@ def input_stuff():
         COVID_VARIANTS["Delta"] = True
     elif covid_variant == 'O':
         COVID_VARIANTS["Other"] = True
+        print("How faster does the infection spread for this variant (compared to the alpha variant)? [0 to 100]")
+        variant_spread = input()
+        while True:
+            try:
+                variant_spread = float(variant_spread)
+                break
+            except:
+                print("input should be an int/float between 0 and 100")
+                variant_spread = input()
+        VARIANT_RISK_MULTIPLIER["Other"] = int(variant_spread) / 100.0
+
 
     # VACCINE INTERVENTION
-    print("Do you want to add vaccinated agents to the model? (Y/N)")
+    print("Do you want to add vaccinated agents to the model? [Y/N]")
     vaccines = input()
     while vaccines not in ['Y', 'N']:
-        print("input should be either (Y for Yes / N for No)")
+        print("input should be either [Y for Yes / N for No]")
         vaccines = input()
     if vaccines == 'Y':
         if covid_variant == 'O':  # if covid variant is neither alpha or delta, user needs to set the effectiveness of their own covid variant
-            print("How effective are vaccines in preventing a susceptible agent from getting infected? (0 to 100)")
+            print("How effective are vaccines in preventing a susceptible agent from getting infected? [0 to 100]")
             vaccine_self = input()
             while not vaccine_self.isnumeric():
                 print("input should be an integer between 0 and 100")
                 vaccine_self = input()
             VACCINE_SELF["Other"] = int(vaccine_self) / 100.0
-            print("How effective are vaccines in preventing an infected agent from spreading infection? (0 to 100)")
+            print("How effective are vaccines in preventing an infected agent from spreading infection? [0 to 100]")
             vaccine_spread = input()
             while not vaccine_spread.isnumeric():
                 print("input should be an integer between 0 and 100")
@@ -475,29 +492,36 @@ def input_stuff():
             VACCINE_SPREAD["Other"] = int(vaccine_spread) / 100.0
 
         INTERVENTIONS["Vaccine"] = True
-        print("What percentage of students should be vaccinated? (0 to 100)")
+        print("What percentage of students should be vaccinated? [0 to 100]")
         students_vax = input()
+        print(students_vax.isnumeric())
+        while not students_vax.isnumeric():
+            print("input should be integer between 0 and 100")
+            students_vax = input
         VACCINE_PERCENTAGE["Student"] = int(students_vax) / 100.0
-        print("What percentage of faculty should be vaccinated? (0 to 100)")
+        print("What percentage of faculty should be vaccinated? [0 to 100]")
         faculty_vax = input()
+        while not faculty_vax.isnumeric():
+            print("input should be integer between 0 and 100")
+            faculty_vax = input
         VACCINE_PERCENTAGE["Faculty"] = int(faculty_vax) / 100.0
 
     # FACE MASK INTERVENTION
-    print("Do you want to add the face mask intervention to the model? (Y/N)")
+    print("Do you want to add the face mask intervention to the model? [Y/N]")
     face_masks = input()
     while face_masks not in ['Y', 'N']:
-        print("input should be either (Y for Yes / N for No)")
+        print("input should be either [Y for Yes / N for No]")
         face_masks = input()
     if face_masks == 'Y':
         INTERVENTIONS["Face mask"] = True
         if covid_variant == 'O':  # if covid variant is neither alpha or delta, user needs to set the effectiveness of their own covid variant
-            print("How effective are face masks in preventing a susceptible agent from getting infected? (0 to 100)")
+            print("How effective are face masks in preventing a susceptible agent from getting infected? [0 to 100]")
             face_mask_self = input()
             while not face_mask_self.isnumeric():
                 print("input should be an integer between 0 and 100")
                 face_mask_self = input()
             FACE_MASK_SELF["Other"] = int(face_mask_self) / 100.0
-            print("How effective are face masks in preventing an infected agent from spreading infection? (0 to 100)")
+            print("How effective are face masks in preventing an infected agent from spreading infection? [0 to 100]")
             face_mask_spread = input()
             while not face_mask_spread.isnumeric():
                 print("input should be an integer between 0 and 100")
@@ -505,22 +529,22 @@ def input_stuff():
             FACE_MASK_SPREAD["Other"] = int(face_mask_spread) / 100.0
 
     # SCREENING TEST INTERVENTION
-    print("Do you want to add the screening test intervention to the model? (Y/N)")
+    print("Do you want to add the screening test intervention to the model? [Y/N]")
     screening = input()
     while screening not in ['Y', 'N']:
-        print("input should be either (Y for Yes / N for No)")
+        print("input should be either [Y for Yes / N for No]")
         screening = input()
     if screening == 'Y':
         INTERVENTIONS["Screening"] = True
 
     # NUMBER OF SIMULATIONS
-    print("How many simulations would you like to run with these interventions? (positive integer)")
+    print("How many simulations would you like to run with these interventions? [positive integer]")
     num_of_simulations = input()
     while not num_of_simulations.isnumeric():
         print("input should be an integer larger than 0")
         num_of_simulations = input()
 
-    pickle.dump([COVID_VARIANTS, [VACCINE_SELF, VACCINE_SPREAD], [FACE_MASK_SELF, FACE_MASK_SPREAD]], open('pickle_files/covid_variants.p', 'wb'))
+    pickle.dump([COVID_VARIANTS, VARIANT_RISK_MULTIPLIER, [VACCINE_SELF, VACCINE_SPREAD], [FACE_MASK_SELF, FACE_MASK_SPREAD]], open('pickle_files/covid_variants.p', 'wb'))
     pickle.dump(INTERVENTIONS, open('pickle_files/interventions.p', 'wb'))
     pickle.dump(VACCINE_PERCENTAGE, open('pickle_files/vaccine_percentage.p', 'wb'))
     return num_of_simulations
@@ -561,4 +585,4 @@ if __name__ == "__main__":
     pool.close()
     pool.join()
     print("The program took " + str(time.time() - start_time) + " seconds to run")
-    observe(data)
+    #observe(data)

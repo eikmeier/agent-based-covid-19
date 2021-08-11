@@ -24,7 +24,7 @@ SUBSPACE_RISK_MULTIPLIERS = {"Dining Hall": 2, "Faculty Dining Leaf": 2, "Librar
 TUNING_PARAMETER = 1.25
 # TUNING_PARAMETER = {"Alpha": 1.25, "Delta": 2.50, "Other": 0}
 PASSING_TIME = 10  # Common passing time between classes, in minutes (302-307)
-
+VARIANT_RISK_MULTIPLIER = {"Alpha": 1, "Delta": 2, "Other": 0}
 
 # Capacities
 SPACE_CAPACITIES = {"Transit Space": 100 * TOTAL_AGENTS, "Dining Hall": 650, "Library": 300 * PASSING_TIME, "Gym": 60 * PASSING_TIME}
@@ -72,6 +72,7 @@ LATENCY_PERIOD = 2  # [1, 2, 3, 4] days
 SCREENING_COMPLIANCE = 0.80  # [0.80, 0.90, 1]
 FALSE_POSITIVE_RATE = 0.001  # possibility of agent in state ["S", "E", "R"] receiving positive result
 FALSE_NEGATIVE_RATE = 0.03  # possibility of infected agent ["Ia", "Im", "Ie"] receiving negative result
+WALK_IN_PROBABILITY = {"Im": 0.70, "Ie": 0.95}
 
 
 

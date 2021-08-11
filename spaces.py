@@ -3,6 +3,7 @@ from global_constants import PASSING_TIME, SPACE_CAPACITIES, SPACE_RISK_MULTIPLI
     CLASSROOMS, ACADEMIC_SUBSPACE_SEATS, SPACE_SUBSPACE_AMOUNT, TUNING_PARAMETER
 import math
 import random
+import pickle
 
 
 class Space:
@@ -31,7 +32,10 @@ class Space:
         im_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Im")]
         ia_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Ia")]
 
-        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
+        caCV = pickle.load(open('pickle_files/covid_variants.p', 'rb'))
+        covid_variant = [key for key in caCV[0].keys() if caCV[0].get(key) is True][0]
+        variant_risk_multiplier = caCV[1].get(covid_variant)
+        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER * variant_risk_multiplier
 
     def spread_infection_core(self):
         """
@@ -154,7 +158,10 @@ class Dorm(Space):
         im_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Im", day, time)]
         ia_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Ia", day, time)]
 
-        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
+        caCV = pickle.load(open('pickle_files/covid_variants.p', 'rb'))
+        covid_variant = [key for key in caCV[0].keys() if caCV[0].get(key) is True][0]
+        variant_risk_multiplier = caCV[1].get(covid_variant)
+        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER * variant_risk_multiplier
 
 
     def spread_infection_core(self, day, time):
@@ -338,13 +345,21 @@ class LargeGatherings(Space):
         """
         Spreads infection at a given space by changing a variable amount of agent states from "S" to "E"
         """
+        ie_agents = [agent for agent in self.get_agents("Ie")]
+        im_agents = [agent for agent in self.get_agents("Im")]
+        ia_agents = [agent for agent in self.get_agents("Ia")]
+        #print("infected: " + str(len(ie_agents) + len(im_agents) + len(ia_agents)))
+
+        infected = 0
         infection_prob = self.get_infection_prob() / 100.0
         for agent in self.get_agents("S"):
             rand_num = random.random()
             if rand_num < (infection_prob * agent.vaccinated_self_risk_multiplier * agent.face_mask_self_risk_multiplier.get("LargeGatherings")):  # Agent is now exposed
                 agent.change_state("E")
                 agent.exposed_space = self
-        # print(infection_prob)
+                infected += 1
+        #print("exposed: " + str(infected))
+
 
 class Academic(Space):
     def __init__(self, size, day, time):
@@ -523,7 +538,10 @@ class SubSpace():
         im_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.space.__class__.__name__)) for agent in self.get_agents("Im")]
         ia_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.space.__class__.__name__)) for agent in self.get_agents("Ia")]
 
-        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
+        caCV = pickle.load(open('pickle_files/covid_variants.p', 'rb'))
+        covid_variant = [key for key in caCV[0].keys() if caCV[0].get(key) is True][0]
+        variant_risk_multiplier = caCV[1].get(covid_variant)
+        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER * variant_risk_multiplier
         # return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia"))) / self.cv) * TUNING_PARAMETER
 
     def spread_infection(self):

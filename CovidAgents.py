@@ -1,19 +1,20 @@
 from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A,\
     FACE_MASK_LEVEL, FALSE_POSITIVE_RATE, FALSE_NEGATIVE_RATE, FACE_MASK_COMPLIANCE, TYPE_RATIO, DIVISION_RATIO, \
-    INITIAL_INFECTION_PROPORTION, SOCIAL_RATIO
+    INITIAL_INFECTION_PROPORTION, SOCIAL_RATIO, WALK_IN_PROBABILITY
 import random
 import pickle
 
 n = TOTAL_AGENTS  # n = 2380, on-campus: 1500, off-campus: 500, faculty: 380
 
+
 class Agent:
     def initialize(self):
         caCV = pickle.load(open('pickle_files/covid_variants.p', 'rb'))
         covid_variant = [key for key in caCV[0].keys() if caCV[0].get(key) is True][0]
-        vaccine_self = caCV[1][0].get(covid_variant)
-        vaccine_spread = caCV[1][1].get(covid_variant)
-        face_mask_self = caCV[2][0].get(covid_variant)
-        face_mask_spread = caCV[2][1].get(covid_variant)
+        vaccine_self = caCV[2][0].get(covid_variant)
+        vaccine_spread = caCV[2][1].get(covid_variant)
+        face_mask_self = caCV[3][0].get(covid_variant)
+        face_mask_spread = caCV[3][1].get(covid_variant)
         caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
         caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
         vaccine_intervention = caI.get("Vaccine")  # whether we use vaccine intervention or not ("on" or "off")
@@ -76,21 +77,10 @@ class Agent:
                     ag.vaccinated_spread_risk_multiplier = (1 - vaccine_spread)
 
 
-
         # FACE MASK COMPLIANCE: randomly select and assign face mask compliance to certain proportion of agents
         if face_mask_intervention is True:
 
-            select_face_mask = random.sample(agents, k=int(TOTAL_AGENTS * FACE_MASK_COMPLIANCE))
-
-            for ag in select_face_mask:
-                ag.face_mask = True
-                for key in ag.face_mask_self_risk_multiplier.keys():
-                    ag.face_mask_self_risk_multiplier[key] = 1 - face_mask_self
-                    ag.face_mask_spread_risk_multiplier[key] = 1 - face_mask_spread
-
-
-
-            """ # ORIGINAL FACEMASK INTERVENTION (following paper)
+            # version that follows paper (all agents need to wear face masks in certain spaces, and in the remaining spaces the )
             if FACE_MASK_LEVEL == "only unvaccinated":
                 unvaccinated = [ag for ag in agents if ag.vaccinated is False]
                 select_face_mask = random.sample(unvaccinated, k=int(len(unvaccinated) * FACE_MASK_COMPLIANCE))
@@ -109,7 +99,22 @@ class Agent:
                         if key in ["Academic", "DiningHall", "Gym", "Library", "Office", "TransitSpace"]:
                             ag.face_mask_self_risk_multiplier[key] = (1 - face_mask_self)
                             ag.face_mask_spread_risk_multiplier[key] = (1 - face_mask_spread)
+
             """
+            # version that may be more realistic (non-compliant agents do not wear face masks in any space)
+            select_face_mask = random.sample(agents, k=int(TOTAL_AGENTS * FACE_MASK_COMPLIANCE))
+
+            for ag in select_face_mask:
+                ag.face_mask = True
+                for key in ag.face_mask_self_risk_multiplier.keys():
+                    ag.face_mask_self_risk_multiplier[key] = 1 - face_mask_self
+                    ag.face_mask_spread_risk_multiplier[key] = 1 - face_mask_spread
+            """
+
+
+
+
+
 
 
 
@@ -302,3 +307,26 @@ def return_screening_result(agents):
         if agent.screening_result == "Positive":
             agent.bedridden = True
             agent.bedridden_days = 0
+        elif agent.screening_result == "Negative" and agent.bedridden is True:  # if a walk-in test agent received a negative result
+            agent.bedridden = False
+            agent.bedridden_days = False
+
+
+def walk_in_test(agents):
+    infected_agents = [agent for agent in agents if agent.seir in ["Ie", "Im"]]
+    walk_in_agents = []
+    for agent in infected_agents:
+        if agent.days_in_state < 1 and agent.bedridden is False:
+            k = agent.days_in_state
+            rand_num = random.random()
+            if rand_num < WALK_IN_PROBABILITY.get(agent.seir):
+                walk_in_agents.append(agent)
+    screening_test(walk_in_agents)
+    for agent in walk_in_agents:
+        agent.bedridden = True
+        agent.bedridden_days = 0
+
+
+
+
+
