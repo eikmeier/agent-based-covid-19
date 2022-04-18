@@ -42,14 +42,14 @@ PROBABILITY_L = 0.15 # Probability of being assigned to the library during a typ
 PROBABILITY_S = 0.15 # Probability of being assigned to a social space during a type of day (A, B, W)
 
 # Scheduling
-SCHEDULE_DAYS = ['A', 'B', 'W']
-SCHEDULE_WEEKDAYS = ['A', 'B']
-SCHEDULE_HOURS = list(range(8, 23))
+SCHEDULE_DAYS = ['A', 'B', 'W'] # A represents Monday & Wednesday, B represents Tuesday & Thursday, and W represents Friday & Saturday
+SCHEDULE_WEEKDAYS = ['A', 'B'] 
+SCHEDULE_HOURS = list(range(8, 23)) # Agents move around on campus between the hours 8 AM and 10 PM. Otherwise, agents are assumed to be sleeping in their dorm
 
 # Interventions
 INTERVENTIONS = {"Vaccine": False, "Face mask": False, "Screening": False}
-VACCINE_PERCENTAGE = {"Faculty": 0, "Student": 0}
-VACCINE_SELF_EFFECTIVENESS = 0.7
-VACCINE_SPREAD_EFFECTIVENESS = 0.7
-FACE_MASK_COMPLIANCE = 0.5
+VACCINE_PERCENTAGE = {"Faculty": 0, "Student": 0} # Initial percentages of vaccinated agents
+VACCINE_SELF_EFFECTIVENESS = 0.7 # Multiplier on vaccinated agents getting COVID
+VACCINE_SPREAD_EFFECTIVENESS = 0.7 # Multiplier on vaccinated agents with COVID spreading it
+FACE_MASK_COMPLIANCE = 0.5 # Amount of agents who wear face masks in dorm cores, social spaces leaves, and dining hall leaves
 SCREENING_COMPLIANCE = 0.5
