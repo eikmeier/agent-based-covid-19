@@ -151,8 +151,7 @@ def observe(data):
     plt.grid(axis='y', zorder=0)
     plt.xticks(rotation=45, ha="right")
     for space_str in se_intervals.keys():
-        plt.errorbar(list(data[number_of_simulations]['exposed_spaces'].keys()).index(space_str), data[number_of_simulations]['exposed_spaces'][space_str], 
-        yerr=np.array(se_intervals[space_str]).T, alpha=0.5, ecolor='black', capsize=4, zorder=4)
+        plt.errorbar(list(data[number_of_simulations]['exposed_spaces'].keys()).index(space_str), data[number_of_simulations]['exposed_spaces'][space_str], yerr=np.array(se_intervals[space_str]).T, alpha=0.5, ecolor='black', capsize=4, zorder=4)
     plt.title(plot_parameters_str)
     plt.bar(data[number_of_simulations]['exposed_spaces'].keys(), data[number_of_simulations]['exposed_spaces'].values(), zorder=3)
     plt.yticks(list(plt.yticks()[0])[1:] + [(plt.yticks()[0][1] - plt.yticks()[0][0]) + plt.yticks()[0][len(plt.yticks()[0]) - 1]])
@@ -318,8 +317,7 @@ if __name__ == "__main__":
     create_directories()
     number_of_simulations = input_stuff()
     start_time = time.time()
-    manager = Manager()
-    data = manager.dict()
+    data = Manager().dict()
     data.update({sim_num: {} for sim_num in range(number_of_simulations + 1)})
     for i in range(number_of_simulations + 1):
         sim = data[i]
@@ -329,7 +327,7 @@ if __name__ == "__main__":
         sim['exposed_spaces'] = {'Dorm': 0, 'Office': 0, 'Transit Space': 0, 'Dining Hall': 0, 'Library': 0, 'Gym': 0, 'Large Gatherings': 0, 
          'Academic': 0, 'Social Space': 0, 'Off-Campus': 0}
         data[i] = sim
-    pool = Pool() # creates an amount of processes from # of CPUs user has
+    pool = Pool() # Creates an amount of processes from # of CPUs user has
     # Use multiprocessing!
     for sim_num in range(number_of_simulations):
         pool.apply_async(update, args=(data, sim_num))
