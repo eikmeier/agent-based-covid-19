@@ -66,7 +66,7 @@ class Dorm(Space):
         Additionally, the space will get a singles field and a doubles field which are a list of the subspaces
          of this particular space. Each of these fields will have subspace dorms created and an agent field declared
          for each element of the list. \n
-        Finally, the space has an occupiedSingles field and an occupiedDoubles field that counts how many of
+        Finally, the space has an occupied_singles field and an occupied_doubles field that counts how many of
          the rooms have already been assigned to agent(s).\n
         """
         self.size = size
@@ -91,8 +91,8 @@ class Dorm(Space):
             self.doubles[j] = SubSpace(self, 2, SUBSPACE_RISK_MULTIPLIERS.get("Dorm"))
             self.doubles[j].agents = [None, None]
 
-        self.occupiedSingles = 0
-        self.occupiedDoubles = 0
+        self.occupied_singles = 0
+        self.occupied_doubles = 0
 
     def __str__(self):
         return 'Dorm'
@@ -108,21 +108,21 @@ class Dorm(Space):
         Otherwise, if an agent is assigned, their room is returned in the function.\n
         """
 
-        if self.occupiedSingles < len(self.singles):
-            self.singles[self.occupiedSingles].agent = agent
-            self.occupiedSingles += 1
+        if self.occupied_singles < len(self.singles):
+            self.singles[self.occupied_singles].agent = agent
+            self.occupied_singles += 1
             for dorm_s_hours in range(len(self.agents[3])): # Agent is in their dorm room every hour on S
                 self.agents[3][dorm_s_hours].append(agent)
-            return self.singles[self.occupiedSingles - 1]
-        elif self.occupiedDoubles < len(self.doubles):
-            if self.doubles[self.occupiedDoubles].agents[0] is None:
-                self.doubles[self.occupiedDoubles].agents[0] = agent
+            return self.singles[self.occupied_singles - 1]
+        elif self.occupied_doubles < len(self.doubles):
+            if self.doubles[self.occupied_doubles].agents[0] is None:
+                self.doubles[self.occupied_doubles].agents[0] = agent
             else:
-                self.doubles[self.occupiedDoubles].agents[1] = agent
-                self.occupiedDoubles += 1
+                self.doubles[self.occupied_doubles].agents[1] = agent
+                self.occupied_doubles += 1
             for dorm_s_hours in range(len(self.agents[3])): # Agent is in their dorm room every hour on S
                 self.agents[3][dorm_s_hours].append(agent)
-            return self.doubles[self.occupiedDoubles - 1]
+            return self.doubles[self.occupied_doubles - 1]
         else:  # Return False if there are no rooms available
             return False
 
@@ -284,7 +284,7 @@ class Office(Space):
         if self.division == "STEM":
             self.cv = PASSING_TIME * 6 * 50
             self.subcv = 50
-        else: #self.division == "Humanities" or self.division == "Arts"
+        else: # Division is Humanities or Arts
             self.cv = PASSING_TIME * 6 * 25
             self.subcv = 20
         self.rv = SPACE_RISK_MULTIPLIERS.get("Office")
@@ -404,7 +404,7 @@ class Academic(Space):
 
     def assign_student(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
         """
-        Assigns a student to a classroom.\n
+        Randomly assigns a student to a classroom.\n
         If a classroom was able to assign the student, then the classroom is returned.\n
         Otherwise, None is returned.\n
         """
@@ -417,7 +417,7 @@ class Academic(Space):
 
     def assign_faculty(self, agent):
         """
-        Assigns a faculty to a classroom.\n
+        Assigns a faculty to a classroom (not random, sequentially).\n
         If a classroom was able to assign the faculty, then the classroom is returned.\n
         Otherwise, None is returned.\n
         """
