@@ -304,10 +304,10 @@ def screening_test(agents):
 
 def return_screening_result(agents):
     for agent in agents:
-        if agent.screening_result == "Positive":
+        if agent.screening_result[-1] == "Positive":
             agent.bedridden = True
             agent.bedridden_days = 0
-        elif agent.screening_result == "Negative" and agent.bedridden is True:  # if a walk-in test agent received a negative result
+        elif agent.screening_result[-1] == "Negative" and agent.bedridden is True:  # if a walk-in test agent received a negative result
             agent.bedridden = False
             agent.bedridden_days = False
 
@@ -315,13 +315,16 @@ def return_screening_result(agents):
 def walk_in_test(agents):
     infected_agents = [agent for agent in agents if agent.seir in ["Ie", "Im"]]
     walk_in_agents = []
+
     for agent in infected_agents:
         if agent.days_in_state < 1 and agent.bedridden is False:
-            k = agent.days_in_state
+            # k = agent.days_in_state
             rand_num = random.random()
             if rand_num < WALK_IN_PROBABILITY.get(agent.seir):
                 walk_in_agents.append(agent)
+
     screening_test(walk_in_agents)
+
     for agent in walk_in_agents:
         agent.bedridden = True
         agent.bedridden_days = 0

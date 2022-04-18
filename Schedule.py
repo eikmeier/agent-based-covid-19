@@ -6,6 +6,7 @@ from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace, Office
 from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, PROBABILITY_G, PROBABILITY_S, PROBABILITY_L, \
     SCHEDULE_DAYS, SCHEDULE_WEEKDAYS, CLASS_TIMES, CLASSROOMS
 
+
 all_transit_spaces = {"A": [], "B": [], "W": []}  # time range is from 8 ~ 22, which is 15 blocks & class times are at index 2, 4, 6, 8
 for day in SCHEDULE_DAYS:
     for time in range(15):
@@ -45,6 +46,7 @@ def create_spaces(space, start_hour=8, end_hour=22, break_times=None, open_days=
                 result[day_index][hour - 8] = space_class(division, open_day, hour)
     return result
 
+
 def create_dorms():
     dorms = []
     # Create dorm buildings (25 small, 10 medium, 10 large)
@@ -55,6 +57,7 @@ def create_dorms():
     for i in range(DORM_BUILDINGS.get("Large")):
         dorms.append(Dorm("Large"))
     return dorms
+
 
 def create_academic_spaces(stem_buildings, humanities_buildings, arts_buildings):
     # create academic buildings (STEM, Humanities, Arts) for class times ([10AM, 12PM, 14PM, 16PM] - index [2, 4, 6, 8])
@@ -165,6 +168,7 @@ def assign_agents_to_classes(academic_buildings, agent_list):
     assign_faculty_classes(academic_buildings, faculty)
     assign_student_classes(academic_buildings, students)
 
+
 def assign_faculty_classes(academic_buildings, faculty_list):
     # list of faculty by division
     stem_faculty = [faculty for faculty in faculty_list if faculty.division == "STEM"]
@@ -217,12 +221,10 @@ def assign_faculty_classes(academic_buildings, faculty_list):
         for building in copy.copy(remaining_buildings):
             if faculty.schedule.get(building.day)[building.time] == None:
                 classroom = building.assign_agent(faculty)  # assign agent to a classroom
-                if faculty.schedule.get(building.day)[
-                    building.time + 2] == building:  # If the agent is in the same Academic space in 2 hours (after this class finishes)
+                if faculty.schedule.get(building.day)[building.time + 2] == building:  # If the agent is in the same Academic space in 2 hours (after this class finishes)
                     all_transit_spaces[building.day][building.time].agents.remove(
                         faculty)  # Remove agent from being in the transit space during this hour
-                elif faculty.schedule.get(building.day)[
-                    building.time - 1] != building:  # If the agent is in a different space in the previous hour
+                elif faculty.schedule.get(building.day)[building.time - 1] != building:  # If the agent is in a different space in the previous hour
                     all_transit_spaces[building.day][building.time].agents.append(
                         faculty)  # assign agent to transit space at corresponding [day, time]
                 if classroom == None:
@@ -230,6 +232,7 @@ def assign_faculty_classes(academic_buildings, faculty_list):
                 else:
                     remaining_faculty.remove(faculty)
                     break  # No need to go through the other buildings for this faculty since they have been successfully assigned
+
 
 def assign_student_classes(academic_buildings, student_list):
     time_range = [2, 4, 6, 8]  # index of time slots for classes
@@ -284,6 +287,7 @@ def assign_student_classes(academic_buildings, student_list):
                             agent)  # assign agent to transit space at corresponding [day, time]
                     break
 
+
 # DINING HALL / GYM / LIBRARY ####################################################################################################################
 def assign_dining_times(dining_hall_space, agent_list):
     for agent in agent_list:  # Assign dining hall times to all agents
@@ -299,6 +303,7 @@ def assign_dining_times(dining_hall_space, agent_list):
                 assign_meal(agent, day, 12, 15, dining_hall_space)
                 assign_meal(agent, day, 17, 20, dining_hall_space)
 
+
 def assign_gym(agent_list, gym_spaces):
     # Try to assign Gym slots
     for agent in agent_list:
@@ -313,6 +318,7 @@ def assign_gym(agent_list, gym_spaces):
                         gym_hour = random.choice(available_times)
                         gym_spaces[count][gym_hour].assign_agent(agent)
                         all_transit_spaces[day][gym_hour].agents.append(agent)
+
 
 # Remaining slots for social spaces, library leaf, or dorm room
 def assign_remaining_time(agent_list, library_spaces, social_spaces, stem_office_spaces, humanities_office_spaces,
