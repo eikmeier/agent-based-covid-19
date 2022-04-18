@@ -103,7 +103,7 @@ def assign_meal(agent, day, start_hour, end_hour, dh_list):
     if possible_meal_hours:
         meal_hour = random.choice(possible_meal_hours)
         dh_list[day_index][meal_hour].assign_agent(agent)
-        if agent.schedule[day][meal_hour - 1] != "Dining Hall":  # If previous agent's location is not Dining Hall,
+        if agent.schedule[day][meal_hour - 1] != "Dining Hall":  # If agent's last location is not Dining Hall...
             all_transit_spaces[day][meal_hour].agents.append(agent)  # assign agent to transit space at corresponding [day, time]
 
 doubles_students = []
