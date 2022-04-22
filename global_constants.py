@@ -43,7 +43,7 @@ PROBABILITY_S = 0.15 # Probability of being assigned to a social space during a 
 
 # Scheduling
 SCHEDULE_DAYS = ['A', 'B', 'W'] # A represents Monday & Wednesday, B represents Tuesday & Thursday, and W represents Friday & Saturday
-SCHEDULE_WEEKDAYS = ['A', 'B'] 
+SCHEDULE_WEEKDAYS = ['A', 'B']
 SCHEDULE_HOURS = list(range(8, 23)) # Agents move around on campus between the hours 8 AM and 10 PM. Otherwise, agents are assumed to be sleeping in their dorm
 
 # Interventions
