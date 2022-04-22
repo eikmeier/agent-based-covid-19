@@ -19,4 +19,6 @@ Documentation is located in the <b> documentation </b> folder. Currently, just t
 
 *This code was largely written by Erik Nelson [nelsoner] and Jiyoung Chang [changjiy] under the guidance of Professor Eikmeier during a 2021 Summer MAP Research Project at Grinnell College*
 
+*The original research paper that this project was based on, can be found at this link: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0255654*
+
 ##### This README.md was last updated on 04/17/2022
