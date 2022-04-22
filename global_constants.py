@@ -5,7 +5,6 @@ DIVISION_RATIO = [0.25, 0.25]  # proportion of ["Humanities", "Arts"] - default 
 SOCIAL_RATIO = 0.5  # proportion of students that are social
 
 
-
 # Simulation Settings
 SIMULATION_LENGTH = 15  # Number of weeks the simulation should go for
 INITIALLY_INFECTED = 10  # Number of agents that are initially infected (before running the simulation)

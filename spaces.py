@@ -6,6 +6,7 @@ import random
 import pickle
 
 
+
 class Space:
     def close_space(self):
         """

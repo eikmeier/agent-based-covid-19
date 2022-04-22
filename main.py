@@ -20,7 +20,6 @@ from CovidAgents import initialize_leaves, change_states, Agent
 from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
     assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
 from spaces import Dorm, Academic, LargeGatherings
-
 plt.rcParams.update({'figure.autolayout': True})  # A required line so the bar graph labels stay on the screen
 
 agent_list = []  # list of all agents
@@ -449,14 +448,14 @@ def input_stuff():
     # DETERMINE COVID VARIANT
     print("What COVID variant do you want? (A for Alpha/ D for Delta/ O for other)")
     covid_variant = input()
-    while covid_variant not in ['A', 'D', 'O']:
+    while covid_variant not in ['A', 'D', 'O', 'a', 'd', 'o']:
         print("input should be either (A for Alpha/ D for Delta/ O for other)")
         covid_variant = input()
-    if covid_variant == 'A':
+    if covid_variant in ['A', 'a']:
         COVID_VARIANTS["Alpha"] = True
-    elif covid_variant == 'D':
+    elif covid_variant in ['D', 'd'] :
         COVID_VARIANTS["Delta"] = True
-    elif covid_variant == 'O':
+    elif covid_variant in ['O', 'o']:
         COVID_VARIANTS["Other"] = True
         print("How faster does the infection spread for this variant (compared to the alpha variant)? [0 to 100]")
         variant_spread = input()
@@ -473,10 +472,10 @@ def input_stuff():
     # VACCINE INTERVENTION
     print("Do you want to add vaccinated agents to the model? [Y/N]")
     vaccines = input()
-    while vaccines not in ['Y', 'N']:
+    while vaccines not in ['Y', 'N', 'y', 'n']:
         print("input should be either [Y for Yes / N for No]")
         vaccines = input()
-    if vaccines == 'Y':
+    if vaccines in ['Y', 'y']:
         if covid_variant == 'O':  # if covid variant is neither alpha or delta, user needs to set the effectiveness of their own covid variant
             print("How effective are vaccines in preventing a susceptible agent from getting infected? [0 to 100]")
             vaccine_self = input()
@@ -509,10 +508,10 @@ def input_stuff():
     # FACE MASK INTERVENTION
     print("Do you want to add the face mask intervention to the model? [Y/N]")
     face_masks = input()
-    while face_masks not in ['Y', 'N']:
+    while face_masks not in ['Y', 'N', 'y', 'n']:
         print("input should be either [Y for Yes / N for No]")
         face_masks = input()
-    if face_masks == 'Y':
+    if face_masks in ['Y', 'y']:
         INTERVENTIONS["Face mask"] = True
         if covid_variant == 'O':  # if covid variant is neither alpha or delta, user needs to set the effectiveness of their own covid variant
             print("How effective are face masks in preventing a susceptible agent from getting infected? [0 to 100]")
@@ -531,10 +530,10 @@ def input_stuff():
     # SCREENING TEST INTERVENTION
     print("Do you want to add the screening test intervention to the model? [Y/N]")
     screening = input()
-    while screening not in ['Y', 'N']:
+    while screening not in ['Y', 'N', 'y', 'n']:
         print("input should be either [Y for Yes / N for No]")
         screening = input()
-    if screening == 'Y':
+    if screening in ['Y', 'y']:
         INTERVENTIONS["Screening"] = True
 
     # NUMBER OF SIMULATIONS
@@ -585,4 +584,4 @@ if __name__ == "__main__":
     pool.close()
     pool.join()
     print("The program took " + str(time.time() - start_time) + " seconds to run")
-    #observe(data)
+    observe(data)
