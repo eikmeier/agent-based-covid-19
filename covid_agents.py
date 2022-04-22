@@ -103,7 +103,6 @@ class Agent:
             """
             # version that may be more realistic (non-compliant agents do not wear face masks in any space)
             select_face_mask = random.sample(agents, k=int(TOTAL_AGENTS * FACE_MASK_COMPLIANCE))
-
             for ag in select_face_mask:
                 ag.face_mask = True
                 for key in ag.face_mask_self_risk_multiplier.keys():
@@ -328,8 +327,3 @@ def walk_in_test(agents):
     for agent in walk_in_agents:
         agent.bedridden = True
         agent.bedridden_days = 0
-
-
-
-
-

@@ -1,6 +1,6 @@
 import random
 import copy
-import CovidAgents
+import covid_agents
 import spaces
 from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace, Office, TransitSpace
 from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, PROBABILITY_G, PROBABILITY_S, PROBABILITY_L, \

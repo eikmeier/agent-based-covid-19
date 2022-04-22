@@ -1,6 +1,6 @@
 import random
-import CovidAgents
-from CovidAgents import change_states, screening_test, return_screening_result, walk_in_test
+import covid_agents
+from covid_agents import change_states, screening_test, return_screening_result, walk_in_test
 from global_constants import CLASS_TIMES, DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, SCHEDULE_DAYS, \
     INITIALLY_INFECTED, TOTAL_AGENTS, INTERVENTIONS, VACCINE_PERCENTAGE, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, \
     VACCINE_PERCENTAGE, WEEK_SCHEDULE, SCREENING_PERCENTAGE, SCREENING_COMPLIANCE, LATENCY_PERIOD, TESTING_DAY_INDEX, COVID_VARIANTS, VACCINE_SELF, VACCINE_SPREAD, \
@@ -16,8 +16,8 @@ import scipy.stats as st
 import numpy as np
 import os
 import csv
-from CovidAgents import initialize_leaves, change_states, Agent
-from Schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
+from covid_agents import initialize_leaves, change_states, Agent
+from schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, assign_dining_times, \
     assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
 from spaces import Dorm, Academic, LargeGatherings
 plt.rcParams.update({'figure.autolayout': True})  # A required line so the bar graph labels stay on the screen
@@ -28,7 +28,7 @@ agent_list = []  # list of all agents
 def initialize():
     # Initialize agents
     global agent_list
-    agent_list = CovidAgents.Agent().initialize()
+    agent_list = covid_agents.Agent().initialize()
 
     # Create spaces
     dorms = create_dorms()

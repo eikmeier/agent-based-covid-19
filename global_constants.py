@@ -72,10 +72,3 @@ SCREENING_COMPLIANCE = 0.80  # [0.80, 0.90, 1]
 FALSE_POSITIVE_RATE = 0.001  # possibility of agent in state ["S", "E", "R"] receiving positive result
 FALSE_NEGATIVE_RATE = 0.03  # possibility of infected agent ["Ia", "Im", "Ie"] receiving negative result
 WALK_IN_PROBABILITY = {"Im": 0.70, "Ie": 0.95}
-
-
-
-
-
-
-
