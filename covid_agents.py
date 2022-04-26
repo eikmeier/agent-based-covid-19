@@ -1,6 +1,6 @@
-from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A, INITIALLY_INFECTED, VACCINE_SELF_EFFECTIVENESS, \
- VACCINE_SPREAD_EFFECTIVENESS, FACE_MASK_COMPLIANCE, SCREENING_COMPLIANCE, OFF_CAMPUS_STUDENT_PROPORTION, FACULTY_PROPORTION, HUMANITIES_PROPORTION, \
- ARTS_PROPORTION, SOCIAL_RATIO
+from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A, INITIALLY_INFECTED, VACCINE_SELF, \
+ VACCINE_SPREAD, FACE_MASK_COMPLIANCE, SCREENING_COMPLIANCE, OFF_CAMPUS_STUDENT_PROPORTION, FACULTY_PROPORTION, HUMANITIES_PROPORTION, \
+ ARTS_PROPORTION, SOCIAL_RATIO, FALSE_POSITIVE_RATE, FALSE_NEGATIVE_RATE, WALK_IN_PROBABILITY
 import random
 import pickle
 
@@ -18,7 +18,7 @@ class Agent:
                                                 "SocialSpace": 1, "TransitSpace": 1, "LargeGatherings": 1}
         self.face_mask_spread_risk_multiplier = {"Dorm": 1, "Academic": 1, "DiningHall": 1, "Gym": 1, "Library": 1, "Office": 1,
                                                 "SocialSpace": 1, "TransitSpace": 1, "LargeGatherings": 1}
-        self.screening = 0  # screening test compliance
+        self.screening_result = []  # result of screening test - whether agent is infected or not
         self.student = True
         self.off_campus = False
         self.division = "STEM"  # agent division/major (either STEM, Humanities, or Arts)
@@ -29,6 +29,7 @@ class Agent:
         self.schedule = {"A": [None] * 15, "B": [None] * 15, "W": [None] * 15}  # time range is from 8 ~ 22, which is 15 blocks & class times are at index 2, 4, 6, 8
         self.days_in_state = 0
         self.bedridden = False
+        self.bedridden_days = False  # by default, agents are not quarantined
         self.num_of_classes = 0
         # Initialize leaves - the first social space leaf is for A & B days and the second is for W days
         self.leaves = {"Dining Hall": -1, "Library": -1, "Gym": -1, "Social Space": [-1, -1], "Office": -1}
@@ -38,12 +39,19 @@ class Agent:
         Initializes a list of agents with several different attributes.\n
         Returns a list of agents with length = TOTAL_AGENTS (from global_constants.py).\n
         """
+        caCV = pickle.load(open('pickle_files/covid_variants.p', 'rb'))
         caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
         caVP = pickle.load(open('pickle_files/vaccine_percentage.p', 'rb'))
         vaccine_intervention = caI.get("Vaccine")  # whether we use vaccine intervention or not ("on" or "off")
         faculty_vaccine_percentage = caVP.get("Faculty")
         student_vaccine_percentage = caVP.get("Student")
         face_mask_intervention = caI.get("Face mask")  # whether we use face mask intervention or not ("on" or "off")
+
+        covid_variant = [key for key in caCV[0].keys() if caCV[0].get(key) is True][0]
+        vaccine_self = caCV[2][0].get(covid_variant)
+        vaccine_spread = caCV[2][1].get(covid_variant)
+        face_mask_self = caCV[3][0].get(covid_variant)
+        face_mask_spread = caCV[3][1].get(covid_variant)
 
         agents = [Agent() for agent in range(TOTAL_AGENTS)]
 
@@ -65,8 +73,8 @@ class Agent:
             select_vaccine_faculty = random.sample(faculty_agents, k=int(len(faculty_agents) * faculty_vaccine_percentage))
             for vaccine_agent in select_vaccine_student + select_vaccine_faculty:
                 vaccine_agent.vaccinated = True
-                vaccine_agent.vaccinated_self_risk_multiplier = (1 - VACCINE_SELF_EFFECTIVENESS)
-                vaccine_agent.vaccinated_spread_risk_multiplier = (1 - VACCINE_SPREAD_EFFECTIVENESS)
+                vaccine_agent.vaccinated_self_risk_multiplier = (1 - vaccine_self)
+                vaccine_agent.vaccinated_spread_risk_multiplier = (1 - vaccine_spread)
 
         # Randomly select and assign face mask compliance to certain proportion of agents
         if face_mask_intervention:
@@ -163,7 +171,15 @@ def change_states(agents):
     At the end of the loop, each agent has their days_in_state field increased by one to signify that
      the current day has ended.\n
     """
+
     for agent in agents:
+        if agent.bedridden_days is not False:  # if agent is in quarantine
+            if agent.bedridden_days == 14:  # after 14 days, agent get out of quarantine
+                agent.bedridden = False  # in whatever state the agent was, after 14 days the agent will be either susceptible or recovered, so we don't need to change their state
+                agent.bedridden_days = False
+            elif agent.bedridden_days < 14:
+                agent.bedridden_days += 1
+
         if agent.days_in_state == 2:
             if agent.seir == "Ia":
                 rand_num = random.random()
@@ -221,3 +237,46 @@ def initialize_leaves(agents):
                 random.shuffle(student_agents)
                 for count, student in enumerate(student_agents):
                     student.leaves[space] = count % SPACE_SUBSPACE_AMOUNT.get(space)
+
+
+def screening_test(agents):
+    for agent in agents:
+        rand_num = random.random()
+        if agent.seir in ["S", "E", "R"]:
+            if rand_num < FALSE_POSITIVE_RATE:
+                agent.screening_result.append("Positive")
+            else:
+                agent.screening_result.append("Negative")
+        elif agent.seir in ["Ia", "Im", "Ie"]:
+            if rand_num < FALSE_NEGATIVE_RATE:
+                agent.screening_result.append("Negative")
+            else:
+                agent.screening_result.append("Positive")
+
+
+def return_screening_result(agents):
+    for agent in agents:
+        if agent.screening_result[-1] == "Positive":
+            agent.bedridden = True
+            agent.bedridden_days = 0
+        elif agent.screening_result[-1] == "Negative" and agent.bedridden is True:  # if a walk-in test agent received a negative result
+            agent.bedridden = False
+            agent.bedridden_days = False
+
+
+def walk_in_test(agents):
+    infected_agents = [agent for agent in agents if agent.seir in ["Ie", "Im"]]
+    walk_in_agents = []
+
+    for agent in infected_agents:
+        if agent.days_in_state < 1 and agent.bedridden is False:
+            # k = agent.days_in_state
+            rand_num = random.random()
+            if rand_num < WALK_IN_PROBABILITY.get(agent.seir):
+                walk_in_agents.append(agent)
+
+    screening_test(walk_in_agents)
+
+    for agent in walk_in_agents:
+        agent.bedridden = True
+        agent.bedridden_days = 0

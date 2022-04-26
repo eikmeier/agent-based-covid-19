@@ -1,5 +1,6 @@
 import random
 import copy
+import covid_agents
 from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace, Office, TransitSpace
 from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, PROBABILITY_G, PROBABILITY_S, PROBABILITY_L, \
     SCHEDULE_DAYS, SCHEDULE_WEEKDAYS
@@ -222,12 +223,10 @@ def assign_faculty_classes(academic_buildings, faculty_list):
         for building in copy.copy(remaining_buildings):
             if faculty.schedule.get(building.day)[building.time] == None:
                 classroom = building.assign_agent(faculty)  # assign agent to a classroom
-                if faculty.schedule.get(building.day)[
-                    building.time + 2] == building:  # If the agent is in the same Academic space in 2 hours (after this class finishes)
+                if faculty.schedule.get(building.day)[building.time + 2] == building:  # If the agent is in the same Academic space in 2 hours (after this class finishes)
                     all_transit_spaces[building.day][building.time].agents.remove(
                         faculty)  # Remove agent from being in the transit space during this hour
-                elif faculty.schedule.get(building.day)[
-                    building.time - 1] != building:  # If the agent is in a different space in the previous hour
+                elif faculty.schedule.get(building.day)[building.time - 1] != building:  # If the agent is in a different space in the previous hour
                     all_transit_spaces[building.day][building.time].agents.append(
                         faculty)  # assign agent to transit space at corresponding [day, time]
                 if classroom == None:
@@ -330,7 +329,6 @@ def assign_gym(gym_spaces, agent_list):
                     gym_hour = random.choice(available_times)
                     gym_spaces[count][gym_hour].assign_agent(student)
                     all_transit_spaces[day][gym_hour].agents.append(student)
-
 
 def assign_remaining_time(library_spaces, social_spaces, stem_office_spaces, humanities_office_spaces,
                           arts_office_spaces, agent_list):

@@ -48,8 +48,25 @@ SCHEDULE_HOURS = list(range(8, 23)) # Agents move around on campus between the h
 
 # Interventions
 INTERVENTIONS = {"Vaccine": False, "Face mask": False, "Screening": False}
+COVID_VARIANTS = {"Alpha": False, "Delta": False, "Other": False}  # variant of covid virus (either Alpha, Delta, or other created by user input)
+VARIANT_RISK_MULTIPLIER = {"Alpha": 1, "Delta": 2, "Other": 0}
 VACCINE_PERCENTAGE = {"Faculty": 0, "Student": 0} # Initial percentages of vaccinated agents
-VACCINE_SELF_EFFECTIVENESS = 0.7 # Multiplier on vaccinated agents getting COVID
-VACCINE_SPREAD_EFFECTIVENESS = 0.7 # Multiplier on vaccinated agents with COVID spreading it
+VACCINE_SELF = {"Alpha": 0.7, "Delta": 0.3, "Other": 0} # Multiplier on vaccinated agents getting COVID
+VACCINE_SPREAD = {"Alpha": 0.7, "Delta": 0.3, "Other": 0} # Multiplier on vaccinated agents with COVID spreading it
 FACE_MASK_COMPLIANCE = 0.5 # Amount of agents who wear face masks in dorm cores, social spaces leaves, and dining hall leaves
 SCREENING_COMPLIANCE = 0.5
+
+# Face Mask Parameters
+FACE_MASK_LEVEL = "all"  # either ["all", "only unvaccinated"] have to wear masks
+FACE_MASK_COMPLIANCE = 0.5  # percentage of total agents complying with face mask intervention
+FACE_MASK_SELF = {"Alpha": 0.75, "Delta": 0.3, "Other": 0}
+FACE_MASK_SPREAD = {"Alpha": 0.5, "Delta": 0.3, "Other": 0}
+
+# Screening Test Parameters
+SCREENING_PERCENTAGE = 0.5  # [0.25, 0.5, 1]
+TESTING_DAY_INDEX = 0  # day of weekly testing (0 = "Monday", 1 = "Tuesday"...)
+LATENCY_PERIOD = 2  # [1, 2, 3, 4] days
+SCREENING_COMPLIANCE = 0.80  # [0.80, 0.90, 1]
+FALSE_POSITIVE_RATE = 0.001  # possibility of agent in state ["S", "E", "R"] receiving positive result
+FALSE_NEGATIVE_RATE = 0.03  # possibility of infected agent ["Ia", "Im", "Ie"] receiving negative result
+WALK_IN_PROBABILITY = {"Im": 0.70, "Ie": 0.95}

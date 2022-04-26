@@ -2,6 +2,8 @@ from global_constants import PASSING_TIME, SPACE_CAPACITIES, SPACE_RISK_MULTIPLI
     ACADEMIC_SUBSPACE_CAPACITIES, ACADEMIC_SPACE_CAPACITIES, CLASSROOMS, ACADEMIC_SUBSPACE_SEATS, SPACE_SUBSPACE_AMOUNT, TUNING_PARAMETER
 import math
 import random
+import pickle
+
 
 class Space:
     def close_space(self):
@@ -29,7 +31,10 @@ class Space:
         im_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Im")]
         ia_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Ia")]
 
-        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
+        caCV = pickle.load(open('pickle_files/covid_variants.p', 'rb'))
+        covid_variant = [key for key in caCV[0].keys() if caCV[0].get(key) is True][0]
+        variant_risk_multiplier = caCV[1].get(covid_variant)
+        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER * variant_risk_multiplier
 
     def spread_infection_core(self):
         """
@@ -95,7 +100,7 @@ class Dorm(Space):
         self.occupied_doubles = 0
 
     def __str__(self):
-        return 'Dorm'
+        return 'Dorm of size ' + self.size
 
     def assign_agent(self, agent):
         """
@@ -137,7 +142,7 @@ class Dorm(Space):
         elif day == 'W':
             day_index = 2
         if agent not in self.agents:
-            self.agents[day_index][time-8].append(agent)
+            self.agents[day_index][time - 8].append(agent)
 
     def get_agents(self, state, day, time):
         """
@@ -152,7 +157,12 @@ class Dorm(Space):
         ie_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Ie", day, time)]
         im_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Im", day, time)]
         ia_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.__class__.__name__)) for agent in self.get_agents("Ia", day, time)]
-        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
+
+        caCV = pickle.load(open('pickle_files/covid_variants.p', 'rb'))
+        covid_variant = [key for key in caCV[0].keys() if caCV[0].get(key) is True][0]
+        variant_risk_multiplier = caCV[1].get(covid_variant)
+        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER * variant_risk_multiplier
+
 
     def spread_infection_core(self, day, time):
         """
@@ -181,7 +191,7 @@ class TransitSpace(Space):
         """
         Returns a list of agents in the Transit Space with a given state.\n
         """
-        return [agent for agent in self.agents if agent.seir == state and agent.bedridden == False]
+        return [agent for agent in self.agents if agent.seir == state and agent.bedridden is False]
 
     def __str__(self):
         return 'Transit Space'
@@ -202,7 +212,7 @@ class DiningHall(Space):
         self.leaves = []
         for i in range(5):
             self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Dining Hall"),
-                                SUBSPACE_RISK_MULTIPLIERS.get("Dining Hall")))
+                                        SUBSPACE_RISK_MULTIPLIERS.get("Dining Hall")))
         self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Faculty Dining Leaf"),
                                     SUBSPACE_RISK_MULTIPLIERS.get("Faculty Dining Leaf")))
 
@@ -211,7 +221,7 @@ class DiningHall(Space):
         Takes in an agent and assigns them to the Dining Hall space, putting them in their assigned subspace.\n
         """
         self.leaves[agent.leaves.get("Dining Hall")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time-8] = "Dining Hall"
+        agent.schedule.get(self.day)[self.time - 8] = "Dining Hall"
 
     def __str__(self):
         return 'Dining Hall'
@@ -230,14 +240,15 @@ class Library(Space):
         self.rv = SPACE_RISK_MULTIPLIERS.get("Library")
         self.leaves = []
         for i in range(SPACE_SUBSPACE_AMOUNT.get("Library")):
-            self.leaves.append(SubSpace(self, SUBSPACE_CAPACITIES.get("Library"), SUBSPACE_RISK_MULTIPLIERS.get("Library")))
+            self.leaves.append(
+                SubSpace(self, SUBSPACE_CAPACITIES.get("Library"), SUBSPACE_RISK_MULTIPLIERS.get("Library")))
 
     def assign_agent(self, agent):
         """
         Takes in an agent and assigns them to the Library space, putting them in their assigned subspace.\n
         """
         self.leaves[agent.leaves.get("Library")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time-8] = "Library"
+        agent.schedule.get(self.day)[self.time - 8] = "Library"
 
     def __str__(self):
         return 'Library'
@@ -263,7 +274,7 @@ class Gym(Space):
         Takes in an agent and assigns them to the Gym space, putting them in their assigned subspace.\n
         """
         self.leaves[agent.leaves.get("Gym")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time-8] = "Gym"
+        agent.schedule.get(self.day)[self.time - 8] = "Gym"
 
     def __str__(self):
         return 'Gym'
@@ -297,10 +308,10 @@ class Office(Space):
         Takes in an agent and assigns them to the Office space, putting them in their assigned subspace.\n
         """
         self.leaves[agent.leaves.get("Office")].agents.append(agent)
-        agent.schedule.get(self.day)[self.time-8] = "Office"
+        agent.schedule.get(self.day)[self.time - 8] = "Office"
 
     def __str__(self):
-        return 'Office'
+        return self.division + ' Office'
 
 class LargeGatherings(Space):
     def __init__(self):
@@ -329,22 +340,31 @@ class LargeGatherings(Space):
         self.cv = 40 * math.ceil(self.number_assigned / 40.0)
         self.agents = agents
 
+
     def get_agents(self, state):
         """
         Returns a list of agents in the space with a given state.\n
         """
-        return [agent for agent in self.agents if agent.seir == state and agent.bedridden == False]
+        return [agent for agent in self.agents if agent.seir == state and agent.bedridden is False]
 
     def spread_infection(self):
         """
         Spreads infection at a given space by changing a variable amount of agent states from "S" to "E"
         """
+        ie_agents = [agent for agent in self.get_agents("Ie")]
+        im_agents = [agent for agent in self.get_agents("Im")]
+        ia_agents = [agent for agent in self.get_agents("Ia")]
+        #print("infected: " + str(len(ie_agents) + len(im_agents) + len(ia_agents)))
+
+        infected = 0
         infection_prob = self.get_infection_prob() / 100.0
         for agent in self.get_agents("S"):
             rand_num = random.random()
             if rand_num < (infection_prob * agent.vaccinated_self_risk_multiplier * agent.face_mask_self_risk_multiplier.get("LargeGatherings")):  # Agent is now exposed
                 agent.change_state("E")
                 agent.exposed_space = self
+                infected += 1
+        #print("exposed: " + str(infected))
 
 
 class Academic(Space):
@@ -373,7 +393,8 @@ class Academic(Space):
             self.classrooms[i].faculty = None
 
         for j in range(CLASSROOMS.get(self.size)[1]):  # Insert medium classrooms
-            self.classrooms.append(SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
+            self.classrooms.append(
+                SubSpace(self, ACADEMIC_SUBSPACE_CAPACITIES.get("Medium"), SUBSPACE_RISK_MULTIPLIERS.get("Classroom")))
             self.classrooms[j + CLASSROOMS.get(self.size)[0]].seats = ACADEMIC_SUBSPACE_SEATS.get("Medium")
             self.classrooms[j + CLASSROOMS.get(self.size)[0]].faculty = None
 
@@ -383,7 +404,7 @@ class Academic(Space):
             self.classrooms[k + CLASSROOMS.get(self.size)[0] + CLASSROOMS.get(self.size)[1]].faculty = None
 
     def __str__(self):
-        return "Academic"
+        return "Academic building: " + '/' + self.size + '/' + self.day + '/' + str(self.time)
 
     def assign_agent(self, agent):
         """
@@ -399,10 +420,11 @@ class Academic(Space):
         if classroom != None:
             agent.num_of_classes += 1
             agent.schedule.get(self.day)[self.time] = classroom.space
-            agent.schedule.get(self.day)[self.time+1] = classroom.space
+            agent.schedule.get(self.day)[self.time + 1] = classroom.space
         return classroom
 
-    def assign_student(self, agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
+    def assign_student(self,
+                       agent):  # academic = academic building (Academic class) / classroom = SubSpace within Academic.classrooms
         """
         Randomly assigns a student to a classroom.\n
         If a classroom was able to assign the student, then the classroom is returned.\n
@@ -422,7 +444,7 @@ class Academic(Space):
         Otherwise, None is returned.\n
         """
         for classroom in self.classrooms:
-            if classroom.faculty is None: # if there is no assigned faculty yet, assign agent to classroom
+            if classroom.faculty is None:  # if there is no assigned faculty yet, assign agent to classroom
                 classroom.agents.append(agent)
                 classroom.faculty = agent
                 return classroom
@@ -453,10 +475,10 @@ class SocialSpace(Space):
         """
         if self.day == 2:
             self.leaves[agent.leaves.get("Social Space")[1]].agents.append(agent)
-            agent.schedule.get(self.day)[self.time-8] = "Social Space"
+            agent.schedule.get(self.day)[self.time - 8] = "Social Space"
         else:
             self.leaves[agent.leaves.get("Social Space")[0]].agents.append(agent)
-            agent.schedule.get(self.day)[self.time-8] = "Social Space"
+            agent.schedule.get(self.day)[self.time - 8] = "Social Space"
 
     def __str__(self):
         return 'Social Space'
@@ -488,7 +510,7 @@ class SubSpace():
         """
         Return a list of agents assigned to the subspace that are not bedridden
         """
-        return [agent for agent in self.agents if agent.bedridden == False]
+        return [agent for agent in self.agents if agent.bedridden is False]
 
     def get_space(self):
         """
@@ -500,7 +522,7 @@ class SubSpace():
         """
         Returns a list of agents in the space with a given state.\n
         """
-        return [agent for agent in self.agents if agent is not None and agent.seir == state and agent.bedridden == False]
+        return [agent for agent in self.agents if agent is not None and agent.seir == state and agent.bedridden is False]
 
     def get_infection_prob(self):
         """
@@ -509,7 +531,12 @@ class SubSpace():
         ie_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.space.__class__.__name__)) for agent in self.get_agents("Ie")]
         im_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.space.__class__.__name__)) for agent in self.get_agents("Im")]
         ia_agents = [agent.vaccinated_spread_risk_multiplier * agent.face_mask_spread_risk_multiplier.get(str(self.space.__class__.__name__)) for agent in self.get_agents("Ia")]
-        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER
+
+        caCV = pickle.load(open('pickle_files/covid_variants.p', 'rb'))
+        covid_variant = [key for key in caCV[0].keys() if caCV[0].get(key) is True][0]
+        variant_risk_multiplier = caCV[1].get(covid_variant)
+        return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER * variant_risk_multiplier
+        # return self.rv * ((len(self.get_agents("Ie")) + len(self.get_agents("Im")) + 0.5 * len(self.get_agents("Ia"))) / self.cv) * TUNING_PARAMETER
 
     def spread_infection(self):
         """

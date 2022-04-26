@@ -1,8 +1,16 @@
 import random
+import covid_agents
+from covid_agents import change_states, screening_test, return_screening_result, walk_in_test
+from global_constants import CLASS_TIMES, DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, SCHEDULE_DAYS, \
+    INITIALLY_INFECTED, TOTAL_AGENTS, INTERVENTIONS, VACCINE_PERCENTAGE, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, \
+    VACCINE_PERCENTAGE, SCREENING_PERCENTAGE, SCREENING_COMPLIANCE, LATENCY_PERIOD, TESTING_DAY_INDEX, COVID_VARIANTS, FACE_MASK_SELF, FACE_MASK_SPREAD, \
+    VARIANT_RISK_MULTIPLIER, VACCINE_SELF, VACCINE_SPREAD
+from spaces import LargeGatherings
 import matplotlib.pyplot as plt
 import time
 from multiprocessing import Pool, Manager
 import pickle
+import copy
 import numpy as np
 import os
 import csv
@@ -24,7 +32,7 @@ def initialize():
     """
     # Initialize agents
     global agent_list
-    agent_list = Agent().initialize()
+    agent_list = covid_agents.Agent().initialize()
 
     # Create spaces
     dorms = create_dorms()
@@ -218,7 +226,11 @@ def update(data, simulation_number):
     update_dorms = []
     sim_data = data[simulation_number]
     spaces = initialize()
+    student_list = [agent for agent in agent_list if agent.student]
     off_campus_agents = [agent for agent in agent_list if agent.off_campus]
+    caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
+    screening_intervention = caI.get("Screening")  # whether we use screening test intervention or not ("on" or "off")
+    testing_day = 0
     probability_o = 0.125 / len(off_campus_agents)
     sim_data['new_exposures'].append(0)
     sim_data['total_infections'].append(INITIALLY_INFECTED)
@@ -229,7 +241,7 @@ def update(data, simulation_number):
 
     # Infection spread in chronological order
     for week in range(SIMULATION_LENGTH):
-        for day in ['A', 'B', 'A', 'B', 'W', 'W', 'S']:
+        for day_of_week_index, day in enumerate(['A', 'B', 'A', 'B', 'W', 'W', 'S']):
             day_index = 0  # Default day is 'A'
             if day == 'B':
                 day_index = 1
@@ -244,9 +256,50 @@ def update(data, simulation_number):
                     off_campus_agent.change_state("E")
                     off_campus_agent.exposed_space = "Off-Campus"
 
+            walk_in_agents = copy.copy(agent_list)
+
             if day != 'S':
                 for hour in SCHEDULE_HOURS:
+                    # WEEKLY SCREENING TEST EVERY MONDAY MORNING
+                    if day_of_week_index == TESTING_DAY_INDEX and hour == 8 and screening_intervention is True:
+
+                        # SCREENING TEST ON FIRST DAY OF SIMULATION
+                        if week == 0:  # on the first day of the simulation, screening test all agents(including both student and faculty)
+                            screening_test(agent_list)
+                            walk_in_agents = []
+
+                        else:  # week != 0:  # for each Monday, test a certain proportion of student agents
+                            if week == 1:  # all agents got tested on the first week, so on the first week we need to select who will be screened from the list of all the student agents
+                                not_tested = copy.copy(student_list)
+                            else:  # starting from the second week, we exclude agents that were tested on the previous week
+                                not_tested = [agent for agent in student_list if agent.screening_result[-1] == "Not tested" and agent.bedridden is False]
+
+                            if len(not_tested) < int(len(student_list) * SCREENING_PERCENTAGE):  # if (# of agents not tested the previous week) < (# of agents that need to be tested each week)
+                                weekly_testing_agents = not_tested + random.sample([agent for agent in student_list if agent not in not_tested],  # fill up the remaining number of agents
+                                                                                   k=int(len(student_list) * SCREENING_PERCENTAGE) - len(not_tested))  # with agents that were tested the previous week
+
+                            else:
+                                weekly_testing_agents = random.sample(not_tested, k=int(len(student_list) * SCREENING_PERCENTAGE))
+
+                            for agent in weekly_testing_agents:
+                                if agent.seir in ["S", "E", "Ia"]:  # if agent doesn't have symptoms,
+                                    rand_num = random.random()
+                                    if rand_num < (1 - SCREENING_COMPLIANCE):  # agent may not comply with screening test by probability (1 - SCREENING_COMPLIANCE)
+                                        weekly_testing_agents.remove(agent)
+
+                            screening_test(weekly_testing_agents)  # selected and compliant agents do the screening test
+
+                            not_weekly_testing_agents = [agent for agent in student_list if agent not in weekly_testing_agents]
+                            for agent in not_weekly_testing_agents:
+                                agent.screening_result.append("Not tested")
+                            walk_in_agents = not_weekly_testing_agents
+
+
+                    if day_of_week_index == TESTING_DAY_INDEX + LATENCY_PERIOD and hour == 8 and screening_intervention is True:
+                        return_screening_result(agent_list)
+
                     all_transit_spaces.get(day)[hour - 8].spread_infection_core()
+
                     for space in spaces:
                         if "Dorm" in str(space):
                             for dorm in space:
@@ -261,8 +314,7 @@ def update(data, simulation_number):
                             if day in SCHEDULE_WEEKDAYS and hour in range(10, 18):  # hour needs to be in range(10, 18)
                                 if hour % 2 == 1:
                                     hour -= 1  # Academic spaces only stored in the even indices
-                                for academic_building in space[day_index][int((
-                                                                                      hour / 2) - 5)]:  # To turn hour into indices for the list of academic_buildings
+                                for academic_building in space[day_index][int((hour / 2) - 5)]:  # To turn hour into indices for the list of academic_buildings
                                     academic_building.spread_in_space()
 
                         else:
@@ -287,6 +339,11 @@ def update(data, simulation_number):
                                                                 k=random.randrange(20, 60)))
                     large_gathering.spread_infection()
 
+            walk_in_test(walk_in_agents)
+
+            # infected_oncampus = [agent for agent in infected_agents if agent.type == "On-campus Student"]
+            # infected_offcampus = [agent for agent in infected_agents if agent.type == "Off-campus Student"]
+            # infected_faculty = [agent for agent in infected_agents if agent.type == "Faculty"]
             new_exposed_agents = [agent for agent in agent_list if agent.seir == "E" and agent.days_in_state == 0]
             sim_data['new_exposures'].append(len(new_exposed_agents))
             infected_agents = [agent for agent in agent_list if
@@ -304,7 +361,6 @@ def update(data, simulation_number):
             data[simulation_number] = sim_data
     print("Simulation finished.")
 
-
 def input_stuff():
     """
     Prints out to the console and requests user input to decide intervention details and then stores them in pickle files, which
@@ -312,25 +368,109 @@ def input_stuff():
     Returns a number representing the number of simulations the model should be run for.\n
     """
     print("Do you want to add vaccinated agents to the model? (Y/N)")
+
+    # DETERMINE COVID VARIANT
+    print("What COVID variant do you want? (A for Alpha/ D for Delta/ O for other)")
+    covid_variant = input()
+    while covid_variant not in ['A', 'D', 'O', 'a', 'd', 'o']:
+        print("input should be either (A for Alpha/ D for Delta/ O for other)")
+        covid_variant = input()
+    if covid_variant in ['A', 'a']:
+        COVID_VARIANTS["Alpha"] = True
+    elif covid_variant in ['D', 'd'] :
+        COVID_VARIANTS["Delta"] = True
+    elif covid_variant in ['O', 'o']:
+        COVID_VARIANTS["Other"] = True
+        print("How faster does the infection spread for this variant (compared to the alpha variant)? [0 to 100]")
+        variant_spread = input()
+        while True:
+            try:
+                variant_spread = float(variant_spread)
+                break
+            except:
+                print("input should be an int/float between 0 and 100")
+                variant_spread = input()
+        VARIANT_RISK_MULTIPLIER["Other"] = int(variant_spread) / 100.0
+
+
+    # VACCINE INTERVENTION
+    print("Do you want to add vaccinated agents to the model? [Y/N]")
     vaccines = input()
-    if vaccines == 'Y':
+    while vaccines not in ['Y', 'N', 'y', 'n']:
+        print("input should be either [Y for Yes / N for No]")
+        vaccines = input()
+    if vaccines in ['Y', 'y']:
+        if covid_variant == 'O':  # if covid variant is neither alpha or delta, user needs to set the effectiveness of their own covid variant
+            print("How effective are vaccines in preventing a susceptible agent from getting infected? [0 to 100]")
+            vaccine_self = input()
+            while not vaccine_self.isnumeric():
+                print("input should be an integer between 0 and 100")
+                vaccine_self = input()
+            VACCINE_SELF["Other"] = int(vaccine_self) / 100.0
+            print("How effective are vaccines in preventing an infected agent from spreading infection? [0 to 100]")
+            vaccine_spread = input()
+            while not vaccine_spread.isnumeric():
+                print("input should be an integer between 0 and 100")
+                vaccine_spread = input()
+            VACCINE_SPREAD["Other"] = int(vaccine_spread) / 100.0
+
         INTERVENTIONS["Vaccine"] = True
-        print("What percentage of students should be vaccinated? (0 to 100)")
+        print("What percentage of students should be vaccinated? [0 to 100]")
         students_vax = input()
+        print(students_vax.isnumeric())
+        while not students_vax.isnumeric():
+            print("input should be integer between 0 and 100")
+            students_vax = input
         VACCINE_PERCENTAGE["Student"] = int(students_vax) / 100.0
-        print("What percentage of faculty should be vaccinated? (0 to 100)")
+        print("What percentage of faculty should be vaccinated? [0 to 100]")
         faculty_vax = input()
+        while not faculty_vax.isnumeric():
+            print("input should be integer between 0 and 100")
+            faculty_vax = input
         VACCINE_PERCENTAGE["Faculty"] = int(faculty_vax) / 100.0
-    print("Do you want to add the facemask intervention to the model? (Y/N)")
-    facemasks = input()
-    if facemasks == 'Y':
+
+    # FACE MASK INTERVENTION
+    print("Do you want to add the face mask intervention to the model? [Y/N]")
+    face_masks = input()
+    while face_masks not in ['Y', 'N', 'y', 'n']:
+        print("input should be either [Y for Yes / N for No]")
+        face_masks = input()
+    if face_masks in ['Y', 'y']:
         INTERVENTIONS["Face mask"] = True
-    print("How many simulations would you like to run with these interventions?")
-    number_of_simulations = int(input())
+        if covid_variant == 'O':  # if covid variant is neither alpha or delta, user needs to set the effectiveness of their own covid variant
+            print("How effective are face masks in preventing a susceptible agent from getting infected? [0 to 100]")
+            face_mask_self = input()
+            while not face_mask_self.isnumeric():
+                print("input should be an integer between 0 and 100")
+                face_mask_self = input()
+            FACE_MASK_SELF["Other"] = int(face_mask_self) / 100.0
+            print("How effective are face masks in preventing an infected agent from spreading infection? [0 to 100]")
+            face_mask_spread = input()
+            while not face_mask_spread.isnumeric():
+                print("input should be an integer between 0 and 100")
+                face_mask_spread = input()
+            FACE_MASK_SPREAD["Other"] = int(face_mask_spread) / 100.0
+
+    # SCREENING TEST INTERVENTION
+    print("Do you want to add the screening test intervention to the model? [Y/N]")
+    screening = input()
+    while screening not in ['Y', 'N', 'y', 'n']:
+        print("input should be either [Y for Yes / N for No]")
+        screening = input()
+    if screening in ['Y', 'y']:
+        INTERVENTIONS["Screening"] = True
+
+    # NUMBER OF SIMULATIONS
+    print("How many simulations would you like to run with these interventions? [positive integer]")
+    num_of_simulations = input()
+    while not num_of_simulations.isnumeric():
+        print("input should be an integer larger than 0")
+        num_of_simulations = input()
+
+    pickle.dump([COVID_VARIANTS, VARIANT_RISK_MULTIPLIER, [VACCINE_SELF, VACCINE_SPREAD], [FACE_MASK_SELF, FACE_MASK_SPREAD]], open('pickle_files/covid_variants.p', 'wb'))
     pickle.dump(INTERVENTIONS, open('pickle_files/interventions.p', 'wb'))
     pickle.dump(VACCINE_PERCENTAGE, open('pickle_files/vaccine_percentage.p', 'wb'))
-    return number_of_simulations
-
+    return num_of_simulations
 
 def create_directories():
     """
@@ -351,7 +491,7 @@ def create_directories():
 # Run simulation
 if __name__ == "__main__":
     create_directories()
-    number_of_simulations = input_stuff()
+    number_of_simulations = int(input_stuff())
     start_time = time.time() # start measuring time
     data = Manager().dict()
     data.update({sim_num: {} for sim_num in range(number_of_simulations + 1)})
