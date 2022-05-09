@@ -1,4 +1,4 @@
-.png
-.p
-.csv
-.pyc
+*.png
+*.p
+*.csv
+*.pyc
