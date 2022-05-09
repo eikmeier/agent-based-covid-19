@@ -1,7 +1,6 @@
 import random
 import copy
-import covid_agents
-from spaces import Dorm, Academic, DiningHall, Gym, Library, SocialSpace, Office, TransitSpace
+from spaces import Dorm, Academic, TransitSpace, DiningHall, Gym, Library, SocialSpace, Office
 from global_constants import DORM_BUILDINGS, ACADEMIC_BUILDINGS, PROBABILITY_G, PROBABILITY_S, PROBABILITY_L, \
     SCHEDULE_DAYS, SCHEDULE_WEEKDAYS
 

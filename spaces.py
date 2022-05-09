@@ -36,6 +36,8 @@ class Space:
         variant_risk_multiplier = caCV[1].get(covid_variant)
         return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER * variant_risk_multiplier
 
+    # Problem is something between: sum(ie_agents) + sum(im_agents) + sum(ia_agents) or not spreading in individual dorms?
+
     def spread_infection_core(self):
         """
         Spreads infection in the space by changing a variable amount of agent states from "S" to "E".\n
@@ -100,7 +102,7 @@ class Dorm(Space):
         self.occupied_doubles = 0
 
     def __str__(self):
-        return 'Dorm of size ' + self.size
+        return 'Dorm'
 
     def assign_agent(self, agent):
         """
@@ -311,7 +313,7 @@ class Office(Space):
         agent.schedule.get(self.day)[self.time - 8] = "Office"
 
     def __str__(self):
-        return self.division + ' Office'
+        return 'Office'
 
 class LargeGatherings(Space):
     def __init__(self):
@@ -404,7 +406,7 @@ class Academic(Space):
             self.classrooms[k + CLASSROOMS.get(self.size)[0] + CLASSROOMS.get(self.size)[1]].faculty = None
 
     def __str__(self):
-        return "Academic building: " + '/' + self.size + '/' + self.day + '/' + str(self.time)
+        return 'Academic'
 
     def assign_agent(self, agent):
         """

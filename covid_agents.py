@@ -1,6 +1,6 @@
-from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A, INITIALLY_INFECTED, VACCINE_SELF, \
- VACCINE_SPREAD, FACE_MASK_COMPLIANCE, SCREENING_COMPLIANCE, OFF_CAMPUS_STUDENT_PROPORTION, FACULTY_PROPORTION, HUMANITIES_PROPORTION, \
- ARTS_PROPORTION, SOCIAL_RATIO, FALSE_POSITIVE_RATE, FALSE_NEGATIVE_RATE, WALK_IN_PROBABILITY
+from global_constants import TOTAL_AGENTS, SPACE_SUBSPACE_AMOUNT, PROBABILITY_E, PROBABILITY_A, INITIALLY_INFECTED, \
+    FACE_MASK_COMPLIANCE, SCREENING_COMPLIANCE, OFF_CAMPUS_STUDENT_PROPORTION, FACULTY_PROPORTION, HUMANITIES_PROPORTION, \
+    ARTS_PROPORTION, SOCIAL_RATIO, FALSE_POSITIVE_RATE, FALSE_NEGATIVE_RATE, WALK_IN_PROBABILITY
 import random
 import pickle
 
@@ -107,7 +107,9 @@ class Agent:
                     agent.division = "Humanities"
 
         # Randomly select and assign agents that are initially infected
-        for ag in random.sample([agent for agent in agents if agent.vaccinated == False], k=int(INITIALLY_INFECTED)):
+        #  Note: This was initially only taking just unvaccinated agents to be initially infected, but if
+        #  everyone on a campus is vaccinated, then there would be 0 initially infected agents
+        for ag in random.sample(agents, k=int(INITIALLY_INFECTED)):
             ag.seir = random.choice(["Ia", "Im", "Ie"])  # randomly assign one of the infected states to agents
 
         # Randomly select and assign student agents as social, which allows them to go to large gatherings

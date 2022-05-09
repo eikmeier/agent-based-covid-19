@@ -1,26 +1,20 @@
 import random
-import covid_agents
-from covid_agents import change_states, screening_test, return_screening_result, walk_in_test
-from global_constants import CLASS_TIMES, DORM_BUILDINGS, ACADEMIC_BUILDINGS, CLASSROOMS, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, SCHEDULE_DAYS, \
-    INITIALLY_INFECTED, TOTAL_AGENTS, INTERVENTIONS, VACCINE_PERCENTAGE, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, \
-    VACCINE_PERCENTAGE, SCREENING_PERCENTAGE, SCREENING_COMPLIANCE, LATENCY_PERIOD, TESTING_DAY_INDEX, COVID_VARIANTS, FACE_MASK_SELF, FACE_MASK_SPREAD, \
-    VARIANT_RISK_MULTIPLIER, VACCINE_SELF, VACCINE_SPREAD
-from spaces import LargeGatherings
 import matplotlib.pyplot as plt
 import time
 from multiprocessing import Pool, Manager
 import pickle
-import copy
 import numpy as np
 import os
 import csv
-from covid_agents import change_states, Agent
+from covid_agents import change_states, Agent, screening_test, return_screening_result, walk_in_test
 from schedule import create_spaces, create_dorms, create_academic_spaces, assign_dorms, assign_agents_to_classes, \
-    assign_dining_times, \
-    assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
+    assign_dining_times, assign_gym, assign_remaining_time, all_transit_spaces, doubles_dorm_times
 from global_constants import SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, \
-    VACCINE_PERCENTAGE
+    VACCINE_PERCENTAGE, SCHEDULE_HOURS, SCHEDULE_WEEKDAYS, SIMULATION_LENGTH, INITIALLY_INFECTED, INTERVENTIONS, \
+    VACCINE_PERCENTAGE, SCREENING_PERCENTAGE, SCREENING_COMPLIANCE, LATENCY_PERIOD, TESTING_DAY_INDEX, COVID_VARIANTS, \
+    FACE_MASK_SELF, FACE_MASK_SPREAD, VARIANT_RISK_MULTIPLIER, VACCINE_SELF, VACCINE_SPREAD
 from spaces import LargeGatherings
+import copy
 
 agent_list = []
 
@@ -32,10 +26,11 @@ def initialize():
     """
     # Initialize agents
     global agent_list
-    agent_list = covid_agents.Agent().initialize()
+    agent_list = Agent().initialize()
 
     # Create spaces
     dorms = create_dorms()
+
     academic_buildings = create_academic_spaces()  # Create a list for each day/hour combination for each division (STEM, Humanities, Arts)
     dining_hall_spaces = create_spaces("DiningHall", 9, 20, [16])
     gym_spaces = create_spaces("Gym")
@@ -228,6 +223,7 @@ def update(data, simulation_number):
     spaces = initialize()
     student_list = [agent for agent in agent_list if agent.student]
     off_campus_agents = [agent for agent in agent_list if agent.off_campus]
+
     caI = pickle.load(open('pickle_files/interventions.p', 'rb'))
     screening_intervention = caI.get("Screening")  # whether we use screening test intervention or not ("on" or "off")
     testing_day = 0
@@ -355,8 +351,7 @@ def update(data, simulation_number):
                 len([agent for agent in agent_list if agent.seir == "Ia" or agent.seir == "Im" or agent.seir == "Ie"]))
             sim_data['seir_states']['r'].append(len([agent for agent in agent_list if agent.seir == "R"]))
             for agent in new_exposed_agents:
-                if str(agent.exposed_space) in sim_data['exposed_spaces']:
-                    sim_data['exposed_spaces'][str(agent.exposed_space)] += 1
+                sim_data['exposed_spaces'][str(agent.exposed_space)] += 1
             change_states(agent_list)
             data[simulation_number] = sim_data
     print("Simulation finished.")
@@ -367,7 +362,6 @@ def input_stuff():
      are stored in the pickle_files folder.\n
     Returns a number representing the number of simulations the model should be run for.\n
     """
-    print("Do you want to add vaccinated agents to the model? (Y/N)")
 
     # DETERMINE COVID VARIANT
     print("What COVID variant do you want? (A for Alpha/ D for Delta/ O for other)")
@@ -381,7 +375,7 @@ def input_stuff():
         COVID_VARIANTS["Delta"] = True
     elif covid_variant in ['O', 'o']:
         COVID_VARIANTS["Other"] = True
-        print("How faster does the infection spread for this variant (compared to the alpha variant)? [0 to 100]")
+        print("How faster does the infection spread for this variant (compared to the alpha variant)? [0x to 10x]")
         variant_spread = input()
         while True:
             try:
@@ -390,7 +384,7 @@ def input_stuff():
             except:
                 print("input should be an int/float between 0 and 100")
                 variant_spread = input()
-        VARIANT_RISK_MULTIPLIER["Other"] = int(variant_spread) / 100.0
+        VARIANT_RISK_MULTIPLIER["Other"] = float(variant_spread)
 
 
     # VACCINE INTERVENTION
@@ -401,23 +395,22 @@ def input_stuff():
         vaccines = input()
     if vaccines in ['Y', 'y']:
         if covid_variant == 'O':  # if covid variant is neither alpha or delta, user needs to set the effectiveness of their own covid variant
-            print("How effective are vaccines in preventing a susceptible agent from getting infected? [0 to 100]")
+            print("How effective are vaccines in preventing a susceptible agent from getting infected? [0 to 10x, compared to the effectiveness of vaccines on the alpha variant]")
             vaccine_self = input()
             while not vaccine_self.isnumeric():
                 print("input should be an integer between 0 and 100")
                 vaccine_self = input()
-            VACCINE_SELF["Other"] = int(vaccine_self) / 100.0
-            print("How effective are vaccines in preventing an infected agent from spreading infection? [0 to 100]")
+            VACCINE_SELF["Other"] = float(vaccine_self)
+            print("How effective are vaccines in preventing an infected agent from spreading infection? [0 to 10x, compared to the effectiveness of vaccines on the alpha variant]")
             vaccine_spread = input()
             while not vaccine_spread.isnumeric():
                 print("input should be an integer between 0 and 100")
                 vaccine_spread = input()
-            VACCINE_SPREAD["Other"] = int(vaccine_spread) / 100.0
+            VACCINE_SPREAD["Other"] = float(vaccine_spread)
 
         INTERVENTIONS["Vaccine"] = True
         print("What percentage of students should be vaccinated? [0 to 100]")
         students_vax = input()
-        print(students_vax.isnumeric())
         while not students_vax.isnumeric():
             print("input should be integer between 0 and 100")
             students_vax = input
@@ -501,8 +494,7 @@ if __name__ == "__main__":
         sim['total_infections'] = []
         sim['seir_states'] = {'s': [], 'e': [], 'i': [], 'r': []}
         sim['exposed_spaces'] = {'Dorm': 0, 'Office': 0, 'Transit Space': 0, 'Dining Hall': 0, 'Library': 0, 'Gym': 0,
-                                 'Large Gatherings': 0,
-                                 'Academic': 0, 'Social Space': 0, 'Off-Campus': 0}
+                                 'Large Gatherings': 0, 'Academic': 0, 'Social Space': 0, 'Off-Campus': 0}
         data[i] = sim
     pool = Pool()  # Creates an amount of processes from # of CPUs user has
     # Use multiprocessing!
@@ -513,3 +505,8 @@ if __name__ == "__main__":
     # Finish the multiprocessing
     print("The program took " + str(time.time() - start_time) + " seconds to run")
     observe(data)
+
+
+# Notes:
+#  1. "Other" variant is not working like we expect
+#  2. Simulations running much slower than before
