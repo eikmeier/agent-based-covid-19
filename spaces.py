@@ -356,7 +356,6 @@ class LargeGatherings(Space):
         ie_agents = [agent for agent in self.get_agents("Ie")]
         im_agents = [agent for agent in self.get_agents("Im")]
         ia_agents = [agent for agent in self.get_agents("Ia")]
-        #print("infected: " + str(len(ie_agents) + len(im_agents) + len(ia_agents)))
 
         infected = 0
         infection_prob = self.get_infection_prob() / 100.0
@@ -366,8 +365,6 @@ class LargeGatherings(Space):
                 agent.change_state("E")
                 agent.exposed_space = self
                 infected += 1
-        #print("exposed: " + str(infected))
-
 
 class Academic(Space):
     def __init__(self, size, day, time):
