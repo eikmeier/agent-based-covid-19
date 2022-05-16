@@ -460,9 +460,9 @@ def input_stuff():
         print("input should be an integer larger than 0")
         num_of_simulations = input()
 
-    pickle.dump([COVID_VARIANTS, VARIANT_RISK_MULTIPLIER, [VACCINE_SELF, VACCINE_SPREAD], [FACE_MASK_SELF, FACE_MASK_SPREAD]], open('pickle_files/covid_variants.p', 'wb'))
-    pickle.dump(INTERVENTIONS, open('pickle_files/interventions.p', 'wb'))
-    pickle.dump(VACCINE_PERCENTAGE, open('pickle_files/vaccine_percentage.p', 'wb'))
+    pickle.dump([COVID_VARIANTS, VARIANT_RISK_MULTIPLIER, [VACCINE_SELF, VACCINE_SPREAD], [FACE_MASK_SELF, FACE_MASK_SPREAD]], open('pickle_files/covid_variants.p', 'w+'))
+    pickle.dump(INTERVENTIONS, open('pickle_files/interventions.p', 'w+'))
+    pickle.dump(VACCINE_PERCENTAGE, open('pickle_files/vaccine_percentage.p', 'w+'))
     return num_of_simulations
 
 def create_directories():
