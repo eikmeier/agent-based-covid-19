@@ -264,7 +264,7 @@ def update(data, simulation_number):
                             screening_test(agent_list)
                             walk_in_agents = []
 
-                        else:  # week != 0:  # for each Monday, test a certain proportion of student agents
+                        else:  # When week != 0... for each Monday, test a certain proportion of student agents
                             if week == 1:  # all agents got tested on the first week, so on the first week we need to select who will be screened from the list of all the student agents
                                 not_tested = copy.copy(student_list)
                             else:  # starting from the second week, we exclude agents that were tested on the previous week
@@ -289,7 +289,6 @@ def update(data, simulation_number):
                             for agent in not_weekly_testing_agents:
                                 agent.screening_result.append("Not tested")
                             walk_in_agents = not_weekly_testing_agents
-
 
                     if day_of_week_index == TESTING_DAY_INDEX + LATENCY_PERIOD and hour == 8 and screening_intervention is True:
                         return_screening_result(agent_list)
@@ -336,10 +335,6 @@ def update(data, simulation_number):
                     large_gathering.spread_infection()
 
             walk_in_test(walk_in_agents)
-
-            # infected_oncampus = [agent for agent in infected_agents if agent.type == "On-campus Student"]
-            # infected_offcampus = [agent for agent in infected_agents if agent.type == "Off-campus Student"]
-            # infected_faculty = [agent for agent in infected_agents if agent.type == "Faculty"]
             new_exposed_agents = [agent for agent in agent_list if agent.seir == "E" and agent.days_in_state == 0]
             sim_data['new_exposures'].append(len(new_exposed_agents))
             infected_agents = [agent for agent in agent_list if
@@ -505,8 +500,3 @@ if __name__ == "__main__":
     # Finish the multiprocessing
     print("The program took " + str(time.time() - start_time) + " seconds to run")
     observe(data)
-
-
-# Notes:
-#  1. "Other" variant is not working like we expect
-#  2. Simulations running much slower than before

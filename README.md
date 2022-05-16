@@ -10,6 +10,7 @@ Constants that are used in all other files in the code are stored in <b> global_
 Attributes and methods solely relating to agents are stored in <b> covid_agents.py </b> <br>
 Attributes and methods solely relating to spaces and subspaces are stored in <b> spaces.py </b> <br>
 Details and information about the scheduling process of agents to spaces are stored in <b> schedule.py </b> <br> </br>
+<ol> <li> Some improvements can be made to the speed of the code </li> </ol>
 
 ## Documentation Notes
 
@@ -21,4 +22,4 @@ Documentation is located in the <b> documentation </b> folder. Currently, just t
 
 *The original research paper that this project was based on, can be found at this link: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0255654*
 
-##### This README.md was last updated on 04/17/2022
+##### This README.md was last updated on 05/15/2022

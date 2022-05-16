@@ -4,7 +4,6 @@ import math
 import random
 import pickle
 
-
 class Space:
     def close_space(self):
         """
@@ -164,7 +163,6 @@ class Dorm(Space):
         covid_variant = [key for key in caCV[0].keys() if caCV[0].get(key) is True][0]
         variant_risk_multiplier = caCV[1].get(covid_variant)
         return self.rv * ((sum(ie_agents) + sum(im_agents) + 0.5 * sum(ia_agents)) / self.cv) * TUNING_PARAMETER * variant_risk_multiplier
-
 
     def spread_infection_core(self, day, time):
         """
@@ -341,7 +339,6 @@ class LargeGatherings(Space):
         self.number_assigned += len(agents)
         self.cv = 40 * math.ceil(self.number_assigned / 40.0)
         self.agents = agents
-
 
     def get_agents(self, state):
         """

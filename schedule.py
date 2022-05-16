@@ -9,7 +9,6 @@ for day in SCHEDULE_DAYS:
     for time in range(15):
         all_transit_spaces[day].append(TransitSpace(day, time))
 
-
 def create_spaces(space, start_hour=8, end_hour=22, break_times=None, open_days=SCHEDULE_DAYS, division=None):
     """
     Creates spaces from spaces.py with a given space, start_hour, end_hour, break_times, open_days, and division.\n
@@ -59,7 +58,6 @@ def create_dorms():
         dorms.append(Dorm("Large"))
     return dorms
 
-
 def create_academic_spaces():
     """
     Create academic buildings (STEM, Humanities, Arts) for class times (10 AM, 12 PM, 2 PM, 4 PM).\n
@@ -90,7 +88,6 @@ def create_academic_spaces():
                     building_list[i // 4][i % 4].append(Academic(size, day_type, 2 + 2 * (i % 4)))
     return academic_buildings
 
-
 def assign_meal(agent, day, start_hour, end_hour, dh_list):
     """
     Assigns a meal to an agent on a given day, start_hour, and end_hour.\n
@@ -111,13 +108,11 @@ def assign_meal(agent, day, start_hour, end_hour, dh_list):
             all_transit_spaces[day][meal_hour].agents.append(
                 agent)  # assign agent to transit space at corresponding [day, time]
 
-
 doubles_students = []
 # List of doubles dorm rooms when at least one student is in it at a specific day, time combination
 temp_doubles_dorm_times = [[[] for j in range(15)] for i in range(3)]
 # List of doubles dorm rooms when both students are in it at a specific day, time combination
 doubles_dorm_times = [[[] for j in range(15)] for i in range(3)]
-
 
 def assign_dorms(dorms, agent_list):
     """
@@ -154,7 +149,6 @@ def assign_dorms(dorms, agent_list):
                     agent.schedule[day][hour] = "Off-Campus Space"
                 agent.schedule['W'][hour] = "Off-Campus Space"  # Off-Campus agents remain off-campus for the entire day
 
-
 # CLASS ASSIGNMENT ------------------------------------------------------------------------------------------------------------------------------------
 def assign_agents_to_classes(academic_buildings, agent_list):
     """
@@ -165,7 +159,6 @@ def assign_agents_to_classes(academic_buildings, agent_list):
     assign_faculty_classes(academic_buildings, faculty)
     students = [agent for agent in agent_list if agent.student]
     assign_student_classes(academic_buildings, students)
-
 
 def assign_faculty_classes(academic_buildings, faculty_list):
     """
@@ -234,7 +227,6 @@ def assign_faculty_classes(academic_buildings, faculty_list):
                     remaining_faculty.remove(faculty)
                     break  # No need to go through the other buildings for this faculty since they have been successfully assigned
 
-
 def assign_student_classes(academic_buildings, student_list):
     """
     Takes in a list of academic_buildings, ideally created from create_academic_buildings(), and a list of students.\n
@@ -292,7 +284,6 @@ def assign_student_classes(academic_buildings, student_list):
                             agent)  # assign agent to transit space at corresponding [day, time]
                     break
 
-
 def assign_dining_times(dining_hall_spaces, agent_list):
     """
     Takes in a list of dining hall spaces and a list of agents.\n
@@ -310,7 +301,6 @@ def assign_dining_times(dining_hall_spaces, agent_list):
                 assign_meal(agent, day, 8, 11, dining_hall_spaces)
                 assign_meal(agent, day, 12, 15, dining_hall_spaces)
                 assign_meal(agent, day, 17, 20, dining_hall_spaces)
-
 
 def assign_gym(gym_spaces, agent_list):
     """
