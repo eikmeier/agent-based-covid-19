@@ -472,9 +472,9 @@ def create_directories():
      files used in the program, and "data", which stores CSV files that represent the data shown in the plots.\n
     """
     current_dir = os.getcwd()
-    images_dir = current_dir + ('\images')
-    pickle_dir = current_dir + ('\pickle_files')
-    data_dir = current_dir + ('\data')
+    images_dir = current_dir + ('/images')
+    pickle_dir = current_dir + ('/pickle_files')
+    data_dir = current_dir + ('/data')
     directories = [images_dir, pickle_dir, data_dir]
     for dir in directories:
         if not os.path.exists(dir):
